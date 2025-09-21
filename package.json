@@ -29,6 +29,7 @@
     "eslint:fix": "eslint --fix 'packages/**/*.{ts,js,html}'",
     "eslint:check": "eslint 'packages/**/*.{ts,js,html}'",
     "start": "lerna run start --scope=@portugol-webstudio/ide",
+    "start:vulpes": "lerna run dev --scope=@portugol-webstudio/vulpes-ide",
     "build": "lerna run build",
     "build:w": "lerna run --parallel build:w",
     "build:parser": "lerna run build --scope=@portugol-webstudio/parser",
