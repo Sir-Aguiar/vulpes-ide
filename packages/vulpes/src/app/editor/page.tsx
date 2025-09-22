@@ -1,13 +1,18 @@
 "use client";
 
+import Sidebar from "@/components/Sidebar";
 import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
 import { Editor } from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
-export default function page() {
+export default function EditorPage() {
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
   const [output, setOutput] = useState<string>("");
+  const [code, setCode] = useState<string>(`programa {\n  funcao inicio() {\n    \n  }\n}\n`);
+  const [title, setTitle] = useState<string>("Sem título");
+  const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [isTranspiling, setIsTranspiling] = useState<boolean>(false);
 
   useEffect(() => {
     const exec = new PortugolExecutor(CustomWebWorkersRunner);
@@ -17,54 +22,153 @@ export default function page() {
       setOutput(data);
     });
 
+    const handleKeyDown = (event: KeyboardEvent) => {
+      // F1 - Help
+      if (event.key === "F1") {
+        event.preventDefault();
+        handleOpenHelp();
+      }
+
+      // Ctrl+S - Save
+      if (event.ctrlKey && event.key === "s") {
+        event.preventDefault();
+        handleSaveFile();
+      }
+
+      // Ctrl+O - Open
+      if (event.ctrlKey && event.key === "o") {
+        event.preventDefault();
+        handleOpenFile();
+      }
+
+      // Ctrl+Enter - Run
+      if (event.ctrlKey && event.key === "Enter") {
+        event.preventDefault();
+        handleRunCode();
+      }
+    };
+
+    document.addEventListener("keydown", handleKeyDown);
+
     return () => {
       subscription.unsubscribe();
       exec.stop();
+      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   const handleRunCode = () => {
     if (executor) {
-      executor.run(portugolCode);
+      setIsTranspiling(true);
+      setIsRunning(true);
+
+      executor.run(code);
+
+      setIsTranspiling(false);
+      setIsRunning(false);
     }
   };
 
-  const [portugolCode, setPortugolCode] = React.useState<string>("");
+  const handleStopCode = () => {
+    if (executor) {
+      executor.stop();
+      setIsRunning(false);
+      setIsTranspiling(false);
+    }
+  };
 
-  const handleEditorChange = (value: string | undefined) => {
-    setPortugolCode(value || "");
+  const handleSaveFile = () => {
+    const blob = new Blob([code], { type: "text/plain" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = title.endsWith(".por") ? title : `${title}.por`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const handleOpenFile = () => {
+    const input = document.createElement("input");
+    input.type = "file";
+    input.accept = ".por,text/plain";
+    input.onchange = async event => {
+      const file = (event.target as HTMLInputElement).files?.[0];
+      if (file) {
+        const content = await file.text();
+        setCode(content);
+        setTitle(file.name);
+      }
+    };
+    input.click();
+  };
+
+  const handleOpenHelp = () => {
+    console.log("Abrindo ajuda...");
+  };
+
+  const handleOpenSettings = () => {
+    console.log("Abrindo configurações...");
   };
 
   return (
-    <div className="w-full h-screen">
-      <div className="w-full h-full flex">
-        <div className="flex-1 flex flex-col bg-slate-900">
-          <div className="flex-1">
-            <Editor
-              height="100%"
-              defaultLanguage="c"
-              value={portugolCode}
-              onChange={handleEditorChange}
-              theme="vs-dark"
-            />
-          </div>
-          <div className="h-16 flex items-center px-4 ">
-            <button
-              className="flex items-center justify-center w-32 h-10 bg-green-600 hover:bg-green-700 text-white font-bold rounded-lg mr-4 transition-colors"
-              onClick={handleRunCode}
-            >
-              Executar
-            </button>
-            <button className="flex items-center justify-center w-32 h-10 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition-colors">
-              Parar
-            </button>
-          </div>
+    <div className="flex flex-row w-full h-screen" style={{ backgroundColor: "#263238" }}>
+      <Sidebar
+        isRunning={isRunning}
+        isTranspiling={isTranspiling}
+        onRunCode={handleRunCode}
+        onStopCode={handleStopCode}
+        onSaveFile={handleSaveFile}
+        onOpenFile={handleOpenFile}
+        onOpenHelp={handleOpenHelp}
+        onOpenSettings={handleOpenSettings}
+      />
+      <div className="flex-1 flex flex-col" style={{ backgroundColor: "#445056" }}>
+        <div className="flex-1" style={{ height: "80%" }}>
+          <Editor
+            height="100%"
+            language="portugol"
+            theme="vs-dark"
+            value={code}
+            onChange={value => setCode(value || "")}
+            options={{
+              fontSize: 14,
+              tabSize: 2,
+              wordWrap: "on",
+              minimap: { enabled: true },
+              lineNumbers: "on",
+              renderWhitespace: "selection",
+              automaticLayout: true,
+              tabCompletion: "on",
+              cursorStyle: "line",
+              scrollBeyondLastLine: false,
+            }}
+          />
         </div>
-        <div className="flex-1 p-4">
-          <h2 className="text-lg font-bold mb-2">Output</h2>
-          <div className="w-full h-full bg-gray-800 rounded-lg p-2 overflow-auto">
-            <pre className="text-white whitespace-pre-wrap">{output}</pre>
-          </div>
+
+        <div style={{ height: "20%", backgroundColor: "#121e24" }}>
+          <Editor
+            height="100%"
+            language="plaintext"
+            theme="vs-dark"
+            value={output}
+            options={{
+              fontSize: 14,
+              fontFamily: '"Lato", sans-serif',
+              lineNumbers: "off",
+              readOnly: true,
+              minimap: { enabled: false },
+              wordWrap: "on",
+              automaticLayout: true,
+              overviewRulerLanes: 0,
+              hideCursorInOverviewRuler: true,
+              overviewRulerBorder: false,
+              renderLineHighlight: "none",
+              scrollBeyondLastLine: false,
+              contextmenu: false,
+            }}
+          />
         </div>
       </div>
     </div>
