@@ -5,6 +5,7 @@ import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
 import { Editor } from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { useEffect, useState } from "react";
+import { registerPortugolLanguage } from "../../../libs/monaco-config";
 
 export default function EditorPage() {
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
@@ -112,8 +113,13 @@ export default function EditorPage() {
     console.log("Abrindo configurações...");
   };
 
+  function handleEditorDidMount(editorInstance: any, monacoInstance: any) {
+    registerPortugolLanguage(monacoInstance);
+    monacoInstance.editor.setTheme("vs-dark");
+  }
+
   return (
-    <div className="flex flex-row w-full h-screen" style={{ backgroundColor: "#263238" }}>
+    <div className="flex flex-row w-full h-screen p-4 gap-2" style={{ backgroundColor: "#263238" }}>
       <Sidebar
         isRunning={isRunning}
         isTranspiling={isTranspiling}
@@ -124,14 +130,15 @@ export default function EditorPage() {
         onOpenHelp={handleOpenHelp}
         onOpenSettings={handleOpenSettings}
       />
-      <div className="flex-1 flex flex-col" style={{ backgroundColor: "#445056" }}>
+      <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1" style={{ backgroundColor: "#445056" }}>
         <div className="flex-1" style={{ height: "80%" }}>
           <Editor
             height="100%"
-            language="portugol"
             theme="vs-dark"
+            language="portugol"
             value={code}
             onChange={value => setCode(value || "")}
+            onMount={handleEditorDidMount}
             options={{
               fontSize: 14,
               tabSize: 2,
@@ -150,7 +157,6 @@ export default function EditorPage() {
         <div style={{ height: "20%", backgroundColor: "#121e24" }}>
           <Editor
             height="100%"
-            language="plaintext"
             theme="vs-dark"
             value={output}
             options={{

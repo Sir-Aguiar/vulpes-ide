@@ -1,16 +1,7 @@
 "use client";
 
 import React from "react";
-import {
-  HelpIcon,
-  OpenIcon,
-  PlayIcon,
-  SaveAsIcon,
-  SaveIcon,
-  SettingsIcon,
-  ShareIcon,
-  StopIcon
-} from "./Icons";
+import { HelpIcon, OpenIcon, PlayIcon, SaveAsIcon, SaveIcon, SettingsIcon, ShareIcon, StopIcon } from "./Icons";
 
 interface SidebarProps {
   isRunning: boolean;
@@ -43,7 +34,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <div className="flex flex-col h-full" style={{ backgroundColor: "#121e24" }}>
+    <div className="flex flex-col h-full rounded-md overflow-hidden" style={{ backgroundColor: "#121e24" }}>
       <button
         className={`flex items-center justify-center w-16 h-16 border-none transition-all duration-200 cursor-pointer ${
           isRunning || isTranspiling ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-600"
