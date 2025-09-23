@@ -7,6 +7,7 @@ import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { useEffect, useState } from "react";
 import { registerPortugolLanguage } from "../../../libs/monaco-config";
 import { taskTemplate } from "@/utils/mocks";
+import { executeWithTestInputs } from "@/utils/code-tester";
 
 export default function EditorPage() {
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
@@ -24,94 +25,20 @@ export default function EditorPage() {
       setOutput(data);
     });
 
-    const handleKeyDown = (event: KeyboardEvent) => {
-      // F1 - Help
-      if (event.key === "F1") {
-        event.preventDefault();
-        handleOpenHelp();
-      }
-
-      // Ctrl+S - Save
-      if (event.ctrlKey && event.key === "s") {
-        event.preventDefault();
-        handleSaveFile();
-      }
-
-      // Ctrl+O - Open
-      if (event.ctrlKey && event.key === "o") {
-        event.preventDefault();
-        handleOpenFile();
-      }
-
-      // Ctrl+Enter - Run
-      if (event.ctrlKey && event.key === "Enter") {
-        event.preventDefault();
-        handleRunCode();
-      }
-    };
-
-    document.addEventListener("keydown", handleKeyDown);
-
     return () => {
       subscription.unsubscribe();
       exec.stop();
-      document.removeEventListener("keydown", handleKeyDown);
     };
   }, []);
 
   const handleRunCode = () => {
     if (executor) {
-      setIsTranspiling(true);
-      setIsRunning(true);
-
-      executor.run(code);
-      console.log(executor.byteCode);
-      setIsTranspiling(false);
-      setIsRunning(false);
+      runTestCases();
     }
   };
 
-  const handleStopCode = () => {
-    if (executor) {
-      executor.stop();
-      setIsRunning(false);
-      setIsTranspiling(false);
-    }
-  };
-
-  const handleSaveFile = () => {
-    const blob = new Blob([code], { type: "text/plain" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = title.endsWith(".por") ? title : `${title}.por`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-  };
-
-  const handleOpenFile = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".por,text/plain";
-    input.onchange = async event => {
-      const file = (event.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const content = await file.text();
-        setCode(content);
-        setTitle(file.name);
-      }
-    };
-    input.click();
-  };
-
-  const handleOpenHelp = () => {
-    console.log("Abrindo ajuda...");
-  };
-
-  const handleOpenSettings = () => {
-    console.log("Abrindo configurações...");
+  const runTestCases = async () => {
+    executeWithTestInputs(executor!, code, taskTemplate.testCases, taskTemplate.functionName);
   };
 
   function handleEditorDidMount(editorInstance: any, monacoInstance: any) {
@@ -121,16 +48,7 @@ export default function EditorPage() {
 
   return (
     <div className="flex flex-row w-full h-screen p-4 gap-2" style={{ backgroundColor: "#263238" }}>
-      <Sidebar
-        isRunning={isRunning}
-        isTranspiling={isTranspiling}
-        onRunCode={handleRunCode}
-        onStopCode={handleStopCode}
-        onSaveFile={handleSaveFile}
-        onOpenFile={handleOpenFile}
-        onOpenHelp={handleOpenHelp}
-        onOpenSettings={handleOpenSettings}
-      />
+      <Sidebar isRunning={isRunning} isTranspiling={isTranspiling} onRunCode={handleRunCode} />
       <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1" style={{ backgroundColor: "#445056" }}>
         <div className="flex-1" style={{ height: "80%" }}>
           <Editor
