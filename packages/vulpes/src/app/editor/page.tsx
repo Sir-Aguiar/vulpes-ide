@@ -6,11 +6,12 @@ import { Editor } from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { useEffect, useState } from "react";
 import { registerPortugolLanguage } from "../../../libs/monaco-config";
+import { taskTemplate } from "@/utils/mocks";
 
 export default function EditorPage() {
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
   const [output, setOutput] = useState<string>("");
-  const [code, setCode] = useState<string>(`programa {\n  funcao inicio() {\n    \n  }\n}\n`);
+  const [code, setCode] = useState<string>(taskTemplate.initialCode);
   const [title, setTitle] = useState<string>("Sem título");
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isTranspiling, setIsTranspiling] = useState<boolean>(false);
@@ -64,7 +65,7 @@ export default function EditorPage() {
       setIsRunning(true);
 
       executor.run(code);
-
+      console.log(executor.byteCode);
       setIsTranspiling(false);
       setIsRunning(false);
     }
