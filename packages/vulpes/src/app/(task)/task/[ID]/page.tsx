@@ -60,10 +60,6 @@ export default function Page() {
     };
   }, []);
 
-  useEffect(() => {
-    console.log(output);
-  }, [output]);
-
   const handleRunCode = () => {
     if (executor && code) {
       setIsRunning(true);
