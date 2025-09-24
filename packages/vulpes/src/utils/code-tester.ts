@@ -1,8 +1,11 @@
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { ITask } from "../@types/Task";
 import { extractFunctionTypeAndParams, extractUserFunction } from "./code-extractor";
+import { CustomWebWorkersRunner } from "./WebWorkerRunner";
 
-export const executeWithTestInputs = (executor: PortugolExecutor, code: string, task: ITask) => {
+export const executeWithTestInputs = (code: string, task: ITask) => {
+  const executor = new PortugolExecutor(CustomWebWorkersRunner);
+
   const functionData = extractFunctionTypeAndParams(task.functionDef)!;
   const functionMatch = extractUserFunction(code, functionData.functionName);
 
@@ -20,7 +23,9 @@ export const executeWithTestInputs = (executor: PortugolExecutor, code: string, 
     }
   `;
 
-  console.log(finalCode);
+  executor.stdOut$.subscribe(output => {
+    console.log(output);
+  });
 
   executor.run(finalCode);
 };

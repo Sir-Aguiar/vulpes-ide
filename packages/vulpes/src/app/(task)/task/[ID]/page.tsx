@@ -63,7 +63,7 @@ export default function Page() {
   const handleRunCode = () => {
     if (executor && code) {
       setIsRunning(true);
-      executeWithTestInputs(executor, code, task!);
+      executeWithTestInputs(code, task!);
     }
   };
 
