@@ -17,6 +17,12 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export function GET() {
-  return new Response("Hello, Next.js!", { status: 200 });
+export async function GET(request: NextRequest) {
+  // Get the query parameters
+  const { searchParams } = new URL(request.url);
+  const ID = searchParams.get("ID")!;
+
+  const response = await dbAdmin.collection("tasks").doc(ID).get();
+
+  return NextResponse.json(response.data());
 }

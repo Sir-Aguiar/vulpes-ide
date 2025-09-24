@@ -4,18 +4,47 @@ import Sidebar from "@/components/Sidebar";
 import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
 import { Editor } from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
-import { useEffect, useState } from "react";
-import { registerPortugolLanguage } from "../../../libs/monaco-config";
-import { taskTemplate } from "@/utils/mocks";
+import { useEffect, useMemo, useState } from "react";
 import { executeWithTestInputs } from "@/utils/code-tester";
+import { useParams } from "next/navigation";
+import axios from "axios";
+import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
+import { baseCode } from "@/utils/mocks";
+import { appendFunctionToCode, extractFunctionTypeAndParams, extractUserFunction } from "@/utils/code-extractor";
+import { ITask } from "@/@types/Task";
 
-export default function EditorPage() {
+export default function Page() {
+  const { ID } = useParams();
+
+  const [task, setTask] = useState<ITask | null>(null);
+
+  const getTask = async () => {
+    const response = await axios.get("/api/task", { params: { ID } });
+    setTask(response.data);
+  };
+
+  const functionData = useMemo(() => {
+    if (task) return extractFunctionTypeAndParams(task.functionDef);
+  }, [task]);
+
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
   const [output, setOutput] = useState<string>("");
-  const [code, setCode] = useState<string>(taskTemplate.initialCode);
-  const [title, setTitle] = useState<string>("Sem título");
+  const [code, setCode] = useState<string>(baseCode);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [isTranspiling, setIsTranspiling] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (ID) {
+      getTask();
+    }
+  }, [ID]);
+
+  useEffect(() => {
+    if (task && functionData) {
+      const newCode = appendFunctionToCode(baseCode, task.functionDef);
+      setCode(newCode);
+    }
+  }, [functionData]);
 
   useEffect(() => {
     const exec = new PortugolExecutor(CustomWebWorkersRunner);
@@ -31,14 +60,15 @@ export default function EditorPage() {
     };
   }, []);
 
-  const handleRunCode = () => {
-    if (executor) {
-      runTestCases();
-    }
-  };
+  useEffect(() => {
+    console.log(output);
+  }, [output]);
 
-  const runTestCases = async () => {
-    executeWithTestInputs(executor!, code, taskTemplate.testCases, taskTemplate.functionName);
+  const handleRunCode = () => {
+    if (executor && code) {
+      setIsRunning(true);
+      executeWithTestInputs(executor, code, task!);
+    }
   };
 
   function handleEditorDidMount(editorInstance: any, monacoInstance: any) {

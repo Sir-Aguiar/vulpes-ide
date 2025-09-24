@@ -129,7 +129,7 @@ export default function Page() {
     const cleanData = JSON.parse(JSON.stringify(data));
 
     try {
-      const response = await axios.post("/api/new-task", cleanData);
+      const response = await axios.post("/api/task", cleanData);
       console.log("Task created successfully:", response.data);
       // TODO: Adicionar feedback para o usuário (ex: redirecionar ou mostrar uma mensagem de sucesso)
     } catch (error) {

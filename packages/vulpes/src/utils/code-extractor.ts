@@ -26,3 +26,25 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
     params,
   };
 };
+
+export const extractUserFunction = (code: string, functionName: string): string | null => {
+  const functionRegex = new RegExp(`funcao\\s+.*\\s+${functionName}\\s*\\(.*\\)\\s*{([\\s\\S]*?)}\\s*`);
+  const userFunction = code.match(functionRegex)?.[0];
+  return userFunction || null;
+};
+
+export const appendFunctionToCode = (code: string, functionDef: string): string => {
+  const insertionPoint = "funcao inicio()";
+  const insertionIndex = code.indexOf(insertionPoint);
+
+  if (insertionIndex === -1) {
+    return code;
+  }
+
+  const before = code.slice(0, Math.max(0, insertionIndex));
+  const after = code.slice(Math.max(0, insertionIndex));
+
+  const newFunction = `\t${functionDef} {\n\n\t}\n\n`;
+
+  return `${before}${newFunction}\t${after}`;
+};
