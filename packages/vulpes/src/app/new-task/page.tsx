@@ -9,6 +9,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { CodeDetailsSchema, CreateTaskDTO, CreateTaskSchema, TaskDetailsSchema } from "./schemas/CreateTask.schema";
+import axios from "axios";
 
 enum Step {
   TASK_DETAILS = "task-details",
@@ -23,6 +24,7 @@ export default function Page() {
     setError,
     clearErrors,
     getValues,
+    handleSubmit,
   } = useForm<CreateTaskDTO>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
@@ -85,7 +87,6 @@ export default function Page() {
 
     if (formStep === Step.CODE_TEST) {
       const { testCases } = getValues();
-      console.log(getValues());
       parsed = TaskDetailsSchema.safeParse({ testCases });
 
       if (!parsed.success) {
@@ -121,10 +122,27 @@ export default function Page() {
     }),
   };
 
+  const onSubmit = async (data: CreateTaskDTO) => {
+    // O Firestore não aceita valores `undefined`.
+    // Esta função percorre o objeto de dados e remove quaisquer chaves
+    // que tenham `undefined` como valor.
+    const cleanData = JSON.parse(JSON.stringify(data));
+
+    try {
+      const response = await axios.post("/api/new-task", cleanData);
+      console.log("Task created successfully:", response.data);
+      // TODO: Adicionar feedback para o usuário (ex: redirecionar ou mostrar uma mensagem de sucesso)
+    } catch (error) {
+      console.error("Error creating task:", error);
+      // TODO: Mostrar uma mensagem de erro para o usuário
+    }
+  };
+
   return (
     <main className="w-full min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Paper
-        component={motion.div}
+        component={motion.form}
+        onSubmit={handleSubmit(onSubmit)}
         layout
         transition={{ duration: 0.4, ease: "easeInOut" }}
         elevation={1}
@@ -274,7 +292,7 @@ export default function Page() {
                   <Button variant="outlined" size="large" onClick={prevStep} fullWidth>
                     Voltar
                   </Button>
-                  <Button variant="contained" size="large" onClick={nextStep} fullWidth>
+                  <Button variant="contained" size="large" type="submit" fullWidth>
                     Finalizar
                   </Button>
                 </Stack>
