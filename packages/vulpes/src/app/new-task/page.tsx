@@ -16,16 +16,6 @@ enum Step {
   CODE_TEST = "code-test",
 }
 
-/*
-  - Titulo
-  - Descricao
-
-  - Quantas funções serão usadas
-  - Qual o nome de cada função
-
-  - Test cases
-*/
-
 export default function Page() {
   const {
     control,
@@ -92,6 +82,18 @@ export default function Page() {
       setDirection(1);
       setFormStep(Step.CODE_TEST);
     }
+
+    if (formStep === Step.CODE_TEST) {
+      const { testCases } = getValues();
+      console.log(getValues());
+      parsed = TaskDetailsSchema.safeParse({ testCases });
+
+      if (!parsed.success) {
+        return parsed.error.issues.forEach(issue => {
+          setError(issue.path[0] as keyof CreateTaskDTO, { message: issue.message });
+        });
+      }
+    }
   };
 
   const prevStep = () => {
@@ -120,7 +122,7 @@ export default function Page() {
   };
 
   return (
-    <main className="h-screen w-full flex items-center justify-center bg-gray-50 p-4 overflow-hidden">
+    <main className="w-full min-h-screen flex items-center justify-center bg-gray-50 p-4">
       <Paper
         component={motion.div}
         layout
@@ -272,7 +274,7 @@ export default function Page() {
                   <Button variant="outlined" size="large" onClick={prevStep} fullWidth>
                     Voltar
                   </Button>
-                  <Button variant="contained" size="large" onClick={() => {}} fullWidth>
+                  <Button variant="contained" size="large" onClick={nextStep} fullWidth>
                     Finalizar
                   </Button>
                 </Stack>
