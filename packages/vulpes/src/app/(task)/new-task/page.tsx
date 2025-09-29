@@ -3,19 +3,45 @@
 import RHFTextField from "@/components/RHF/TextField";
 import { extractFunctionTypeAndParams, IFunctionData } from "@/utils/code-extractor";
 import { zodResolver } from "@hookform/resolvers/zod";
+import AddIcon from "@mui/icons-material/Add";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CodeIcon from "@mui/icons-material/Code";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { Box, Button, Divider, IconButton, Paper, Stack, Typography } from "@mui/material";
+import PlaylistAddCheckIcon from "@mui/icons-material/PlaylistAddCheck";
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Divider,
+  Fade,
+  IconButton,
+  Paper,
+  Stack,
+  Step,
+  StepLabel,
+  Stepper,
+  Typography,
+} from "@mui/material";
+import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { useFieldArray, useForm } from "react-hook-form";
 import { CodeDetailsSchema, CreateTaskDTO, CreateTaskSchema, TaskDetailsSchema } from "./schemas/CreateTask.schema";
-import axios from "axios";
 
-enum Step {
-  TASK_DETAILS = "task-details",
-  CODE_DETAILS = "code-details",
-  CODE_TEST = "code-test",
+enum FormStep {
+  TASK_AND_CODE = 0,
+  TEST_CASES = 1,
 }
+
+const steps = [
+  { label: "Detalhes da Tarefa", icon: <CodeIcon /> },
+  { label: "Casos de Teste", icon: <PlaylistAddCheckIcon /> },
+];
 
 export default function Page() {
   const {
@@ -25,6 +51,7 @@ export default function Page() {
     clearErrors,
     getValues,
     handleSubmit,
+    watch,
   } = useForm<CreateTaskDTO>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
@@ -40,70 +67,50 @@ export default function Page() {
     name: "testCases",
   });
 
-  const [formStep, setFormStep] = useState<Step>(Step.TASK_DETAILS);
+  const [activeStep, setActiveStep] = useState<FormStep>(FormStep.TASK_AND_CODE);
   const [direction, setDirection] = useState(1);
   const [functionData, setFunctionData] = useState<IFunctionData | null>(null);
+
+  const watchedFunctionDef = watch("functionDef");
 
   const nextStep = () => {
     clearErrors();
 
-    let parsed;
+    if (activeStep === FormStep.TASK_AND_CODE) {
+      const { title, description, functionDef } = getValues();
 
-    if (formStep === Step.TASK_DETAILS) {
-      const { title, description } = getValues();
-      parsed = TaskDetailsSchema.safeParse({ title, description });
-
-      if (!parsed.success) {
-        return parsed.error.issues.forEach(issue => {
+      // Validar detalhes da tarefa
+      const taskParsed = TaskDetailsSchema.safeParse({ title, description });
+      if (!taskParsed.success) {
+        return taskParsed.error.issues.forEach(issue => {
           setError(issue.path[0] as keyof CreateTaskDTO, { message: issue.message });
         });
       }
 
-      setDirection(1);
-      setFormStep(Step.CODE_DETAILS);
-    }
-
-    if (formStep === Step.CODE_DETAILS) {
-      const { functionDef } = getValues();
-      parsed = CodeDetailsSchema.safeParse({ functionDef });
-
-      if (!parsed.success) {
-        return parsed.error.issues.forEach(issue => {
+      // Validar código
+      const codeParsed = CodeDetailsSchema.safeParse({ functionDef });
+      if (!codeParsed.success) {
+        return codeParsed.error.issues.forEach(issue => {
           setError(issue.path[0] as keyof CreateTaskDTO, { message: issue.message });
         });
       }
 
-      const functionData = extractFunctionTypeAndParams(functionDef);
-
-      if (!functionData) {
+      const extractedData = extractFunctionTypeAndParams(functionDef);
+      if (!extractedData) {
         setError("functionDef", { message: "Não foi possível extrair os dados da função. Verifique a sintaxe." });
         return;
       }
 
-      setFunctionData(functionData);
+      setFunctionData(extractedData);
       setDirection(1);
-      setFormStep(Step.CODE_TEST);
-    }
-
-    if (formStep === Step.CODE_TEST) {
-      const { testCases } = getValues();
-      parsed = TaskDetailsSchema.safeParse({ testCases });
-
-      if (!parsed.success) {
-        return parsed.error.issues.forEach(issue => {
-          setError(issue.path[0] as keyof CreateTaskDTO, { message: issue.message });
-        });
-      }
+      setActiveStep(FormStep.TEST_CASES);
     }
   };
 
   const prevStep = () => {
     setDirection(-1);
-    if (formStep === Step.CODE_DETAILS) {
-      setFormStep(Step.TASK_DETAILS);
-    }
-    if (formStep === Step.CODE_TEST) {
-      setFormStep(Step.CODE_DETAILS);
+    if (activeStep === FormStep.TEST_CASES) {
+      setActiveStep(FormStep.TASK_AND_CODE);
     }
   };
 
@@ -123,35 +130,51 @@ export default function Page() {
   };
 
   const onSubmit = async (data: CreateTaskDTO) => {
-    // O Firestore não aceita valores `undefined`.
-    // Esta função percorre o objeto de dados e remove quaisquer chaves
-    // que tenham `undefined` como valor.
     const cleanData = JSON.parse(JSON.stringify(data));
 
     try {
       const response = await axios.post("/api/task", cleanData);
       console.log("Task created successfully:", response.data);
-      // TODO: Adicionar feedback para o usuário (ex: redirecionar ou mostrar uma mensagem de sucesso)
     } catch (error) {
       console.error("Error creating task:", error);
-      // TODO: Mostrar uma mensagem de erro para o usuário
     }
   };
 
   return (
-    <main className="w-full min-h-screen flex items-center justify-center bg-gray-50 p-4">
+    <main className="w-full min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
       <Paper
         component={motion.form}
         onSubmit={handleSubmit(onSubmit)}
         layout
         transition={{ duration: 0.4, ease: "easeInOut" }}
-        elevation={1}
-        className="w-full max-w-md rounded-xl overflow-hidden"
+        elevation={3}
+        className="w-full max-w-4xl min-h-[855px] rounded-2xl overflow-hidden"
+        sx={{ boxShadow: "0 20px 40px rgba(0,0,0,0.1)" }}
       >
+        {/* Header com Stepper */}
+        <Box sx={{ bgcolor: "primary.main", color: "white", p: 3 }}>
+          <Stepper
+            activeStep={activeStep}
+            alternativeLabel
+            sx={{
+              "& .MuiStepLabel-label": { color: "white" },
+              "& .MuiStepIcon-root": { color: "rgba(255,255,255,0.5)" },
+              "& .MuiStepIcon-root.Mui-active": { color: "white" },
+              "& .MuiStepIcon-root.Mui-completed": { color: "white" },
+            }}
+          >
+            {steps.map((step, index) => (
+              <Step key={step.label}>
+                <StepLabel icon={step.icon}>{step.label}</StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+        </Box>
+
         <AnimatePresence initial={false} custom={direction} mode="wait">
-          {formStep === Step.TASK_DETAILS && (
+          {activeStep === FormStep.TASK_AND_CODE && (
             <motion.div
-              key={Step.TASK_DETAILS}
+              key={FormStep.TASK_AND_CODE}
               custom={direction}
               variants={variants}
               initial="enter"
@@ -159,144 +182,230 @@ export default function Page() {
               exit="exit"
               transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
             >
-              <Stack spacing={3} p={4}>
-                <Typography variant="h5" component="h1" className="font-bold text-center">
-                  Cadastrar Nova Atividade
-                </Typography>
-                <RHFTextField control={control} errors={errors} name="title" label="Título" />
-                <RHFTextField
-                  control={control}
-                  errors={errors}
-                  name="description"
-                  label="Descrição"
-                  multiline
-                  rows={3}
-                />
-                <Button variant="contained" size="large" onClick={nextStep} className="!mt-4">
-                  Próximo
-                </Button>
-              </Stack>
-            </motion.div>
-          )}
-
-          {formStep === Step.CODE_DETAILS && (
-            <motion.div
-              key={Step.CODE_DETAILS}
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
-            >
-              <Stack spacing={3} p={4}>
-                <Typography variant="h5" component="h1" className="font-bold text-center">
-                  Detalhes do Código
-                </Typography>
-                <RHFTextField
-                  control={control}
-                  errors={errors}
-                  name="functionDef"
-                  label="Definição da função principal"
-                />
-                <Box className="text-sm text-center text-gray-600 bg-gray-100 p-2 rounded-md">
-                  Exemplo: <code>funcao real soma(real a, real b)</code>
-                </Box>
-                <Stack direction="row" spacing={2} className="!mt-4">
-                  <Button variant="outlined" size="large" onClick={prevStep} fullWidth>
-                    Voltar
-                  </Button>
-                  <Button variant="contained" size="large" onClick={nextStep} fullWidth>
-                    Próximo
-                  </Button>
-                </Stack>
-              </Stack>
-            </motion.div>
-          )}
-
-          {formStep === Step.CODE_TEST && functionData && (
-            <motion.div
-              key={Step.CODE_TEST}
-              custom={direction}
-              variants={variants}
-              initial="enter"
-              animate="center"
-              exit="exit"
-              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
-            >
-              <Stack spacing={3} p={4}>
-                <Typography variant="h5" component="h1" className="font-bold text-center">
-                  Casos de Teste
-                </Typography>
-
-                <Paper variant="outlined" sx={{ p: 2, bgcolor: "grey.50" }}>
-                  <Typography variant="h6" gutterBottom>
-                    Resumo da Função
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Nome:</strong> {functionData.functionName}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Retorno:</strong> {functionData.returnType}
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Parâmetros:</strong>{" "}
-                    {functionData.params.map((p: any) => `${p.type} ${p.name}`).join(", ") || "Nenhum"}
-                  </Typography>
-                </Paper>
-
-                <Divider>Testes</Divider>
-
-                <Stack spacing={3}>
-                  {fields.map((field, index) => (
-                    <Paper key={field.id} variant="outlined" sx={{ p: 2, position: "relative" }}>
-                      <Typography variant="subtitle1" gutterBottom>
-                        Teste {index + 1}
+              <Box p={4}>
+                <Stack spacing={4}>
+                  {/* Seção de Detalhes da Tarefa */}
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CodeIcon color="primary" />
+                        Informações da Atividade
                       </Typography>
-                      <Stack spacing={2}>
-                        {functionData.params.map((param: any, paramIndex: any) => (
-                          <RHFTextField
-                            key={param.name}
-                            control={control}
-                            errors={errors}
-                            name={`testCases.${index}.input.${paramIndex}`}
-                            label={`Parâmetro: ${param.name} (${param.type})`}
-                          />
-                        ))}
+                      <Stack spacing={3}>
                         <RHFTextField
                           control={control}
                           errors={errors}
-                          name={`testCases.${index}.expectedOutput`}
-                          label={`Retorno Esperado (${functionData.returnType})`}
+                          name="title"
+                          label="Título da Atividade"
+                          placeholder="Ex: Calcular soma de dois números"
+                        />
+                        <RHFTextField
+                          control={control}
+                          errors={errors}
+                          name="description"
+                          label="Descrição"
+                          placeholder="Descreva o objetivo da atividade..."
+                          multiline
+                          rows={3}
                         />
                       </Stack>
-                      <IconButton
-                        aria-label="delete"
-                        onClick={() => remove(index)}
-                        sx={{ position: "absolute", top: 8, right: 8 }}
+                    </CardContent>
+                  </Card>
+
+                  {/* Seção de Código */}
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <PlaylistAddCheckIcon color="primary" />
+                        Definição da Função
+                      </Typography>
+                      <Stack spacing={2}>
+                        <RHFTextField
+                          control={control}
+                          errors={errors}
+                          name="functionDef"
+                          label="Assinatura da função"
+                          placeholder="funcao real soma(real a, real b)"
+                        />
+                        <Alert severity="info" sx={{ borderRadius: 2 }}>
+                          <Typography variant="body2">
+                            <strong>Formato esperado:</strong>{" "}
+                            <code>funcao [tipo_retorno] [nome]([tipo] [param1], [tipo] [param2], ...)</code>
+                          </Typography>
+                        </Alert>
+
+                        {/* Preview da função extraída */}
+                        {watchedFunctionDef && (
+                          <Fade in={true}>
+                            <Paper sx={{ p: 2, bgcolor: "grey.50", borderRadius: 2 }}>
+                              <Typography variant="subtitle2" gutterBottom>
+                                Preview da Função:
+                              </Typography>
+                              <Box sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}>
+                                <code>{watchedFunctionDef}</code>
+                              </Box>
+                            </Paper>
+                          </Fade>
+                        )}
+                      </Stack>
+                    </CardContent>
+                  </Card>
+
+                  {/* Botão de Ação */}
+                  <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 2 }}>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      onClick={nextStep}
+                      endIcon={<ArrowForwardIcon />}
+                      sx={{ minWidth: 160, borderRadius: 3 }}
+                    >
+                      Próximo
+                    </Button>
+                  </Box>
+                </Stack>
+              </Box>
+            </motion.div>
+          )}
+
+          {activeStep === FormStep.TEST_CASES && functionData && (
+            <motion.div
+              key={FormStep.TEST_CASES}
+              custom={direction}
+              variants={variants}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ type: "tween", ease: "easeInOut", duration: 0.4 }}
+            >
+              <Box p={4} sx={{ overflow: "hidden" }}>
+                <Stack spacing={4} justifyContent="space-between">
+                  {/* Resumo da Função */}
+                  <Card variant="outlined" sx={{ bgcolor: "primary.50" }}>
+                    <CardContent>
+                      <Typography variant="h6" gutterBottom sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                        <CheckCircleIcon color="primary" />
+                        Resumo da Função
+                      </Typography>
+                      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mt: 2 }}>
+                        <Chip label={`Nome: ${functionData.functionName}`} variant="outlined" />
+                        <Chip label={`Retorno: ${functionData.returnType}`} variant="outlined" />
+                        <Chip label={`Parâmetros: ${functionData.params.length}`} variant="outlined" />
+                      </Box>
+                      {functionData.params.length > 0 && (
+                        <Box sx={{ mt: 2 }}>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Parâmetros:</strong>{" "}
+                            {functionData.params.map((p: any) => `${p.type} ${p.name}`).join(", ")}
+                          </Typography>
+                        </Box>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Casos de Teste */}
+                  <Card variant="outlined">
+                    <CardContent>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mb: 3,
+                        }}
                       >
-                        <DeleteIcon />
-                      </IconButton>
-                    </Paper>
-                  ))}
-                </Stack>
+                        <Typography variant="h6">Casos de Teste</Typography>
+                        <Button
+                          variant="outlined"
+                          startIcon={<AddIcon />}
+                          onClick={() => append({ input: functionData.params.map(() => ""), expectedOutput: "" })}
+                          sx={{ borderRadius: 2 }}
+                        >
+                          Adicionar Teste
+                        </Button>
+                      </Box>
 
-                <Button
-                  variant="outlined"
-                  onClick={() => append({ input: functionData.params.map(() => ""), expectedOutput: "" })}
-                >
-                  Adicionar Caso de Teste
-                </Button>
+                      {fields.length === 0 ? (
+                        <Alert severity="warning" sx={{ borderRadius: 2 }}>
+                          Adicione pelo menos um caso de teste para validar sua função.
+                        </Alert>
+                      ) : (
+                        <Stack spacing={3} sx={{ maxHeight: 300, overflowY: "auto", pr: 1 }}>
+                          {fields.map((field, index) => (
+                            <Paper
+                              key={field.id}
+                              variant="outlined"
+                              sx={{ p: 3, position: "relative", borderRadius: 2 }}
+                            >
+                              <Box
+                                sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}
+                              >
+                                <Typography variant="subtitle1" fontWeight="medium">
+                                  Teste {index + 1}
+                                </Typography>
+                                <IconButton
+                                  aria-label="delete"
+                                  onClick={() => remove(index)}
+                                  color="error"
+                                  size="small"
+                                >
+                                  <DeleteIcon />
+                                </IconButton>
+                              </Box>
 
-                <Stack direction="row" spacing={2} className="!mt-4">
-                  <Button variant="outlined" size="large" onClick={prevStep} fullWidth>
-                    Voltar
-                  </Button>
-                  <Button variant="contained" size="large" type="submit" fullWidth>
-                    Finalizar
-                  </Button>
+                              <Stack spacing={2}>
+                                {functionData.params.map((param: any, paramIndex: any) => (
+                                  <RHFTextField
+                                    key={param.name}
+                                    control={control}
+                                    errors={errors}
+                                    name={`testCases.${index}.input.${paramIndex}`}
+                                    label={`${param.name}`}
+                                    placeholder={`Valor para ${param.name} (${param.type})`}
+                                    size="small"
+                                  />
+                                ))}
+                                <Divider sx={{ my: 1 }} />
+                                <RHFTextField
+                                  control={control}
+                                  errors={errors}
+                                  name={`testCases.${index}.expectedOutput`}
+                                  label="Resultado Esperado"
+                                  placeholder={`Valor esperado (${functionData.returnType})`}
+                                  size="small"
+                                />
+                              </Stack>
+                            </Paper>
+                          ))}
+                        </Stack>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  {/* Botões de Navegação */}
+                  <Box sx={{ display: "flex", gap: 2, justifyContent: "space-between" }}>
+                    <Button
+                      variant="outlined"
+                      size="large"
+                      onClick={prevStep}
+                      startIcon={<ArrowBackIcon />}
+                      sx={{ minWidth: 160, borderRadius: 3 }}
+                    >
+                      Voltar
+                    </Button>
+                    <Button
+                      variant="contained"
+                      size="large"
+                      type="submit"
+                      startIcon={<CheckCircleIcon />}
+                      sx={{ minWidth: 160, borderRadius: 3 }}
+                      disabled={fields.length === 0}
+                    >
+                      Criar Atividade
+                    </Button>
+                  </Box>
                 </Stack>
-              </Stack>
+              </Box>
             </motion.div>
           )}
         </AnimatePresence>
