@@ -48,3 +48,107 @@ export const appendFunctionToCode = (code: string, functionDef: string): string 
 
   return `${before}${newFunction}\t${after}`;
 };
+
+export const extractFunctionFromProgram = (code: string): IFunctionData | null => {
+  // Remove comentários e espaços desnecessários
+  const cleanCode = code
+    .replaceAll(/\/\*[\S\s]*?\*\//g, "")
+    .replaceAll(/\/\/.*$/gm, "")
+    .trim();
+
+  // Regex para capturar funções que não sejam 'inicio'
+  // Formato: funcao [tipo] [nome]([parametros]) {
+  const functionRegex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{/g;
+
+  let match;
+  const functions: IFunctionData[] = [];
+
+  // Encontrar todas as funções no código
+  while ((match = functionRegex.exec(cleanCode)) !== null) {
+    const returnType = match[1];
+    const functionName = match[2];
+    const paramString = match[3].trim();
+
+    // Ignorar a função 'inicio'
+    if (functionName === "inicio") {
+      continue;
+    }
+
+    // Processar parâmetros
+    let params: Array<{ name: string; type: string }> = [];
+
+    if (paramString) {
+      // Dividir parâmetros por vírgula e processar cada um
+      params = paramString
+        .split(",")
+        .map(param => {
+          const trimmedParam = param.trim();
+
+          // Regex para capturar tipo, nome e possível indicador de vetor
+          // Formatos suportados: "inteiro nome", "inteiro nome[]", "inteiro nome[10]"
+          const paramRegex = /^(\w+)\s+(\w+)(\[\d*])?$/;
+          const paramMatch = trimmedParam.match(paramRegex);
+
+          if (paramMatch) {
+            const type = paramMatch[1];
+            const name = paramMatch[2];
+            const arrayIndicator = paramMatch[3];
+
+            // Se tem indicador de array, adicionar ao tipo
+            const finalType = arrayIndicator ? `${type} []` : type;
+
+            return { name, type: finalType };
+          }
+
+          // Fallback para formatos não reconhecidos
+          const parts = trimmedParam.split(/\s+/);
+          if (parts.length >= 2) {
+            const type = parts[0];
+            const nameWithArray = parts[1];
+            return { name: nameWithArray, type };
+          }
+
+          // Último fallback
+          return { name: trimmedParam, type: "desconhecido" };
+        })
+        .filter(param => param.name && param.name !== "");
+    }
+
+    functions.push({
+      returnType,
+      functionName,
+      params,
+    });
+  }
+
+  // Retornar a primeira função encontrada (excluindo 'inicio')
+  return functions.length > 0 ? functions[0] : null;
+};
+
+export const extractFunctionCodeFromProgram = (code: string): string | null => {
+  // Remove comentários e espaços desnecessários
+  const cleanCode = code
+    .replaceAll(/\/\*[\S\s]*?\*\//g, "")
+    .replaceAll(/\/\/.*$/gm, "")
+    .trim();
+
+  // Regex para capturar funções que não sejam 'inicio'
+  // Formato: funcao [tipo] [nome]([parametros]) {
+  const functionRegex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{([\s\S]*?)}\s*/g;
+
+  let match;
+
+  // Encontrar todas as funções no código
+  while ((match = functionRegex.exec(cleanCode)) !== null) {
+    const functionName = match[2];
+
+    // Ignorar a função 'inicio'
+    if (functionName === "inicio") {
+      continue;
+    } else {
+      return match[0];
+    }
+  }
+
+  return null;
+};

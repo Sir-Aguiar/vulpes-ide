@@ -1,1 +1,1 @@
-export const baseCode = `programa {\n funcao inicio() {\n    \n  }\n}\n`;
+export const baseCode = `programa {\n  funcao inicio() {\n    \n  }\n}\n`;

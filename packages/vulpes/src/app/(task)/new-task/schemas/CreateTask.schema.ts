@@ -1,19 +1,36 @@
 import * as Zod from "zod";
 
-export const CodeTestSchema = Zod.array(
-  Zod.object({
-    input: Zod.array(Zod.string()).min(1, "Defina ao menos uma entrada"),
-    expectedOutput: Zod.string().min(1, "Defina uma saída esperada"),
-  }),
-).min(1, "Adicione ao menos um caso de teste");
+/*
+
+{
+  inputs: ["", ""]
+  output: ""
+}
+
+Se os parâmetros forem do tipo array, o input deve ser um array também
+
+Exemplo:
+
+{
+  inputs: ["1 2 3 4 5", "6 7 8 9 10"]
+  output: "1"
+}
+
+*/
+
+export const CodeTestSchema = Zod.object({
+  input: Zod.array(Zod.string()).min(1, "Defina ao menos uma entrada"),
+  expectedOutput: Zod.string().min(1, "Defina uma saída esperada"),
+});
+
+export type ICodeTest = Zod.infer<typeof CodeTestSchema>;
 
 export const CreateTaskSchema = Zod.object({
   title: Zod.string().min(1, "Defina um título"),
   description: Zod.string().min(1, "Defina uma descrição"),
   functionDef: Zod.string().min(1, "Defina a assinatura da função"),
-  inputPattern: Zod.string(),
+  inputMode: Zod.string(),
   isVisible: Zod.boolean().default(true),
-  templateCode: Zod.string().optional(),
 });
 
 export type CreateTaskDTO = Zod.infer<typeof CreateTaskSchema>;
