@@ -5,8 +5,12 @@ export interface IFunctionData {
 }
 
 export const extractFunctionTypeAndParams = (code: string): IFunctionData | null => {
-  const regex = /funcao (\w+) (\w+)\(([\s\w,]*)\)/;
-  const match = code.match(regex);
+  // Remove quebras de linha e espaços extras para normalizar o código
+  const cleanCode = code.replaceAll(/\s+/g, " ").trim();
+
+  // Regex atualizada para aceitar colchetes nos parâmetros
+  const regex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)/;
+  const match = cleanCode.match(regex);
 
   if (!match) {
     return null;
@@ -14,11 +18,53 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
 
   const returnType = match[1];
   const functionName = match[2];
+  const paramString = match[3].trim();
 
-  const params = match[3].split(",").map(param => {
-    const [type, name] = param.trim().split(" ");
-    return { name, type };
-  });
+  // Se não houver parâmetros, retornar array vazio
+  if (!paramString) {
+    return {
+      returnType,
+      functionName,
+      params: [],
+    };
+  }
+
+  const params = paramString
+    .split(",")
+    .filter(param => param.trim())
+    .map(param => {
+      const trimmedParam = param.trim();
+
+      // Regex para capturar tipo, nome e possível indicador de vetor
+      // Formatos suportados: "inteiro nome", "inteiro nome[]", "inteiro nome[10]"
+      const paramRegex = /^(\w+)\s+(\w+)(\[\d*])?$/;
+      const paramMatch = trimmedParam.match(paramRegex);
+
+      if (paramMatch) {
+        const type = paramMatch[1];
+        const name = paramMatch[2];
+        const arrayIndicator = paramMatch[3];
+
+        // Se tem indicador de array, adicionar ao tipo
+        const finalType = arrayIndicator ? `${type}[]` : type;
+
+        return { name, type: finalType };
+      }
+
+      // Fallback para formato simples
+      const parts = trimmedParam.split(/\s+/);
+      if (parts.length >= 2) {
+        const type = parts[0];
+        const name = parts[1];
+        return { name, type };
+      }
+
+      console.warn(
+        `[code-extractor] Malformed parameter detected: "${trimmedParam}". Returning with type "desconhecido".`,
+      );
+      return { name: trimmedParam, type: "desconhecido" };
+    })
+    .filter(param => param.name && param.type);
 
   return {
     returnType,
@@ -49,6 +95,11 @@ export const appendFunctionToCode = (code: string, functionDef: string): string 
   return `${before}${newFunction}\t${after}`;
 };
 
+/**
+ * Extrai a primeira função definida no código que não seja 'inicio'
+ * Retorna um objeto com o tipo de retorno, nome da função e parâmetros
+ * ou null se nenhuma função for encontrada
+ */
 export const extractFunctionFromProgram = (code: string): IFunctionData | null => {
   // Remove comentários e espaços desnecessários
   const cleanCode = code
@@ -134,7 +185,7 @@ export const extractFunctionCodeFromProgram = (code: string): string | null => {
 
   // Regex para capturar funções que não sejam 'inicio'
   // Formato: funcao [tipo] [nome]([parametros]) {
-  const functionRegex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{([\s\S]*?)}\s*/g;
+  const functionRegex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{([\S\s]*?)}\s*/g;
 
   let match;
 
