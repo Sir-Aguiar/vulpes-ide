@@ -91,9 +91,7 @@ export const appendFunctionToCode = (code: string, functionDef: string): string 
   const before = code.slice(0, Math.max(0, insertionIndex));
   const after = code.slice(Math.max(0, insertionIndex));
 
-  const newFunction = `\t${functionDef} {\n\n\t}\n\n`;
-
-  return `${before}${newFunction}\t${after}`;
+  return `${before}${functionDef}${after}`;
 };
 
 /**
