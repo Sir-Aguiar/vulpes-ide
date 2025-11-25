@@ -2,12 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { CreateTaskDTO, CreateTaskSchema, ICodeTest } from "./schemas/CreateTask.schema";
+import { CreateTaskDTO, CreateTaskSchema, ICodeTest, IParam } from "./schemas/CreateTask.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { Editor } from "@monaco-editor/react";
 import { registerPortugolLanguage } from "../../../../libs/monaco-config";
 import { baseCode } from "@/utils/mocks";
-import { ChangeEventHandler, useEffect, useState } from "react";
+import { ChangeEventHandler, useEffect, useMemo, useState } from "react";
 import RHFCheckBox from "@/components/RHF/CheckBox";
 import RHFSelect from "@/components/RHF/Select";
 import MenuItem from "@mui/material/MenuItem";
@@ -23,6 +23,7 @@ import {
 import TextField from "@mui/material/TextField";
 
 import { AnimatePresence, motion } from "framer-motion";
+import axios from "axios";
 
 export default function Page() {
   const {
@@ -116,8 +117,21 @@ export default function Page() {
     });
   };
 
+  const params: IParam[] = useMemo(() => {
+    if (userFunctionData) {
+      return userFunctionData.params;
+    }
+
+    return [];
+  }, [userFunctionData]);
+
+  useEffect(() => {
+    setValue("params", params);
+  }, [params]);
+
   const onSubmit = async (data: CreateTaskDTO) => {
-    console.log({ ...data,testCases });
+    console.log({ ...data, testCases });
+    await axios.post("/api/task", { ...data, testCases });
   };
 
   return (
@@ -163,7 +177,7 @@ export default function Page() {
           <AnimatePresence>
             {testCases.map(({ id }, index) => (
               <motion.div
-                key={index}
+                key={id}
                 initial={{ opacity: 0, height: 0 }}
                 animate={{ opacity: 1, height: "auto" }}
                 exit={{ opacity: 0, height: 0 }}

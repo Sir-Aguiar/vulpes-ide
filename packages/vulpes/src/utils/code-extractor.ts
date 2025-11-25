@@ -1,7 +1,9 @@
+import { IParam } from "@/app/(task)/new-task/schemas/CreateTask.schema";
+
 export interface IFunctionData {
   returnType: string;
   functionName: string;
-  params: Array<{ name: string; type: string }>;
+  params: IParam[];
 }
 
 export const extractFunctionTypeAndParams = (code: string): IFunctionData | null => {
@@ -43,12 +45,9 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
       if (paramMatch) {
         const type = paramMatch[1];
         const name = paramMatch[2];
-        const arrayIndicator = paramMatch[3];
+        const isArray = !!paramMatch[3];
 
-        // Se tem indicador de array, adicionar ao tipo
-        const finalType = arrayIndicator ? `${type}[]` : type;
-
-        return { name, type: finalType };
+        return { name, type, isArray };
       }
 
       // Fallback para formato simples
@@ -56,13 +55,15 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
       if (parts.length >= 2) {
         const type = parts[0];
         const name = parts[1];
-        return { name, type };
+        const isArray = false;
+        return { name, type, isArray };
       }
 
       console.warn(
         `[code-extractor] Malformed parameter detected: "${trimmedParam}". Returning with type "desconhecido".`,
       );
-      return { name: trimmedParam, type: "desconhecido" };
+
+      return { name: trimmedParam, type: "desconhecido", isArray: false };
     })
     .filter(param => param.name && param.type);
 
@@ -126,7 +127,7 @@ export const extractFunctionFromProgram = (code: string): IFunctionData | null =
     }
 
     // Processar parâmetros
-    let params: Array<{ name: string; type: string }> = [];
+    let params: IParam[] = [];
 
     if (paramString) {
       // Dividir parâmetros por vírgula e processar cada um
@@ -143,24 +144,13 @@ export const extractFunctionFromProgram = (code: string): IFunctionData | null =
           if (paramMatch) {
             const type = paramMatch[1];
             const name = paramMatch[2];
-            const arrayIndicator = paramMatch[3];
+            const isArray = !!paramMatch[3];
 
-            // Se tem indicador de array, adicionar ao tipo
-            const finalType = arrayIndicator ? `${type} []` : type;
-
-            return { name, type: finalType };
-          }
-
-          // Fallback para formatos não reconhecidos
-          const parts = trimmedParam.split(/\s+/);
-          if (parts.length >= 2) {
-            const type = parts[0];
-            const nameWithArray = parts[1];
-            return { name: nameWithArray, type };
+            return { name, type, isArray };
           }
 
           // Último fallback
-          return { name: trimmedParam, type: "desconhecido" };
+          return { name: trimmedParam, type: "desconhecido", isArray: false };
         })
         .filter(param => param.name && param.name !== "");
     }
