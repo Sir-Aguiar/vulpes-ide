@@ -1,21 +1,25 @@
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { IExecutableTestCase, ITask } from "../@types/Task";
 import { extractFunctionTypeAndParams, extractUserFunction } from "./code-extractor";
-import { appendArrayVariablesToCode, generateArrayVariable, generatePrintStatement } from "./code-formatter";
+import {
+  appendArrayVariablesToCode,
+  formatPortugolCode,
+  generateArrayVariable,
+  generatePrintStatement,
+} from "./code-formatter";
 import { CustomWebWorkersRunner } from "./WebWorkerRunner";
 
-export const executeWithTestInputs = (code: string, task: ITask) => {
-  const executor = new PortugolExecutor(CustomWebWorkersRunner);
+export interface ITestCaseResult {
+  input: any[];
+  expectedOutput: any;
+  actualOutput: any;
+  passed: boolean;
+}
 
+export const executeWithTestInputs = async (code: string, task: ITask) => {
   const functionData = extractFunctionTypeAndParams(task.functionDef)!;
 
-  console.log(functionData);
-
   const functionMatch = extractUserFunction(code, functionData.functionName);
-
-  console.log(functionMatch);
-
-  console.log(task);
 
   const executableTestCases: IExecutableTestCase[] = task.testCases.map(testCase => ({
     ...testCase,
@@ -43,28 +47,65 @@ export const executeWithTestInputs = (code: string, task: ITask) => {
     }
   }
 
-  console.log(executableTestCases);
+  const testCaseResults = new Map<number, ITestCaseResult>();
 
-  let baseCode = `
-    programa {
-      ${functionMatch || ""}
+  for (const testCase of executableTestCases) {
+    await new Promise<void>((resolve, reject) => {
+      const executor = new PortugolExecutor(CustomWebWorkersRunner);
 
-      funcao inicio() {
-        ${generatePrintStatement(functionData, executableTestCases[0].input)}
-      }
-    }
-  `;
+      testCaseResults.set(testCase.id, {
+        expectedOutput: testCase.expectedOutput,
+        input: testCase.input,
+        actualOutput: null,
+        passed: false,
+      });
 
-  baseCode = appendArrayVariablesToCode(
-    baseCode,
-    executableTestCases[0].arraysDeclarations.map(decl => decl.declaration),
-  );
+      let baseCode = `
+        programa {
+          ${functionMatch || ""}
 
-  console.log(baseCode);
+          funcao inicio() {
+            ${generatePrintStatement(functionData, testCase.input)}
+          }
+        }
+      `;
 
-  executor.stdOut$.subscribe(output => {
-    console.log(output);
-  });
+      baseCode = appendArrayVariablesToCode(
+        baseCode,
+        testCase.arraysDeclarations.map(decl => decl.declaration),
+      );
 
-  executor.run(baseCode);
+      baseCode = formatPortugolCode(baseCode);
+
+      const stdOutSubscription = executor.stdOut$.subscribe(output => {
+        const match = output.match(/Saída recebida:\s*(.*)/);
+
+        if (match) {
+          testCaseResults.get(testCase.id)!.actualOutput = match[1];
+          testCaseResults.get(testCase.id)!.passed = match[1] === testCaseResults.get(testCase.id)!.expectedOutput;
+        }
+      });
+
+      const eventsSubscription = executor.events.subscribe(event => {
+        if (event.type === "finish") {
+          stdOutSubscription.unsubscribe();
+          eventsSubscription.unsubscribe();
+          executor.stop();
+          resolve();
+        }
+
+        if (event.type === "error") {
+          stdOutSubscription.unsubscribe();
+          eventsSubscription.unsubscribe();
+          executor.stop();
+
+          reject(new Error("Erro na execução do código"));
+        }
+      });
+
+      executor.run(baseCode);
+    });
+  }
+
+  return testCaseResults;
 };

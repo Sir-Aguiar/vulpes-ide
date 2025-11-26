@@ -10,8 +10,9 @@ import { useParams } from "next/navigation";
 import axios from "axios";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import { baseCode } from "@/utils/mocks";
-import { appendFunctionToCode, extractFunctionTypeAndParams, extractUserFunction } from "@/utils/code-extractor";
+import { appendFunctionToCode } from "@/utils/code-extractor";
 import { ITask } from "@/@types/Task";
+import API from "@/services/API";
 
 export default function Page() {
   const { ID } = useParams();
@@ -19,13 +20,14 @@ export default function Page() {
   const [task, setTask] = useState<ITask | null>(null);
 
   const getTask = async () => {
-    const response = await axios.get("/api/task", { params: { ID } });
+    const response = await API.get("/task", { params: { ID } });
     setTask(response.data);
+    setCode(appendFunctionToCode(baseCode, response.data.functionDef));
   };
 
-  const functionData = useMemo(() => {
-    if (task) return extractFunctionTypeAndParams(task.functionDef);
-  }, [task]);
+  useEffect(() => {
+    if (ID) getTask();
+  }, [ID]);
 
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
   const [output, setOutput] = useState<string>("");
@@ -34,23 +36,11 @@ export default function Page() {
   const [isTranspiling, setIsTranspiling] = useState<boolean>(false);
 
   useEffect(() => {
-    if (ID) {
-      getTask();
-    }
-  }, [ID]);
-
-  useEffect(() => {
-    if (task && functionData) {
-      const newCode = appendFunctionToCode(baseCode, task.functionDef);
-      setCode(newCode);
-    }
-  }, [functionData]);
-
-  useEffect(() => {
     const exec = new PortugolExecutor(CustomWebWorkersRunner);
     setExecutor(exec);
 
     const subscription = exec.stdOut$.subscribe(data => {
+      console.log(data);
       setOutput(data);
     });
 
@@ -60,10 +50,17 @@ export default function Page() {
     };
   }, []);
 
-  const handleRunCode = () => {
-    if (executor && code) {
+  const handleRunCode = async () => {
+    if (executor && code && task) {
       setIsRunning(true);
-      executeWithTestInputs(code, task!);
+      try {
+        const results = await executeWithTestInputs(code, task);
+        console.log("Resultados dos testes:", results);
+      } catch (error) {
+        console.error("Erro ao executar testes:", error);
+      } finally {
+        setIsRunning(false);
+      }
     }
   };
 

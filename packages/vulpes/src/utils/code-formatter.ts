@@ -61,3 +61,33 @@ export function generatePrintStatement(functionData: IFunctionData, params: stri
   const paramsString = params.join(", ");
   return `escreva("Saída recebida: " + ${functionData.functionName}(${paramsString}) + "\\n")`;
 }
+
+export function formatPortugolCode(code: string, indentSize: number = 2): string {
+  const lines = code.split("\n");
+  let indentLevel = 0;
+  const formattedLines: string[] = [];
+  const indent = " ".repeat(indentSize);
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+
+    // Diminui indentação antes de chaves de fechamento
+    if (trimmed.startsWith("}")) {
+      indentLevel = Math.max(0, indentLevel - 1);
+    }
+
+    // Adiciona linha com indentação apropriada
+    if (trimmed.length > 0) {
+      formattedLines.push(indent.repeat(indentLevel) + trimmed);
+    } else {
+      formattedLines.push("");
+    }
+
+    // Aumenta indentação após chaves de abertura
+    if (trimmed.endsWith("{")) {
+      indentLevel++;
+    }
+  }
+
+  return formattedLines.join("\n");
+}
