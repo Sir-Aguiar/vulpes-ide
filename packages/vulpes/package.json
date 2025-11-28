@@ -17,6 +17,7 @@
     "@mui/material": "^7.3.2",
     "@portugol-webstudio/runner": "*",
     "@portugol-webstudio/worker": "*",
+    "@uiw/react-md-editor": "^4.0.8",
     "axios": "^1.12.2",
     "firebase": "^12.3.0",
     "firebase-admin": "^13.5.0",

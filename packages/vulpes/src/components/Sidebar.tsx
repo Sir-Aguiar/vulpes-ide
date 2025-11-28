@@ -5,11 +5,10 @@ import { HelpIcon, OpenIcon, PlayIcon, SaveAsIcon, SaveIcon, SettingsIcon, Share
 
 interface SidebarProps {
   isRunning: boolean;
-  isTranspiling: boolean;
   onRunCode: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isRunning, isTranspiling, onRunCode }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
   const [isSharing, setIsSharing] = React.useState<boolean>(false);
 
   const handleShareFile = () => {
@@ -23,14 +22,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isRunning, isTranspiling, onRunCode }
     <div className="flex flex-col h-full rounded-md overflow-hidden" style={{ backgroundColor: "#121e24" }}>
       <button
         className={`flex items-center justify-center w-16 h-16 border-none transition-all duration-200 cursor-pointer ${
-          isRunning || isTranspiling ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-600"
+          isRunning ? "opacity-50 cursor-not-allowed" : "hover:bg-gray-600"
         }`}
         style={{
           backgroundColor: "#121e24",
           color: "#00f0c0",
         }}
         title="Iniciar execução"
-        disabled={isRunning || isTranspiling}
+        disabled={isRunning}
         onClick={onRunCode}
       >
         <PlayIcon />

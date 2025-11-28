@@ -1,7 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 import { CreateTaskDTO, CreateTaskSchema, ICodeTest, IParam } from "./schemas/CreateTask.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { Editor } from "@monaco-editor/react";
@@ -21,9 +21,10 @@ import {
   IFunctionData,
 } from "@/utils/code-extractor";
 import TextField from "@mui/material/TextField";
-
 import { AnimatePresence, motion } from "framer-motion";
 import axios from "axios";
+import MDEditor from "@uiw/react-md-editor";
+import RHFMDEditor from "@/components/RHF/MarkdownEditor";
 
 export default function Page() {
   const {
@@ -136,9 +137,9 @@ export default function Page() {
 
   return (
     <form className="w-full min-h-screen h-screen flex p-4 gap-2" onSubmit={handleSubmit(onSubmit)}>
-      <div className="p-2 h-full flex flex-col gap-4 ">
+      <div className="w-full h-full flex flex-col gap-4 p-2">
         <RHFTextField control={control} label="Título" name="title" errors={errors} sx={{ minWidth: "328px" }} />
-        <RHFTextField control={control} label="Descrição" name="description" errors={errors} rows={8} multiline />
+        <RHFMDEditor control={control} name="description" errors={errors} height="100%" value="# Hello World" />
         <Divider />
         <div className="w-full h-full flex-1 flex flex-col ">
           <RHFSelect control={control} name="inputMode" label="A entra dos dados será por" errors={errors}>
@@ -153,7 +154,7 @@ export default function Page() {
           </Button>
         </div>
       </div>
-      <div className="w-full h-full flex flex-col gap-2  p-2 rounded-sm">
+      <div className="w-full h-full flex flex-col gap-2 p-2 rounded-sm">
         <div className="w-full">
           <Editor
             height="312px"
@@ -167,6 +168,9 @@ export default function Page() {
         <div className="w-full h-full flex flex-col gap-4 overflow-auto">
           <span className="w-full text-center text-sm opacity-60 my-1">
             Insira no editor a definição da função em que o aluno deverá desenvolver seu algoritmo
+          </span>
+          <span className="w-full text-center text-sm opacity-60">
+            Ex: <code>funcao inteiro somar() &#123; &#125;</code>
           </span>
           {userFunctionData && (
             <Button startIcon={<AddIcon />} sx={{ marginY: 2 }} onClick={addTestCase}>
@@ -183,7 +187,7 @@ export default function Page() {
                 exit={{ opacity: 0, height: 0 }}
                 transition={{ duration: 0.3 }}
               >
-                <div className="w-full p-2 border border-gray-600 rounded-sm flex flex-col gap-2">
+                <div className="w-full p-2 rounded-sm flex flex-col gap-2">
                   <span className="w-full text-sm opacity-60">Caso de Teste {index + 1}</span>
                   {userFunctionData &&
                     userFunctionData.params.map((param, paramIndex) => (
@@ -205,6 +209,17 @@ export default function Page() {
                     name={`${id}-${index}-output`}
                     onChange={onTestOutputChange}
                   />
+
+                  {/* Remove button */}
+                  <div className="w-full flex justify-end">
+                    <Button
+                      variant="outlined"
+                      color="error"
+                      onClick={() => setTestCases(prev => prev.filter(testCase => testCase.id !== id))}
+                    >
+                      Remover Teste
+                    </Button>
+                  </div>
                 </div>
               </motion.div>
             ))}

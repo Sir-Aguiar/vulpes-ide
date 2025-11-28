@@ -86,16 +86,7 @@ export default function Home() {
 
   return (
     <div className="h-screen w-screen bg-gray-900 text-white flex">
-      <Sidebar
-        isRunning={!executor}
-        isTranspiling={false}
-        onRunCode={handleRunCode}
-        onStopCode={handleStopCode}
-        onSaveFile={handleSaveFile}
-        onOpenFile={handleOpenFile}
-        onOpenHelp={handleOpenHelp}
-        onOpenSettings={handleOpenSettings}
-      />
+      <Sidebar isRunning={!executor} onRunCode={handleRunCode} />
 
       <div className="flex-1 flex flex-col">
         <div className="flex-1">
