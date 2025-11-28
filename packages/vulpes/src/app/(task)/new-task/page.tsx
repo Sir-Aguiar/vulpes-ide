@@ -2,7 +2,12 @@
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Controller, useForm } from "react-hook-form";
-import { CreateTaskDTO, CreateTaskSchema, ICodeTest, IParam } from "./schemas/CreateTask.schema";
+import {
+  CreateTaskDTO,
+  CreateTaskSchema,
+  ICodeTest,
+  IParam,
+} from "./schemas/CreateTask.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { Editor } from "@monaco-editor/react";
 import { registerPortugolLanguage } from "../../../../libs/monaco-config";
@@ -49,7 +54,8 @@ export default function Page() {
   }
 
   const [code, setCode] = useState(baseCode);
-  const [userFunctionData, setUserFunctionData] = useState<IFunctionData | null>(null);
+  const [userFunctionData, setUserFunctionData] =
+    useState<IFunctionData | null>(null);
 
   const onEditorChange = (value: string | undefined) => {
     const functionData = extractFunctionFromProgram(value || "");
@@ -67,7 +73,9 @@ export default function Page() {
     }
   }, [userFunctionData]);
 
-  const [testCases, setTestCases] = useState<(ICodeTest & { id: number })[]>([]);
+  const [testCases, setTestCases] = useState<(ICodeTest & { id: number })[]>(
+    [],
+  );
 
   const addTestCase = () => {
     /*
@@ -86,15 +94,19 @@ export default function Page() {
       }
     */
 
-    const newTest: ICodeTest & { id: number } = { id: Date.now(), input: [""], expectedOutput: "" };
-    setTestCases(prev => [...prev, newTest]);
+    const newTest: ICodeTest & { id: number } = {
+      id: Date.now(),
+      input: [""],
+      expectedOutput: "",
+    };
+    setTestCases((prev) => [...prev, newTest]);
   };
 
-  const onTestParamChange: ChangeEventHandler<HTMLInputElement> = e => {
+  const onTestParamChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const [testId, , paramIndex] = e.target.name.split("-");
 
-    setTestCases(prev => {
-      return prev.map(test => {
+    setTestCases((prev) => {
+      return prev.map((test) => {
         if (test.id === Number(testId)) {
           const newInputs = [...test.input];
           newInputs[Number(paramIndex)] = e.target.value;
@@ -105,11 +117,11 @@ export default function Page() {
     });
   };
 
-  const onTestOutputChange: ChangeEventHandler<HTMLInputElement> = e => {
+  const onTestOutputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
     const [testId] = e.target.name.split("-");
 
-    setTestCases(prev => {
-      return prev.map(test => {
+    setTestCases((prev) => {
+      return prev.map((test) => {
         if (test.id === Number(testId)) {
           return { ...test, expectedOutput: e.target.value };
         }
@@ -136,16 +148,41 @@ export default function Page() {
   };
 
   return (
-    <form className="w-full min-h-screen h-screen flex p-4 gap-2" onSubmit={handleSubmit(onSubmit)}>
+    <form
+      className="w-full min-h-screen h-screen flex p-4 gap-2"
+      onSubmit={handleSubmit(onSubmit)}
+    >
       <div className="w-full h-full flex flex-col gap-4 p-2">
-        <RHFTextField control={control} label="Título" name="title" errors={errors} sx={{ minWidth: "328px" }} />
-        <RHFMDEditor control={control} name="description" errors={errors} height="100%" value="# Hello World" />
+        <RHFTextField
+          control={control}
+          label="Título"
+          name="title"
+          errors={errors}
+          sx={{ minWidth: "328px" }}
+        />
+        <RHFMDEditor
+          control={control}
+          name="description"
+          errors={errors}
+          height="100%"
+          value="# Hello World"
+        />
         <Divider />
         <div className="w-full h-full flex-1 flex flex-col ">
-          <RHFSelect control={control} name="inputMode" label="A entra dos dados será por" errors={errors}>
+          <RHFSelect
+            control={control}
+            name="inputMode"
+            label="A entra dos dados será por"
+            errors={errors}
+          >
             <MenuItem value="params">Parâmetros</MenuItem>
           </RHFSelect>
-          <RHFCheckBox control={control} name="isVisible" label="Privado" errors={errors} />
+          <RHFCheckBox
+            control={control}
+            name="isVisible"
+            label="Privado"
+            errors={errors}
+          />
         </div>
         <div className="w-full py-2 mt-auto flex items-center gap-2">
           <Button fullWidth>Voltar</Button>
@@ -167,13 +204,18 @@ export default function Page() {
         </div>
         <div className="w-full h-full flex flex-col gap-4 overflow-auto">
           <span className="w-full text-center text-sm opacity-60 my-1">
-            Insira no editor a definição da função em que o aluno deverá desenvolver seu algoritmo
+            Insira no editor a definição da função em que o aluno deverá
+            desenvolver seu algoritmo
           </span>
           <span className="w-full text-center text-sm opacity-60">
             Ex: <code>funcao inteiro somar() &#123; &#125;</code>
           </span>
           {userFunctionData && (
-            <Button startIcon={<AddIcon />} sx={{ marginY: 2 }} onClick={addTestCase}>
+            <Button
+              startIcon={<AddIcon />}
+              sx={{ marginY: 2 }}
+              onClick={addTestCase}
+            >
               Adicionar Teste
             </Button>
           )}
@@ -188,7 +230,9 @@ export default function Page() {
                 transition={{ duration: 0.3 }}
               >
                 <div className="w-full p-2 rounded-sm flex flex-col gap-2">
-                  <span className="w-full text-sm opacity-60">Caso de Teste {index + 1}</span>
+                  <span className="w-full text-sm opacity-60">
+                    Caso de Teste {index + 1}
+                  </span>
                   {userFunctionData &&
                     userFunctionData.params.map((param, paramIndex) => (
                       <TextField
@@ -215,7 +259,11 @@ export default function Page() {
                     <Button
                       variant="outlined"
                       color="error"
-                      onClick={() => setTestCases(prev => prev.filter(testCase => testCase.id !== id))}
+                      onClick={() =>
+                        setTestCases((prev) =>
+                          prev.filter((testCase) => testCase.id !== id),
+                        )
+                      }
                     >
                       Remover Teste
                     </Button>

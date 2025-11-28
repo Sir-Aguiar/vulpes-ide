@@ -17,7 +17,7 @@ export default function Home() {
     const exec = new PortugolExecutor(CustomWebWorkersRunner);
     setExecutor(exec);
 
-    const subscription = exec.stdOut$.subscribe(data => {
+    const subscription = exec.stdOut$.subscribe((data) => {
       setOutput(data);
     });
 
@@ -50,14 +50,16 @@ export default function Home() {
   };
 
   const handleNewFile = () => {
-    setPortugolCode('programa\n{\n  funcao inicio()\n  {\n    escreva("Olá, Mundo!")\n  }\n}');
+    setPortugolCode(
+      'programa\n{\n  funcao inicio()\n  {\n    escreva("Olá, Mundo!")\n  }\n}',
+    );
   };
 
   const handleOpenFile = () => {
     const input = document.createElement("input");
     input.type = "file";
     input.accept = ".por";
-    input.onchange = e => {
+    input.onchange = (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
         const reader = new FileReader();
@@ -94,7 +96,7 @@ export default function Home() {
             defaultValue={portugolCode}
             language="portugol"
             theme="vs-dark"
-            onChange={value => setPortugolCode(value || "")}
+            onChange={(value) => setPortugolCode(value || "")}
             options={{
               minimap: { enabled: false },
               fontSize: 14,
@@ -110,7 +112,9 @@ export default function Home() {
         {output && (
           <div className="h-32 bg-gray-800 border-t border-gray-700 p-4 overflow-auto">
             <h3 className="text-sm font-semibold mb-2 text-gray-300">Saída:</h3>
-            <pre className="text-sm text-green-400 whitespace-pre-wrap">{output}</pre>
+            <pre className="text-sm text-green-400 whitespace-pre-wrap">
+              {output}
+            </pre>
           </div>
         )}
       </div>

@@ -3,7 +3,11 @@ import admin from "firebase-admin";
 import { getFirestore } from "firebase-admin/firestore";
 
 // Adicione uma verificação para garantir que as variáveis de ambiente foram carregadas
-if (!process.env.FIREBASE_PROJECT_ID || !process.env.FIREBASE_CLIENT_EMAIL || !process.env.FIREBASE_PRIVATE_KEY) {
+if (
+  !process.env.FIREBASE_PROJECT_ID ||
+  !process.env.FIREBASE_CLIENT_EMAIL ||
+  !process.env.FIREBASE_PRIVATE_KEY
+) {
   throw new Error(
     "As variáveis de ambiente do Firebase Admin não foram definidas. Verifique seu arquivo .env e reinicie o servidor.",
   );

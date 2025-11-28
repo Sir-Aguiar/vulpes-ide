@@ -13,7 +13,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: docRef.id, ...cleanBody }, { status: 201 });
   } catch (error: any) {
     console.error("Error adding document:", error);
-    return NextResponse.json({ error: "Failed to create task", details: error.message }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to create task", details: error.message },
+      { status: 500 },
+    );
   }
 }
 

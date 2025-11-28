@@ -1,6 +1,9 @@
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { IExecutableTestCase, ITask } from "../@types/Task";
-import { extractFunctionTypeAndParams, extractUserFunction } from "./code-extractor";
+import {
+  extractFunctionTypeAndParams,
+  extractUserFunction,
+} from "./code-extractor";
 import {
   appendArrayVariablesToCode,
   formatPortugolCode,
@@ -21,10 +24,12 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
 
   const functionMatch = extractUserFunction(code, functionData.functionName);
 
-  const executableTestCases: IExecutableTestCase[] = task.testCases.map(testCase => ({
-    ...testCase,
-    arraysDeclarations: [],
-  }));
+  const executableTestCases: IExecutableTestCase[] = task.testCases.map(
+    (testCase) => ({
+      ...testCase,
+      arraysDeclarations: [],
+    }),
+  );
 
   // Para cada testCase será feita uma processamento dos inputs
   for (let index = 0; index < task.testCases.length; index++) {
@@ -72,21 +77,22 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
 
       baseCode = appendArrayVariablesToCode(
         baseCode,
-        testCase.arraysDeclarations.map(decl => decl.declaration),
+        testCase.arraysDeclarations.map((decl) => decl.declaration),
       );
 
       baseCode = formatPortugolCode(baseCode);
 
-      const stdOutSubscription = executor.stdOut$.subscribe(output => {
+      const stdOutSubscription = executor.stdOut$.subscribe((output) => {
         const match = output.match(/Saída recebida:\s*(.*)/);
 
         if (match) {
           testCaseResults.get(testCase.id)!.actualOutput = match[1];
-          testCaseResults.get(testCase.id)!.passed = match[1] === testCaseResults.get(testCase.id)!.expectedOutput;
+          testCaseResults.get(testCase.id)!.passed =
+            match[1] === testCaseResults.get(testCase.id)!.expectedOutput;
         }
       });
 
-      const eventsSubscription = executor.events.subscribe(event => {
+      const eventsSubscription = executor.events.subscribe((event) => {
         if (event.type === "finish") {
           stdOutSubscription.unsubscribe();
           eventsSubscription.unsubscribe();

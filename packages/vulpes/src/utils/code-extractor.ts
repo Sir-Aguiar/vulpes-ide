@@ -6,7 +6,9 @@ export interface IFunctionData {
   params: IParam[];
 }
 
-export const extractFunctionTypeAndParams = (code: string): IFunctionData | null => {
+export const extractFunctionTypeAndParams = (
+  code: string,
+): IFunctionData | null => {
   // Remove quebras de linha e espaços extras para normalizar o código
   const cleanCode = code.replaceAll(/\s+/g, " ").trim();
 
@@ -33,8 +35,8 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
 
   const params = paramString
     .split(",")
-    .filter(param => param.trim())
-    .map(param => {
+    .filter((param) => param.trim())
+    .map((param) => {
       const trimmedParam = param.trim();
 
       // Regex para capturar tipo, nome e possível indicador de vetor
@@ -65,7 +67,7 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
 
       return { name: trimmedParam, type: "desconhecido", isArray: false };
     })
-    .filter(param => param.name && param.type);
+    .filter((param) => param.name && param.type);
 
   return {
     returnType,
@@ -74,13 +76,21 @@ export const extractFunctionTypeAndParams = (code: string): IFunctionData | null
   };
 };
 
-export const extractUserFunction = (code: string, functionName: string): string | null => {
-  const functionRegex = new RegExp(`funcao\\s+.*\\s+${functionName}\\s*\\(.*\\)\\s*{([\\s\\S]*?)}\\s*`);
+export const extractUserFunction = (
+  code: string,
+  functionName: string,
+): string | null => {
+  const functionRegex = new RegExp(
+    `funcao\\s+.*\\s+${functionName}\\s*\\(.*\\)\\s*{([\\s\\S]*?)}\\s*`,
+  );
   const userFunction = code.match(functionRegex)?.[0];
   return userFunction || null;
 };
 
-export const appendFunctionToCode = (code: string, functionDef: string): string => {
+export const appendFunctionToCode = (
+  code: string,
+  functionDef: string,
+): string => {
   const insertionPoint = "funcao inicio()";
   const insertionIndex = code.indexOf(insertionPoint);
 
@@ -99,7 +109,9 @@ export const appendFunctionToCode = (code: string, functionDef: string): string 
  * Retorna um objeto com o tipo de retorno, nome da função e parâmetros
  * ou null se nenhuma função for encontrada
  */
-export const extractFunctionFromProgram = (code: string): IFunctionData | null => {
+export const extractFunctionFromProgram = (
+  code: string,
+): IFunctionData | null => {
   // Remove comentários e espaços desnecessários
   const cleanCode = code
     .replaceAll(/\/\*[\S\s]*?\*\//g, "")
@@ -131,7 +143,7 @@ export const extractFunctionFromProgram = (code: string): IFunctionData | null =
       // Dividir parâmetros por vírgula e processar cada um
       params = paramString
         .split(",")
-        .map(param => {
+        .map((param) => {
           const trimmedParam = param.trim();
 
           // Regex para capturar tipo, nome e possível indicador de vetor
@@ -150,7 +162,7 @@ export const extractFunctionFromProgram = (code: string): IFunctionData | null =
           // Último fallback
           return { name: trimmedParam, type: "desconhecido", isArray: false };
         })
-        .filter(param => param.name && param.name !== "");
+        .filter((param) => param.name && param.name !== "");
     }
 
     functions.push({
@@ -173,7 +185,8 @@ export const extractFunctionCodeFromProgram = (code: string): string | null => {
 
   // Regex para capturar funções que não sejam 'inicio'
   // Formato: funcao [tipo] [nome]([parametros]) {
-  const functionRegex = /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{([\S\s]*?)}\s*/g;
+  const functionRegex =
+    /funcao\s+(\w+)\s+(\w+)\s*\(\s*([^)]*)\s*\)\s*{([\S\s]*?)}\s*/g;
 
   let match;
 

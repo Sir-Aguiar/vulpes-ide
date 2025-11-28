@@ -1,11 +1,17 @@
 import { TextFieldProps } from "@mui/material/TextField";
 import MDEditor, { MDEditorProps } from "@uiw/react-md-editor";
-import { Controller, FieldErrors, FieldPath, FieldValues, UseControllerProps } from "react-hook-form";
+import {
+  Controller,
+  FieldErrors,
+  FieldPath,
+  FieldValues,
+  UseControllerProps,
+} from "react-hook-form";
 
-type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = UseControllerProps<
-  TFieldValues,
-  TName
-> &
+type InputProps<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> = UseControllerProps<TFieldValues, TName> &
   Omit<MDEditorProps, "name" | "defaultValue"> & {
     errors: FieldErrors;
   };
@@ -16,7 +22,10 @@ type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TField
  * @param label Rótulo a se exibido no input
  * @param errors Erros fornecios pelo hook `useForm` (`formState.errors`), o campo que causou o erro será rotulado e marcado em vermelho
  */
-const RHFMDEditor = <TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
+const RHFMDEditor = <
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+>({
   control,
   name,
   errors,

@@ -3,12 +3,18 @@ import InputLabel from "@mui/material/InputLabel";
 import Select, { SelectProps } from "@mui/material/Select";
 import FormHelperText from "@mui/material/FormHelperText";
 import React from "react";
-import { Controller, FieldErrors, FieldPath, FieldValues, UseControllerProps } from "react-hook-form";
+import {
+  Controller,
+  FieldErrors,
+  FieldPath,
+  FieldValues,
+  UseControllerProps,
+} from "react-hook-form";
 
-type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = UseControllerProps<
-  TFieldValues,
-  TName
-> &
+type InputProps<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> = UseControllerProps<TFieldValues, TName> &
   Omit<SelectProps, "name" | "defaultValue"> & {
     errors: FieldErrors<TFieldValues>;
     label: string;
@@ -22,7 +28,10 @@ type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TField
  * @param errors Erros fornecios pelo hook `useForm` (`formState.errors`), o campo que causou o erro será rotulado e marcado em vermelho
   @description Este componente envelopa um Select do Material UI com um Controller do react-hook-form
 */
-const RHFSelect = <TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
+const RHFSelect = <
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+>({
   control,
   name,
   label,
@@ -55,7 +64,9 @@ const RHFSelect = <TFieldValues extends FieldValues, TName extends FieldPath<TFi
           >
             {props.children}
           </Select>
-          {!!errors[name] && <FormHelperText>{errors[name]?.message?.toString()}</FormHelperText>}
+          {!!errors[name] && (
+            <FormHelperText>{errors[name]?.message?.toString()}</FormHelperText>
+          )}
         </FormControl>
       )}
     />

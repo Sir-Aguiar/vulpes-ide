@@ -49,16 +49,22 @@ export default function Page() {
   }
 
   return (
-    <div className="flex flex-row w-full h-screen p-4 gap-2" style={{ backgroundColor: "#263238" }}>
+    <div
+      className="flex flex-row w-full h-screen p-4 gap-2"
+      style={{ backgroundColor: "#263238" }}
+    >
       <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
-      <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1" style={{ backgroundColor: "#445056" }}>
+      <div
+        className="flex-1 flex flex-col rounded-md overflow-hidden gap-1"
+        style={{ backgroundColor: "#445056" }}
+      >
         <div className="flex-1" style={{ height: "80%" }}>
           <Editor
             height="100%"
             theme="vs-dark"
             language="portugol"
             value={code}
-            onChange={value => setCode(value || "")}
+            onChange={(value) => setCode(value || "")}
             onMount={handleEditorDidMount}
             options={{
               fontSize: 14,

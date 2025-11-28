@@ -4,12 +4,18 @@ import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
 import type { SelectProps } from "@mui/material/Select";
 import React from "react";
-import { Controller, FieldErrors, FieldPath, FieldValues, UseControllerProps } from "react-hook-form";
+import {
+  Controller,
+  FieldErrors,
+  FieldPath,
+  FieldValues,
+  UseControllerProps,
+} from "react-hook-form";
 
-type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>> = UseControllerProps<
-  TFieldValues,
-  TName
-> &
+type InputProps<
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+> = UseControllerProps<TFieldValues, TName> &
   Omit<SelectProps, "name" | "defaultValue"> & {
     errors: FieldErrors<TFieldValues>;
     label: string;
@@ -26,7 +32,10 @@ type InputProps<TFieldValues extends FieldValues, TName extends FieldPath<TField
  * @param errors Erros fornecidos pelo hook `useForm` (`formState.errors`), o campo que causou o erro será rotulado e marcado em vermelho
  * @description Este componente envelopa um Select do Material UI com um Controller do react-hook-form
  */
-const RHFCheckBox = <TFieldValues extends FieldValues, TName extends FieldPath<TFieldValues>>({
+const RHFCheckBox = <
+  TFieldValues extends FieldValues,
+  TName extends FieldPath<TFieldValues>,
+>({
   control,
   name,
   label,
@@ -61,7 +70,7 @@ const RHFCheckBox = <TFieldValues extends FieldValues, TName extends FieldPath<T
                 defaultChecked={defaultChecked}
                 disabled={disabled}
                 checked={value ?? field.value}
-                onChange={e => {
+                onChange={(e) => {
                   field.onChange(e);
                   if (onChange) {
                     onChange(e);
@@ -76,7 +85,11 @@ const RHFCheckBox = <TFieldValues extends FieldValues, TName extends FieldPath<T
               </div>
             }
           />
-          {error && <p style={{ color: "#ff0000", fontSize: "13px" }}>{String(error.message)}</p>}
+          {error && (
+            <p style={{ color: "#ff0000", fontSize: "13px" }}>
+              {String(error.message)}
+            </p>
+          )}
         </FormControl>
       )}
     />

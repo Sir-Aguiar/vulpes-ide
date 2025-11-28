@@ -6,7 +6,7 @@ export function formatValue(input: string, type: string): string {
   if (type.endsWith("[]")) {
     // É array de cadeias
     if (type.startsWith("cadeia")) {
-      const stringItems = input.split(" ").map(item => `"${item}"`);
+      const stringItems = input.split(" ").map((item) => `"${item}"`);
       return `{${stringItems.join(", ")}}`;
     }
     // Array de primitivos (inteiro, real, etc)
@@ -28,7 +28,10 @@ export interface IArrayVariableDeclaration {
   values: string;
 }
 
-export function generateArrayVariable(param: IParam, value: string): IArrayVariableDeclaration {
+export function generateArrayVariable(
+  param: IParam,
+  value: string,
+): IArrayVariableDeclaration {
   function getUniqueName() {
     return `arrayVar_${Math.random().toString(36).slice(2, 15)}`;
   }
@@ -45,7 +48,10 @@ export function generateArrayVariable(param: IParam, value: string): IArrayVaria
   };
 }
 
-export function appendArrayVariablesToCode(code: string, arrayVars: string[]): string {
+export function appendArrayVariablesToCode(
+  code: string,
+  arrayVars: string[],
+): string {
   if (arrayVars.length === 0) return code;
 
   const variablesString = arrayVars.join("\n\t");
@@ -57,12 +63,18 @@ export function appendArrayVariablesToCode(code: string, arrayVars: string[]): s
   return code.replace(regex, `$1\n\t${variablesString}\n`);
 }
 
-export function generatePrintStatement(functionData: IFunctionData, params: string[]): string {
+export function generatePrintStatement(
+  functionData: IFunctionData,
+  params: string[],
+): string {
   const paramsString = params.join(", ");
   return `escreva("Saída recebida: " + ${functionData.functionName}(${paramsString}) + "\\n")`;
 }
 
-export function formatPortugolCode(code: string, indentSize: number = 2): string {
+export function formatPortugolCode(
+  code: string,
+  indentSize: number = 2,
+): string {
   const lines = code.split("\n");
   let indentLevel = 0;
   const formattedLines: string[] = [];
