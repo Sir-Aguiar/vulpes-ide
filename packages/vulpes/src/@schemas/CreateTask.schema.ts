@@ -23,5 +23,3 @@ export const CreateTaskSchema = Zod.object({
   isVisible: Zod.boolean().default(true),
   params: Zod.array(ParamSchema).min(1, "Defina ao menos um parâmetro"),
 });
-
-export type CreateTaskDTO = Zod.infer<typeof CreateTaskSchema>;

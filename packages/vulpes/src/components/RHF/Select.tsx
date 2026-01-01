@@ -54,9 +54,7 @@ const RHFSelect = <
             {...field}
             {...props}
             onChange={(event, child) => {
-              // Call the field's onChange first (required for react-hook-form)
               field.onChange(event);
-              // Then call the custom onChange if provided
               if (props.onChange) {
                 props.onChange(event, child);
               }

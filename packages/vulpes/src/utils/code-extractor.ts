@@ -1,4 +1,4 @@
-import { IParam } from "@/app/(task)/new-task/schemas/CreateTask.schema";
+import { IParam } from "@/@schemas/CreateTask.schema";
 
 export interface IFunctionData {
   returnType: string;

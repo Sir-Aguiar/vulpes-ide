@@ -1,4 +1,4 @@
-import { CreateTaskDTO } from "@/app/(task)/new-task/schemas/CreateTask.schema";
+import { CreateTaskDTO } from "@/@dtos/Task";
 import { IArrayVariableDeclaration } from "@/utils/code-formatter";
 
 export interface ITestCase {

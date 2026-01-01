@@ -1,16 +1,11 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import { LayoutProvider } from "@/providers/LayoutProvider";
+import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "Vulpes IDE",
@@ -23,10 +18,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-br">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+      <body className={`${inter.className} antialiased`}>
+        <LayoutProvider>
+          <ContentWrapper>{children}</ContentWrapper>
+        </LayoutProvider>
       </body>
     </html>
   );
