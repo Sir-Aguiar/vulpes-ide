@@ -1,17 +1,17 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import { Editor } from "@monaco-editor/react";
-import { useEffect, useState } from "react";
-import { executeWithTestInputs } from "@/utils/code-tester";
-import { useParams } from "next/navigation";
-import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
-import { baseCode } from "@/utils/mocks";
-import { appendFunctionToCode } from "@/utils/code-extractor";
 import { ITask } from "@/@types/Task";
-import API from "@/services/API";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import Sidebar from "@/components/Sidebar";
+import API from "@/services/API";
+import { appendFunctionToCode } from "@/utils/code-extractor";
+import { executeWithTestInputs, ITestCaseResult } from "@/utils/code-tester";
+import { baseCode } from "@/utils/mocks";
+import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 
 export default function Page() {
   const { ID } = useParams();
@@ -30,12 +30,23 @@ export default function Page() {
 
   const [code, setCode] = useState<string>(baseCode);
   const [isRunning, setIsRunning] = useState<boolean>(false);
+  const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
 
   const handleRunCode = async () => {
     if (code && task) {
       setIsRunning(true);
       try {
         const results = await executeWithTestInputs(code, task);
+
+        const resultsArray: ITestCaseResult[] = [];
+
+        results.keys().forEach((key) => {
+          const result = results.get(key);
+          resultsArray.push(result!);
+        });
+
+        setLastResults(resultsArray);
+
         console.log("Resultados dos testes:", results);
       } catch (error) {
         console.error("Erro ao executar testes:", error);
@@ -57,11 +68,8 @@ export default function Page() {
         style={{ backgroundColor: "#263238" }}
       >
         <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
-        <div
-          className="flex-1 flex flex-col rounded-md overflow-hidden gap-1"
-          style={{ backgroundColor: "#445056" }}
-        >
-          <div className="flex-1" style={{ height: "80%" }}>
+        <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1">
+          <div className="flex-1">
             <Editor
               height="100%"
               theme="vs-dark"
@@ -82,6 +90,34 @@ export default function Page() {
                 scrollBeyondLastLine: false,
               }}
             />
+          </div>
+          <div className="w-full h-36 py-1 overflow-y-auto text-gray-300">
+            {lastResults.map((result, index) => (
+              <pre className="text-sm">
+                <div key={index} className="mb-2">
+                  <div>
+                    <strong>Teste {index + 1}:</strong>{" "}
+                    {result.passed ? (
+                      <span className="text-green-700">Passou</span>
+                    ) : (
+                      <span className="text-red-700">Falhou</span>
+                    )}
+                  </div>
+                  {!result.passed && (
+                    <div className="ml-4">
+                      <div>
+                        <strong>Saída Esperada:</strong>{" "}
+                        <pre className="inline">{result.expectedOutput}</pre>
+                      </div>
+                      <div>
+                        <strong>Saída Obtida:</strong>{" "}
+                        <pre className="inline">{result.actualOutput}</pre>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </pre>
+            ))}
           </div>
         </div>
       </div>
