@@ -11,6 +11,7 @@ import { appendFunctionToCode } from "@/utils/code-extractor";
 import { ITask } from "@/@types/Task";
 import API from "@/services/API";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import MDEditor from "@uiw/react-md-editor";
 
 export default function Page() {
   const { ID } = useParams();
@@ -50,7 +51,7 @@ export default function Page() {
   }
 
   return (
-    <ContentWrapper className="w-full min-h-screen">
+    <ContentWrapper className="w-full min-h-screen flex flex-row">
       <div
         className="flex flex-row w-full h-screen p-4 gap-2"
         style={{ backgroundColor: "#263238" }}
@@ -84,6 +85,17 @@ export default function Page() {
           </div>
         </div>
       </div>
+      <MDEditor.Markdown
+        source={task?.description || ""}
+        style={{
+          height: "100%",
+          maxHeight: "100vh",
+          width: "100%",
+          padding: "8px 16px",
+          overflowY: "auto",
+          backgroundColor: "#263238",
+        }}
+      />
     </ContentWrapper>
   );
 }
