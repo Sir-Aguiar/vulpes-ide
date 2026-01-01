@@ -2,7 +2,7 @@
 
 import Sidebar from "@/components/Sidebar";
 import { Editor } from "@monaco-editor/react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { executeWithTestInputs } from "@/utils/code-tester";
 import { useParams } from "next/navigation";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
@@ -10,6 +10,7 @@ import { baseCode } from "@/utils/mocks";
 import { appendFunctionToCode } from "@/utils/code-extractor";
 import { ITask } from "@/@types/Task";
 import API from "@/services/API";
+import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
 
 export default function Page() {
   const { ID } = useParams();
@@ -49,38 +50,40 @@ export default function Page() {
   }
 
   return (
-    <div
-      className="flex flex-row w-full h-screen p-4 gap-2"
-      style={{ backgroundColor: "#263238" }}
-    >
-      <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
+    <ContentWrapper className="w-full min-h-screen">
       <div
-        className="flex-1 flex flex-col rounded-md overflow-hidden gap-1"
-        style={{ backgroundColor: "#445056" }}
+        className="flex flex-row w-full h-screen p-4 gap-2"
+        style={{ backgroundColor: "#263238" }}
       >
-        <div className="flex-1" style={{ height: "80%" }}>
-          <Editor
-            height="100%"
-            theme="vs-dark"
-            language="portugol"
-            value={code}
-            onChange={(value) => setCode(value || "")}
-            onMount={handleEditorDidMount}
-            options={{
-              fontSize: 14,
-              tabSize: 2,
-              wordWrap: "on",
-              minimap: { enabled: true },
-              lineNumbers: "on",
-              renderWhitespace: "selection",
-              automaticLayout: true,
-              tabCompletion: "on",
-              cursorStyle: "line",
-              scrollBeyondLastLine: false,
-            }}
-          />
+        <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
+        <div
+          className="flex-1 flex flex-col rounded-md overflow-hidden gap-1"
+          style={{ backgroundColor: "#445056" }}
+        >
+          <div className="flex-1" style={{ height: "80%" }}>
+            <Editor
+              height="100%"
+              theme="vs-dark"
+              language="portugol"
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              onMount={handleEditorDidMount}
+              options={{
+                fontSize: 14,
+                tabSize: 2,
+                wordWrap: "on",
+                minimap: { enabled: true },
+                lineNumbers: "on",
+                renderWhitespace: "selection",
+                automaticLayout: true,
+                tabCompletion: "on",
+                cursorStyle: "line",
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </ContentWrapper>
   );
 }

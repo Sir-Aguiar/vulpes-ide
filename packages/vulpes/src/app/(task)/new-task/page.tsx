@@ -24,6 +24,7 @@ import { StepTaskDescription } from "./components/StepTaskDescription";
 import { StepTestCases } from "./components/StepTestCases";
 import useTestCases from "./hooks/useTestCases";
 import { CreateTaskDTO } from "@/@dtos/Task";
+import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
 
 enum FormStep {
   TASK_DETAILS,
@@ -121,54 +122,56 @@ export default function Page() {
   };
 
   return (
-    <form
-      className="w-full h-screen flex flex-col gap-2 py-4"
-      onSubmit={handleSubmit(onSubmit)}
-    >
-      <Stepper activeStep={activeStep} alternativeLabel>
-        {STEPS_LABELS.map((step) => (
-          <Step key={step}>
-            <StepLabel>{step}</StepLabel>
-          </Step>
-        ))}
-      </Stepper>
+    <ContentWrapper>
+      <form
+        className="w-full h-screen flex flex-col gap-2 py-4"
+        onSubmit={handleSubmit(onSubmit)}
+      >
+        <Stepper activeStep={activeStep} alternativeLabel>
+          {STEPS_LABELS.map((step) => (
+            <Step key={step}>
+              <StepLabel>{step}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
 
-      <div className="flex-1 w-full relative p-2">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`step-${activeStep}`}
-            initial={{ opacity: 0, x: 10 }}
-            animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -10 }}
-            transition={{ duration: 0.2 }}
-            className="w-full h-full"
+        <div className="flex-1 w-full relative p-2">
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={`step-${activeStep}`}
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -10 }}
+              transition={{ duration: 0.2 }}
+              className="w-full h-full"
+            >
+              {renderStepContent()}
+            </motion.div>
+          </AnimatePresence>
+        </div>
+
+        <div className="w-full flex items-center pb-2 gap-2 px-2">
+          <Button disabled={activeStep === 0} onClick={handleBack} fullWidth>
+            Voltar
+          </Button>
+          <Button
+            variant="contained"
+            onClick={
+              activeStep === STEPS_LABELS.length - 1 ? undefined : handleNext
+            }
+            fullWidth
+            disabled={
+              activeStep === FormStep.TASK_DETAILS &&
+              (!userFunctionData || !watch("title") || !watch("description"))
+            }
+            type={activeStep === STEPS_LABELS.length - 1 ? "submit" : "button"}
           >
-            {renderStepContent()}
-          </motion.div>
-        </AnimatePresence>
-      </div>
-
-      <div className="w-full flex items-center pb-2 gap-2 px-2">
-        <Button disabled={activeStep === 0} onClick={handleBack} fullWidth>
-          Voltar
-        </Button>
-        <Button
-          variant="contained"
-          onClick={
-            activeStep === STEPS_LABELS.length - 1 ? undefined : handleNext
-          }
-          fullWidth
-          disabled={
-            activeStep === FormStep.TASK_DETAILS &&
-            (!userFunctionData || !watch("title") || !watch("description"))
-          }
-          type={activeStep === STEPS_LABELS.length - 1 ? "submit" : "button"}
-        >
-          {activeStep === STEPS_LABELS.length - 1
-            ? "Publicar Tarefa"
-            : "Próximo"}
-        </Button>
-      </div>
-    </form>
+            {activeStep === STEPS_LABELS.length - 1
+              ? "Publicar Tarefa"
+              : "Próximo"}
+          </Button>
+        </div>
+      </form>
+    </ContentWrapper>
   );
 }

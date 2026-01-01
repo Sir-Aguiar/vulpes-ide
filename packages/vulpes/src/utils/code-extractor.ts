@@ -101,7 +101,7 @@ export const appendFunctionToCode = (
   const before = code.slice(0, Math.max(0, insertionIndex));
   const after = code.slice(Math.max(0, insertionIndex));
 
-  return `${before}${functionDef}${after}`;
+  return `${before}${functionDef}\n  ${after}`;
 };
 
 /**
