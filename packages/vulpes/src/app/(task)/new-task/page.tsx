@@ -25,6 +25,7 @@ import { StepTestCases } from "./components/StepTestCases";
 import useTestCases from "./hooks/useTestCases";
 import { CreateTaskDTO } from "@/@dtos/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import API from "@/services/API";
 
 enum FormStep {
   TASK_DETAILS,
@@ -58,7 +59,7 @@ export default function Page() {
     defaultValues: {
       title: "",
       description: "",
-      inputMode: "params",
+      inputMode: "PARAM",
       isVisible: false,
       functionDef: "",
     },
@@ -81,7 +82,7 @@ export default function Page() {
   const onSubmit = async (data: CreateTaskDTO) => {
     try {
       console.log({ ...data, testCases });
-      await axios.post("/api/task", { ...data, testCases });
+      await API.post("/task", { ...data, testCases });
     } catch (error) {
       console.error("Erro ao salvar tarefa", error);
     }

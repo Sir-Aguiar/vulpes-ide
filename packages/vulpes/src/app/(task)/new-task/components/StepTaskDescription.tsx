@@ -51,8 +51,8 @@ export const StepTaskDescription = ({
           label="A entrada dos dados será por"
           errors={errors}
         >
-          <MenuItem value="params">Parâmetros</MenuItem>
-          <MenuItem value="inputs">Leia()</MenuItem>
+          <MenuItem value="PARAM">Parâmetros</MenuItem>
+          <MenuItem value="LEIA">Leia()</MenuItem>
         </RHFSelect>
 
         <div className="h-[400px] border border-gray-700 rounded overflow-hidden">

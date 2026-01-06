@@ -19,7 +19,7 @@ export default function Page() {
   const [task, setTask] = useState<ITask | null>(null);
 
   const getTask = async () => {
-    const response = await API.get("/task", { params: { ID } });
+    const response = await API.get("/task", { params: { id: ID } });
     setTask(response.data);
     setCode(appendFunctionToCode(baseCode, response.data.functionDef));
   };
@@ -124,6 +124,7 @@ export default function Page() {
       <MDEditor.Markdown
         source={task?.description || ""}
         style={{
+          minHeight: "100vh",
           height: "100%",
           maxHeight: "100vh",
           width: "100%",
