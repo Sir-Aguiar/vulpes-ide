@@ -36,7 +36,8 @@
     "build:parser": "lerna run build --scope=@portugol-webstudio/parser",
     "build:runner": "lerna run build --scope=@portugol-webstudio/runner",
     "build:runtime": "lerna run build --scope=@portugol-webstudio/runtime",
-    "build:vulpes":"lerna run build && lerna run build -scope=@portugol-webstudio/vulpes-ide",
+    "build:vulpes": "lerna run build -scope=@portugol-webstudio/vulpes-ide",
+    "build:vercel": "lerna run build && lerna run build:vulpes",
     "test:parser": "lerna run test --scope=@portugol-webstudio/parser",
     "release": "lerna run release",
     "postinstall": "patch-package"
