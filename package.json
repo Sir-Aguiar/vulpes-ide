@@ -48,10 +48,12 @@
     "eslint-plugin-unicorn": "^61.0.2",
     "fs-extra": "^11.3.3",
     "lerna": "^8.2.4",
-    "patch-package": "^8.0.0",
     "sherif": "^1.6.1",
     "typescript": "~5.9.2",
     "typescript-eslint": "^8.44.0"
+  },
+  "dependencies": {
+    "patch-package": "^8.0.0"
   },
   "overrides": {
     "tmp": "^0.2.4"
