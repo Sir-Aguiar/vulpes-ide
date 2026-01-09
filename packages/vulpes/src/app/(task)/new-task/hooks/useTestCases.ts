@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { ICodeTest } from "../../../../@schemas/CreateTask.schema";
+import { ICodeTest } from "../../../../@schemas/Task.schema";
 
 export type TestWithId = ICodeTest & { id: number };
 

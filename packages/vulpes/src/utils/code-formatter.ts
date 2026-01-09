@@ -1,4 +1,4 @@
-import { IParam } from "@/@schemas/CreateTask.schema";
+import { IParam } from "@/@schemas/Task.schema";
 import { IFunctionData } from "./code-extractor";
 
 export function formatValue(input: string, type: string): string {

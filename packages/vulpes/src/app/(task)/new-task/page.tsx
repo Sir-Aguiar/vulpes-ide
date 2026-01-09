@@ -1,7 +1,6 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import axios from "axios";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
@@ -17,15 +16,15 @@ import {
   IFunctionData,
 } from "@/utils/code-extractor";
 import { baseCode } from "@/utils/mocks";
-import { CreateTaskSchema } from "../../../@schemas/CreateTask.schema";
+import { CreateTaskSchema } from "../../../@schemas/Task.schema";
 
+import { CreateTaskDTO } from "@/@dtos/Task";
+import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import API from "@/services/API";
 import { StepReview } from "./components/StepReview";
 import { StepTaskDescription } from "./components/StepTaskDescription";
 import { StepTestCases } from "./components/StepTestCases";
 import useTestCases from "./hooks/useTestCases";
-import { CreateTaskDTO } from "@/@dtos/Task";
-import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
-import API from "@/services/API";
 
 enum FormStep {
   TASK_DETAILS,
