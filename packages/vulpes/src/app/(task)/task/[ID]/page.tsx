@@ -55,7 +55,7 @@ export default function Page() {
 
         setLastResults(resultsArray);
 
-        /* await registerSubmission(resultsArray); */
+        await registerSubmission(resultsArray);
 
         console.log("Resultados dos testes:", results);
       } catch (error) {
