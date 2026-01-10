@@ -28,9 +28,9 @@ export const StepTestCases = ({
       </Button>
     )}
 
-    {testCases.map(({ id, input, expectedOutput }, index) => (
+    {testCases.map(({ testId, input, expectedOutput }, index) => (
       <div
-        key={id}
+        key={testId}
         className="w-full p-2 rounded-sm flex flex-col gap-2 border border-gray-100/10"
       >
         <span className="w-full text-sm opacity-60">
@@ -38,7 +38,7 @@ export const StepTestCases = ({
         </span>
         {userFunctionData?.params.map((param, paramIndex) => (
           <TextField
-            key={`${id}-param-${paramIndex}`}
+            key={`${testId}-param-${paramIndex}`}
             label={`Parâmetro ${param.name} (${param.type})`}
             defaultValue={input[paramIndex] || ""}
             helperText={
@@ -46,17 +46,21 @@ export const StepTestCases = ({
                 ? "Insira os valores separados por espaço. Ex: 1 2 3 4 5"
                 : ""
             }
-            onChange={(e) => onInputChange(id, paramIndex, e.target.value)}
+            onChange={(e) => onInputChange(testId, paramIndex, e.target.value)}
           />
         ))}
         <TextField
           label="Saída Esperada"
           helperText="Insira o valor que deve retornar para este teste"
-          onChange={(e) => onOutputChange(id, e.target.value)}
+          onChange={(e) => onOutputChange(testId, e.target.value)}
           defaultValue={expectedOutput}
         />
         <div className="w-full flex justify-end">
-          <Button variant="outlined" color="error" onClick={() => onRemove(id)}>
+          <Button
+            variant="outlined"
+            color="error"
+            onClick={() => onRemove(testId)}
+          >
             Remover Teste
           </Button>
         </div>

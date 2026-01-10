@@ -8,12 +8,15 @@ export const CodeTestSchema = Zod.object({
 export type ICodeTest = Zod.infer<typeof CodeTestSchema>;
 
 export const ParamSchema = Zod.object({
+  paramId: Zod.string().min(1, "Defina o ID do parâmetro"),
   name: Zod.string().min(1, "Defina o nome do parâmetro"),
   type: Zod.string().min(1, "Defina o tipo do parâmetro"),
   isArray: Zod.boolean().default(false),
 });
 
-export type IParam = Zod.infer<typeof ParamSchema>;
+export interface IParam extends Zod.infer<typeof ParamSchema> {
+  paramId: string;
+}
 
 export const CreateTaskSchema = Zod.object({
   title: Zod.string().min(1, "Defina um título"),
@@ -21,5 +24,5 @@ export const CreateTaskSchema = Zod.object({
   functionDef: Zod.string().min(1, "Defina a assinatura da função"),
   inputMode: Zod.string(),
   isVisible: Zod.boolean().default(true),
-  params: Zod.array(ParamSchema).min(1, "Defina ao menos um parâmetro"),
+  taskParams: Zod.array(ParamSchema).min(1, "Defina ao menos um parâmetro"),
 });

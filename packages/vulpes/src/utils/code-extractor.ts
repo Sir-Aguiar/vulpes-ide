@@ -1,4 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IParam } from "@/@schemas/Task.schema";
+import { v4 as uuidv4 } from "uuid";
 
 export interface IFunctionData {
   returnType: string;
@@ -38,7 +40,7 @@ export const extractFunctionTypeAndParams = (
     .filter((param) => param.trim())
     .map((param) => {
       const trimmedParam = param.trim();
-
+      const paramId = uuidv4();
       // Regex para capturar tipo, nome e possível indicador de vetor
       // Formatos suportados: "inteiro nome", "inteiro nome[]", "inteiro nome[10]"
       const paramRegex = /^(\w+)\s+(\w+)(\[\d*])?$/;
@@ -49,7 +51,7 @@ export const extractFunctionTypeAndParams = (
         const name = paramMatch[2];
         const isArray = !!paramMatch[3];
 
-        return { name, type, isArray };
+        return { paramId, name, type, isArray };
       }
 
       // Fallback para formato simples
@@ -58,14 +60,19 @@ export const extractFunctionTypeAndParams = (
         const type = parts[0];
         const name = parts[1];
         const isArray = false;
-        return { name, type, isArray };
+        return { paramId, name, type, isArray };
       }
 
       console.warn(
         `[code-extractor] Malformed parameter detected: "${trimmedParam}". Returning with type "desconhecido".`,
       );
 
-      return { name: trimmedParam, type: "desconhecido", isArray: false };
+      return {
+        paramId,
+        name: trimmedParam,
+        type: "desconhecido",
+        isArray: false,
+      };
     })
     .filter((param) => param.name && param.type);
 
@@ -145,7 +152,7 @@ export const extractFunctionFromProgram = (
         .split(",")
         .map((param) => {
           const trimmedParam = param.trim();
-
+          const paramId = uuidv4();
           // Regex para capturar tipo, nome e possível indicador de vetor
           // Formatos suportados: "inteiro nome", "inteiro nome[]", "inteiro nome[10]"
           const paramRegex = /^(\w+)\s+(\w+)(\[\d*])?$/;
@@ -156,11 +163,16 @@ export const extractFunctionFromProgram = (
             const name = paramMatch[2];
             const isArray = !!paramMatch[3];
 
-            return { name, type, isArray };
+            return { paramId, name, type, isArray };
           }
 
           // Último fallback
-          return { name: trimmedParam, type: "desconhecido", isArray: false };
+          return {
+            paramId,
+            name: trimmedParam,
+            type: "desconhecido",
+            isArray: false,
+          };
         })
         .filter((param) => param.name && param.name !== "");
     }

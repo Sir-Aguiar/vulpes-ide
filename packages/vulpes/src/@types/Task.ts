@@ -2,7 +2,7 @@ import { CreateTaskDTO } from "@/@dtos/Task";
 import { IArrayVariableDeclaration } from "@/utils/code-formatter";
 
 export interface ITestCase {
-  id: number;
+  testId: number;
   input: string[];
   expectedOutput: string;
 }
@@ -12,5 +12,5 @@ export interface IExecutableTestCase extends ITestCase {
 }
 
 export interface ITask extends CreateTaskDTO {
-  testCases: ITestCase[];
+  taskTests: ITestCase[];
 }

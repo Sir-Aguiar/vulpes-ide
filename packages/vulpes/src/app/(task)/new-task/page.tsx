@@ -74,7 +74,7 @@ export default function Page() {
   useEffect(() => {
     if (userFunctionData) {
       setValue("functionDef", extractFunctionCodeFromProgram(code) ?? "");
-      setValue("params", userFunctionData.params);
+      setValue("taskParams", userFunctionData.params);
     }
   }, [userFunctionData, code, setValue]);
 

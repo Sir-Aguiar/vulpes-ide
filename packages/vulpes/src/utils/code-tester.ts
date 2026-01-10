@@ -24,7 +24,7 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
 
   const functionMatch = extractUserFunction(code, functionData.functionName);
 
-  const executableTestCases: IExecutableTestCase[] = task.testCases.map(
+  const executableTestCases: IExecutableTestCase[] = task.taskTests.map(
     (testCase) => ({
       ...testCase,
       arraysDeclarations: [],
@@ -32,12 +32,12 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
   );
 
   // Para cada testCase será feita uma processamento dos inputs
-  for (let index = 0; index < task.testCases.length; index++) {
-    const testCase = task.testCases[index];
+  for (let index = 0; index < task.taskTests.length; index++) {
+    const testCase = task.taskTests[index];
 
     // Para cada input do testCase, formatar de acordo com o tipo esperado
     for (let inputIndex = 0; inputIndex < testCase.input.length; inputIndex++) {
-      const param = task.params[inputIndex];
+      const param = task.taskParams[inputIndex];
       const input = testCase.input[inputIndex];
 
       if (param.type === "cadeia") {
@@ -58,7 +58,7 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
     await new Promise<void>((resolve, reject) => {
       const executor = new PortugolExecutor(CustomWebWorkersRunner);
 
-      testCaseResults.set(testCase.id, {
+      testCaseResults.set(testCase.testId, {
         expectedOutput: testCase.expectedOutput,
         input: testCase.input,
         actualOutput: null,
@@ -86,9 +86,9 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
         const match = output.match(/Saída recebida:\s*(.*)/);
 
         if (match) {
-          testCaseResults.get(testCase.id)!.actualOutput = match[1];
-          testCaseResults.get(testCase.id)!.passed =
-            match[1] === testCaseResults.get(testCase.id)!.expectedOutput;
+          testCaseResults.get(testCase.testId)!.actualOutput = match[1];
+          testCaseResults.get(testCase.testId)!.passed =
+            match[1] === testCaseResults.get(testCase.testId)!.expectedOutput;
         }
       });
 

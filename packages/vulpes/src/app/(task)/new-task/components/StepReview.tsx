@@ -19,7 +19,11 @@ export const StepReview = ({ control, code, testCases }: StepReviewProps) => {
         <h2 className="text-2xl font-bold">{values.title || "Sem título"}</h2>
         <div className="rounded">
           <h3 className="text-sm font-bold uppercase mb-2">Descrição</h3>
-          <MDEditor value={values.description} preview="preview" height="500px" />
+          <MDEditor
+            value={values.description}
+            preview="preview"
+            height="500px"
+          />
         </div>
       </div>
 
@@ -52,7 +56,7 @@ export const StepReview = ({ control, code, testCases }: StepReviewProps) => {
         )}
         <div className="grid grid-cols-1 gap-2">
           {testCases.map((test, index) => (
-            <div key={test.id} className="p-3 rounded flex flex-col gap-1">
+            <div key={test.testId} className="p-3 rounded flex flex-col gap-1">
               <span className="text-xs font-bold opacity-50 uppercase mb-1">
                 Teste {index + 1}
               </span>

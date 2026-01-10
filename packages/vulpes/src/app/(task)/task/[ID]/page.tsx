@@ -20,6 +20,7 @@ export default function Page() {
 
   const getTask = async () => {
     const response = await API.get("/task", { params: { id: ID } });
+    console.log(response);
     setTask(response.data);
     setCode(appendFunctionToCode(baseCode, response.data.functionDef));
   };
@@ -32,12 +33,19 @@ export default function Page() {
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
 
+  const registerSubmission = async (results: ITestCaseResult[]) => {
+    return await API.post("/submission", {
+      taskId: ID,
+      code,
+      isCorrect: results.every((res) => res.passed),
+    });
+  };
+
   const handleRunCode = async () => {
     if (code && task) {
       setIsRunning(true);
       try {
         const results = await executeWithTestInputs(code, task);
-
         const resultsArray: ITestCaseResult[] = [];
 
         results.keys().forEach((key) => {
@@ -46,6 +54,8 @@ export default function Page() {
         });
 
         setLastResults(resultsArray);
+
+        /* await registerSubmission(resultsArray); */
 
         console.log("Resultados dos testes:", results);
       } catch (error) {
