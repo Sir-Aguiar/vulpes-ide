@@ -31,14 +31,15 @@ const RHFTextField = <
   label,
   errors,
   defaultValue,
-  ...props
+  rules,
+  ...textFieldProps
 }: InputProps<TFieldValues, TName>) => {
   return (
     <Controller
       control={control}
       name={name}
       defaultValue={defaultValue}
-      rules={props.rules}
+      rules={rules}
       render={({ field }) => (
         <TextField
           fullWidth
@@ -47,7 +48,7 @@ const RHFTextField = <
           error={!!errors[name]}
           helperText={errors[name] ? `${errors[name]!.message}` : undefined}
           {...field}
-          {...props}
+          {...textFieldProps}
         />
       )}
     />

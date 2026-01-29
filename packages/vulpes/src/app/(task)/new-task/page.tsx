@@ -20,6 +20,7 @@ import { CreateTaskSchema } from "../../../@schemas/Task.schema";
 
 import { CreateTaskDTO } from "@/@dtos/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import AuthGuard from "@/components/AuthGuard";
 import API from "@/services/API";
 import { StepReview } from "./components/StepReview";
 import { StepTaskDescription } from "./components/StepTaskDescription";
@@ -39,6 +40,14 @@ const STEPS_LABELS = [
 ];
 
 export default function Page() {
+  return (
+    <AuthGuard requiredRoles={["PROFESSOR", "ADMIN"]}>
+      <NewTaskContent />
+    </AuthGuard>
+  );
+}
+
+function NewTaskContent() {
   const [activeStep, setActiveStep] = useState(0);
   const [code, setCode] = useState(baseCode);
   const [userFunctionData, setUserFunctionData] =

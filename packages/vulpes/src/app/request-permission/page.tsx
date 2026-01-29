@@ -1,6 +1,5 @@
 "use client";
 
-import { zodResolver } from "@hookform/resolvers/zod";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
@@ -11,6 +10,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
+import { safeZodResolver } from "@/utils/safeZodResolver";
 
 import {
   CreateTeacherPermissionSchema,
@@ -18,6 +18,7 @@ import {
 } from "@/@schemas/RequestPermission.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import API from "@/services/API";
+import { useRouter } from "next/navigation";
 
 export default function RequestPermissionPage() {
   const [isSuccess, setIsSuccess] = useState(false);
@@ -25,11 +26,20 @@ export default function RequestPermissionPage() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isSubmitting },
+    formState: { errors, isSubmitting },
   } = useForm<ICreateTeacherPermissionDTO>({
-    resolver: zodResolver(CreateTeacherPermissionSchema),
+    resolver: safeZodResolver(CreateTeacherPermissionSchema),
     mode: "onChange",
+    defaultValues: {
+      name: "",
+      personalEmail: "",
+      institutionalEmail: "",
+      institution: "",
+      document: undefined,
+    },
   });
+
+  const router = useRouter();
 
   const onSubmit = async (data: ICreateTeacherPermissionDTO) => {
     try {
@@ -39,7 +49,7 @@ export default function RequestPermissionPage() {
         formData.append(key, data[key as keyof ICreateTeacherPermissionDTO]);
       }
 
-      await API.post("teacher-permission-request", formData, {
+      await API.post("professor-permission-request", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -145,7 +155,7 @@ export default function RequestPermissionPage() {
                             style={{ display: "none" }}
                             id="request-file-upload"
                             type="file"
-                            onChange={(e) => onChange(e.target.files?.[0])}
+                            onChange={(e) => onChange(e.target.files?.[0] || undefined)}
                             {...field}
                           />
                           <label htmlFor="request-file-upload">
@@ -212,7 +222,7 @@ export default function RequestPermissionPage() {
                       type="submit"
                       variant="contained"
                       size="large"
-                      disabled={isSubmitting || !isValid}
+                      disabled={isSubmitting}
                       sx={{
                         mt: 2,
                         height: 48,
@@ -315,6 +325,15 @@ export default function RequestPermissionPage() {
                   >
                     Sua solicitação de acesso foi enviada com sucesso.
                   </Typography>
+                  <Button
+                    variant="contained"
+                    color="success"
+                    onClick={() => {
+                      router.push("/");
+                    }}
+                  >
+                    Voltar
+                  </Button>
                 </motion.div>
               </motion.div>
             )}

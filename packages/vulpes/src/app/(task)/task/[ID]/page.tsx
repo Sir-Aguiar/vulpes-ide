@@ -2,6 +2,7 @@
 
 import { ITask } from "@/@types/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import AuthGuard from "@/components/AuthGuard";
 import Sidebar from "@/components/Sidebar";
 import API from "@/services/API";
 import { appendFunctionToCode } from "@/utils/code-extractor";
@@ -46,6 +47,14 @@ const XIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Page() {
+  return (
+    <AuthGuard>
+      <TaskContent />
+    </AuthGuard>
+  );
+}
+
+function TaskContent() {
   const { ID } = useParams();
 
   const [task, setTask] = useState<ITask | null>(null);

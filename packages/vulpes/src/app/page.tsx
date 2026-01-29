@@ -5,15 +5,30 @@ import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
 import Editor from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAuth } from "@/providers/AuthProvider";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 
 export default function Home() {
+  const { isAuthenticated, loading } = useAuth();
+  const router = useRouter();
   const [portugolCode, setPortugolCode] = useState(
     'programa\n{\n  funcao inicio()\n  {\n    escreva("Olá, Mundo!")\n  }\n}',
   );
   const [output, setOutput] = useState("");
   const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
 
+  // Check authentication
   useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [isAuthenticated, loading, router]);
+
+  useEffect(() => {
+    if (!isAuthenticated || loading) return;
+
     const exec = new PortugolExecutor(CustomWebWorkersRunner);
     setExecutor(exec);
 
@@ -25,7 +40,7 @@ export default function Home() {
       subscription.unsubscribe();
       exec.stop();
     };
-  }, []);
+  }, [isAuthenticated, loading]);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -85,6 +100,29 @@ export default function Home() {
   const handleOpenSettings = () => {
     console.log("Abrir configurações");
   };
+
+  // Show loading while checking authentication
+  if (loading) {
+    return (
+      <Box
+        sx={{
+          height: "100vh",
+          width: "100vw",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          bgcolor: "background.default",
+        }}
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  // Don't render the IDE if not authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   return (
     <div className="h-screen w-screen bg-gray-900 text-white flex">
