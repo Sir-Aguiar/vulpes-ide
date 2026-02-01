@@ -1,6 +1,7 @@
 "use client";
 
 import Sidebar from "@/components/Sidebar";
+import AppNavBar from "@/components/AppNavBar";
 import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
 import Editor from "@monaco-editor/react";
 import { PortugolExecutor } from "@portugol-webstudio/runner";
@@ -125,37 +126,40 @@ export default function Home() {
   }
 
   return (
-    <div className="h-screen w-screen bg-gray-900 text-white flex">
-      <Sidebar isRunning={!executor} onRunCode={handleRunCode} />
+    <>
+      <AppNavBar />
+      <div className="h-[calc(100vh-64px)] w-screen bg-gray-900 text-white flex">
+        <Sidebar isRunning={!executor} onRunCode={handleRunCode} />
 
-      <div className="flex-1 flex flex-col">
-        <div className="flex-1">
-          <Editor
-            defaultValue={portugolCode}
-            language="portugol"
-            theme="vs-dark"
-            onChange={(value) => setPortugolCode(value || "")}
-            options={{
-              minimap: { enabled: false },
-              fontSize: 14,
-              lineNumbers: "on",
-              scrollBeyondLastLine: false,
-              automaticLayout: true,
-              tabSize: 2,
-              wordWrap: "on",
-            }}
-          />
-        </div>
-
-        {output && (
-          <div className="h-32 bg-gray-800 border-t border-gray-700 p-4 overflow-auto">
-            <h3 className="text-sm font-semibold mb-2 text-gray-300">Saída:</h3>
-            <pre className="text-sm text-green-400 whitespace-pre-wrap">
-              {output}
-            </pre>
+        <div className="flex-1 flex flex-col">
+          <div className="flex-1">
+            <Editor
+              defaultValue={portugolCode}
+              language="portugol"
+              theme="vs-dark"
+              onChange={(value) => setPortugolCode(value || "")}
+              options={{
+                minimap: { enabled: false },
+                fontSize: 14,
+                lineNumbers: "on",
+                scrollBeyondLastLine: false,
+                automaticLayout: true,
+                tabSize: 2,
+                wordWrap: "on",
+              }}
+            />
           </div>
-        )}
+
+          {output && (
+            <div className="h-32 bg-gray-800 border-t border-gray-700 p-4 overflow-auto">
+              <h3 className="text-sm font-semibold mb-2 text-gray-300">Saída:</h3>
+              <pre className="text-sm text-green-400 whitespace-pre-wrap">
+                {output}
+              </pre>
+            </div>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

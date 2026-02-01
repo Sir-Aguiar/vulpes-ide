@@ -3,6 +3,7 @@ import * as Zod from "zod";
 export const CodeTestSchema = Zod.object({
   input: Zod.array(Zod.string()).min(1, "Defina ao menos uma entrada"),
   expectedOutput: Zod.string().min(1, "Defina uma saída esperada"),
+  expectedOutputType: Zod.string().min(1, "Defina o tipo da saída esperada"),
 });
 
 export type ICodeTest = Zod.infer<typeof CodeTestSchema>;

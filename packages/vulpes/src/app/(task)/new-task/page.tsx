@@ -4,6 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
 
 import Button from "@mui/material/Button";
 import Step from "@mui/material/Step";
@@ -21,11 +22,13 @@ import { CreateTaskSchema } from "../../../@schemas/Task.schema";
 import { CreateTaskDTO } from "@/@dtos/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
 import AuthGuard from "@/components/AuthGuard";
+import AppNavBar from "@/components/AppNavBar";
 import API from "@/services/API";
 import { StepReview } from "./components/StepReview";
 import { StepTaskDescription } from "./components/StepTaskDescription";
 import { StepTestCases } from "./components/StepTestCases";
 import useTestCases from "./hooks/useTestCases";
+import { toast } from "react-toastify";
 
 enum FormStep {
   TASK_DETAILS,
@@ -39,9 +42,11 @@ const STEPS_LABELS = [
   "Revisão",
 ];
 
+
 export default function Page() {
   return (
     <AuthGuard requiredRoles={["PROFESSOR", "ADMIN"]}>
+      <AppNavBar />
       <NewTaskContent />
     </AuthGuard>
   );
@@ -53,8 +58,9 @@ function NewTaskContent() {
   const [userFunctionData, setUserFunctionData] =
     useState<IFunctionData | null>(null);
 
+  const router = useRouter();
   const { testCases, addTestCase, removeTestCase, updateInput, updateOutput } =
-    useTestCases();
+    useTestCases(userFunctionData?.returnType);
 
   const {
     control,
@@ -87,10 +93,16 @@ function NewTaskContent() {
     }
   }, [userFunctionData, code, setValue]);
 
+  useEffect(() => {
+    console.log(activeStep);
+  }, [activeStep]);
+
   const onSubmit = async (data: CreateTaskDTO) => {
     try {
       console.log({ ...data, testCases });
       await API.post("/task", { ...data, testCases });
+      toast.success("Tarefa criada com sucesso!");
+      router.push("/")
     } catch (error) {
       console.error("Erro ao salvar tarefa", error);
     }
@@ -165,15 +177,19 @@ function NewTaskContent() {
           </Button>
           <Button
             variant="contained"
-            onClick={
-              activeStep === STEPS_LABELS.length - 1 ? undefined : handleNext
-            }
+            onClick={() => {
+              if (activeStep === STEPS_LABELS.length - 1) {
+                handleSubmit(onSubmit)();
+              } else {
+                handleNext();
+              }
+            }}
             fullWidth
             disabled={
               activeStep === FormStep.TASK_DETAILS &&
               (!userFunctionData || !watch("title") || !watch("description"))
             }
-            type={activeStep === STEPS_LABELS.length - 1 ? "submit" : "button"}
+            type="button"
           >
             {activeStep === STEPS_LABELS.length - 1
               ? "Publicar Tarefa"

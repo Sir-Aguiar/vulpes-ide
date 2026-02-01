@@ -1,45 +1,49 @@
-import { z } from 'zod';
-import { FieldError } from 'react-hook-form';
+import { z } from "zod";
+import { FieldError, ResolverResult } from "react-hook-form";
 
-export const safeZodResolver = <T extends z.ZodType<any, any>>(schema: T) => {
-    return async (data: any, _context: any, _options: any) => {
-        try {
-            const result = await schema.safeParseAsync(data);
+export const safeZodResolver = <TSchema extends z.ZodType<any, any>>(
+  schema: TSchema,
+) => {
+  type TFieldValues = z.infer<TSchema>;
 
-            if (!result.success) {
-                const errors: Record<string, FieldError> = {};
-                
-                result.error.issues.forEach((issue) => {
-                    const path = issue.path.join('.');
-                    if (!errors[path]) {
-                        errors[path] = {
-                            type: issue.code,
-                            message: issue.message,
-                        };
-                    }
-                });
+  return async (data: TFieldValues): Promise<ResolverResult<TFieldValues>> => {
+    try {
+      const result = await schema.safeParseAsync(data);
 
-                return {
-                    values: {},
-                    errors,
-                };
-            }
+      if (!result.success) {
+        const errors: Record<string, FieldError> = {};
 
-            return {
-                values: result.data,
-                errors: {},
+        result.error.issues.forEach((issue) => {
+          const path = issue.path.join(".");
+          if (!errors[path]) {
+            errors[path] = {
+              type: issue.code,
+              message: issue.message,
             };
-        } catch (error) {
-            console.error('Validation error:', error);
-            return {
-                values: {},
-                errors: {
-                    root: {
-                        type: 'manual',
-                        message: 'Erro na validação do formulário',
-                    },
-                },
-            };
-        }
-    };
+          }
+        });
+
+        return {
+          values: {},
+          errors,
+        } as ResolverResult<TFieldValues>;
+      }
+
+      return {
+        values: result.data,
+        errors: {},
+      } as ResolverResult<TFieldValues>;
+    } catch (error) {
+      console.error("Validation error:", error);
+      return {
+        values: {},
+        errors: {
+          root: {
+            type: "manual",
+            message: "Erro na validação do formulário",
+          },
+        },
+      } as ResolverResult<TFieldValues>;
+    }
+  };
 };

@@ -17,7 +17,7 @@ API.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 API.interceptors.response.use(
@@ -25,15 +25,17 @@ API.interceptors.response.use(
   (error) => {
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
-      
-      if (typeof window !== "undefined" && 
-          !window.location.pathname.includes("/login") &&
-          !window.location.pathname.includes("/signup")) {
+
+      if (
+        typeof window !== "undefined" &&
+        !window.location.pathname.includes("/login") &&
+        !window.location.pathname.includes("/signup")
+      ) {
         window.location.href = "/login";
       }
     }
     return Promise.reject(error);
-  }
+  },
 );
 
 export default API;

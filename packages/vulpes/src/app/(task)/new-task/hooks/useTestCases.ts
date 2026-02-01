@@ -3,7 +3,7 @@ import { ICodeTest } from "../../../../@schemas/Task.schema";
 
 export type TestWithId = ICodeTest & { testId: number };
 
-export default function useTestCases() {
+export default function useTestCases(expectedOutputType?: string) {
   const [testCases, setTestCases] = useState<TestWithId[]>([]);
   const nextIdRef = useRef(0);
 
@@ -11,9 +11,9 @@ export default function useTestCases() {
     const testId = nextIdRef.current++;
     setTestCases((prev) => [
       ...prev,
-      { testId, input: [""], expectedOutput: "" },
+      { testId, input: [""], expectedOutput: "", expectedOutputType: expectedOutputType || "" },
     ]);
-  }, []);
+  }, [expectedOutputType]);
 
   const removeTestCase = useCallback((testId: number) => {
     setTestCases((prev) => prev.filter((t) => t.testId !== testId));
@@ -36,10 +36,10 @@ export default function useTestCases() {
   const updateOutput = useCallback((id: number, value: string) => {
     setTestCases((prev) =>
       prev.map((test) =>
-        test.testId === id ? { ...test, expectedOutput: value } : test,
+        test.testId === id ? { ...test, expectedOutput: value, expectedOutputType: expectedOutputType || "" } : test,
       ),
     );
-  }, []);
+  }, [expectedOutputType]);
 
   return { testCases, addTestCase, removeTestCase, updateInput, updateOutput };
 }

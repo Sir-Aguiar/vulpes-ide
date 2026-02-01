@@ -14,3 +14,21 @@ export interface IExecutableTestCase extends ITestCase {
 export interface ITask extends CreateTaskDTO {
   taskTests: ITestCase[];
 }
+
+export interface ITaskListItem {
+  taskId: string;
+  title: string;
+  description: string;
+  creatorId: string;
+  isPublic: boolean;
+  isVisible: boolean;
+  createdAt: string;
+}
+
+export interface IGetTasksResponse {
+  tasks: ITaskListItem[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
