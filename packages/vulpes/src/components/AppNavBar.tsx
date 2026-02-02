@@ -40,6 +40,11 @@ export default function AppNavBar() {
   const navItems = [
     { label: "Início", path: "/", roles: ["STUDENT", "PROFESSOR", "ADMIN"] },
     {
+      label: "Turmas",
+      path: "/classes",
+      roles: ["STUDENT", "PROFESSOR", "ADMIN"],
+    },
+    {
       label: "Tarefas",
       path: "/tasks",
       roles: ["STUDENT", "PROFESSOR", "ADMIN"],
