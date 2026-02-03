@@ -8,9 +8,9 @@ interface ITestCaseProps {
   testCases: TestWithId[];
   userFunctionData: IFunctionData | null;
   onAdd: () => void;
-  onRemove: (id: number) => void;
-  onInputChange: (id: number, index: number, val: string) => void;
-  onOutputChange: (id: number, val: string) => void;
+  onRemove: (id: string) => void;
+  onInputChange: (id: string, index: number, val: string) => void;
+  onOutputChange: (id: string, val: string) => void;
 }
 
 export const StepTestCases = ({

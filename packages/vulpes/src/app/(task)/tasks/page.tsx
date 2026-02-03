@@ -13,12 +13,17 @@ import {
   Pagination,
   TextField,
   InputAdornment,
+  IconButton,
+  Tooltip,
+  Chip,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import EditIcon from "@mui/icons-material/Edit";
 import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
 import API from "@/services/API";
 import { IGetTasksResponse, ITaskListItem } from "@/@types/Task";
+import { useAuth } from "@/providers/AuthProvider";
 
 export default function TasksPage() {
   return (
@@ -31,6 +36,7 @@ export default function TasksPage() {
 
 function TasksListContent() {
   const router = useRouter();
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<ITaskListItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -75,6 +81,15 @@ function TasksListContent() {
 
   const handleTaskClick = (taskId: string) => {
     router.push(`/task/${taskId}`);
+  };
+
+  const handleEditClick = (e: React.MouseEvent, taskId: string) => {
+    e.stopPropagation();
+    router.push(`/edit-task/${taskId}`);
+  };
+
+  const canEditTask = (task: ITaskListItem) => {
+    return user?.userId === task.creatorId || user?.role === "ADMIN";
   };
 
   const handlePageChange = (_event: React.ChangeEvent<unknown>, value: number) => {
@@ -167,8 +182,27 @@ function TasksListContent() {
                     transform: "translateY(-4px)",
                     boxShadow: 6,
                   },
+                  position: "relative",
                 }}
               >
+                {canEditTask(task) && (
+                  <Tooltip title="Editar tarefa">
+                    <IconButton
+                      size="small"
+                      onClick={(e) => handleEditClick(e, task.taskId)}
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        zIndex: 1,
+                        bgcolor: "background.paper",
+                        "&:hover": { bgcolor: "action.hover" },
+                      }}
+                    >
+                      <EditIcon fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                )}
                 <CardActionArea
                   onClick={() => handleTaskClick(task.taskId)}
                   sx={{
@@ -179,6 +213,14 @@ function TasksListContent() {
                   }}
                 >
                   <CardContent sx={{ flexGrow: 1 }}>
+                    <Box sx={{ display: "flex", gap: 0.5, mb: 1, flexWrap: "wrap" }}>
+                      {task.isPublic && (
+                        <Chip label="Pública" size="small" color="primary" variant="outlined" />
+                      )}
+                      {!task.isVisible && (
+                        <Chip label="Oculta" size="small" color="warning" variant="outlined" />
+                      )}
+                    </Box>
                     <Typography
                       variant="h6"
                       component="h2"
@@ -205,13 +247,6 @@ function TasksListContent() {
                       }}
                     >
                       {task.description}
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      color="text.disabled"
-                      sx={{ mt: 2, display: "block" }}
-                    >
-                      ID: {task.taskId}
                     </Typography>
                   </CardContent>
                 </CardActionArea>

@@ -25,5 +25,7 @@ export const CreateTaskSchema = Zod.object({
   functionDef: Zod.string().min(1, "Defina a assinatura da função"),
   inputMode: Zod.string(),
   isVisible: Zod.boolean().default(true),
+  isPublic: Zod.boolean().default(false),
   taskParams: Zod.array(ParamSchema).min(1, "Defina ao menos um parâmetro"),
+  classIds: Zod.array(Zod.string()).optional().default([]),
 });

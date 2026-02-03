@@ -1,27 +1,35 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { ICodeTest } from "../../../../@schemas/Task.schema";
 
-export type TestWithId = ICodeTest & { testId: number };
+export type TestWithId = ICodeTest & { testId: string };
 
 export default function useTestCases(expectedOutputType?: string) {
-  const [testCases, setTestCases] = useState<TestWithId[]>([]);
-  const nextIdRef = useRef(0);
+  const [testCases, setTestCasesState] = useState<TestWithId[]>([]);
+
+  const setTestCases = useCallback((tests: TestWithId[]) => {
+    setTestCasesState(tests);
+  }, []);
 
   const addTestCase = useCallback(() => {
-    const testId = nextIdRef.current++;
-    setTestCases((prev) => [
+    const testId = crypto.randomUUID();
+    setTestCasesState((prev) => [
       ...prev,
-      { testId, input: [""], expectedOutput: "", expectedOutputType: expectedOutputType || "" },
+      {
+        testId,
+        input: [""],
+        expectedOutput: "",
+        expectedOutputType: expectedOutputType || "",
+      },
     ]);
   }, [expectedOutputType]);
 
-  const removeTestCase = useCallback((testId: number) => {
-    setTestCases((prev) => prev.filter((t) => t.testId !== testId));
+  const removeTestCase = useCallback((testId: string) => {
+    setTestCasesState((prev) => prev.filter((t) => t.testId !== testId));
   }, []);
 
   const updateInput = useCallback(
-    (id: number, paramIndex: number, value: string) => {
-      setTestCases((prev) =>
+    (id: string, paramIndex: number, value: string) => {
+      setTestCasesState((prev) =>
         prev.map((test) => {
           if (test.testId !== id) return test;
           const newInputs = [...test.input];
@@ -33,13 +41,29 @@ export default function useTestCases(expectedOutputType?: string) {
     [],
   );
 
-  const updateOutput = useCallback((id: number, value: string) => {
-    setTestCases((prev) =>
-      prev.map((test) =>
-        test.testId === id ? { ...test, expectedOutput: value, expectedOutputType: expectedOutputType || "" } : test,
-      ),
-    );
-  }, [expectedOutputType]);
+  const updateOutput = useCallback(
+    (id: string, value: string) => {
+      setTestCasesState((prev) =>
+        prev.map((test) =>
+          test.testId === id
+            ? {
+                ...test,
+                expectedOutput: value,
+                expectedOutputType: expectedOutputType || "",
+              }
+            : test,
+        ),
+      );
+    },
+    [expectedOutputType],
+  );
 
-  return { testCases, addTestCase, removeTestCase, updateInput, updateOutput };
+  return {
+    testCases,
+    addTestCase,
+    removeTestCase,
+    updateInput,
+    updateOutput,
+    setTestCases,
+  };
 }

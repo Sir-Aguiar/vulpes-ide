@@ -54,6 +54,11 @@ export default function AppNavBar() {
       path: "/new-task",
       roles: ["PROFESSOR", "ADMIN"],
     },
+    {
+      label: "Permissões",
+      path: "/professor-permissions",
+      roles: ["ADMIN"],
+    },
   ];
 
   const visibleNavItems = navItems.filter(
