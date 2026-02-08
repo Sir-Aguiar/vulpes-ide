@@ -13,7 +13,7 @@ export const safeZodResolver = <TSchema extends z.ZodType<any, any>>(
       if (!result.success) {
         const errors: Record<string, FieldError> = {};
 
-        result.error.issues.forEach((issue) => {
+        for (const issue of result.error.issues) {
           const path = issue.path.join(".");
           if (!errors[path]) {
             errors[path] = {
@@ -21,7 +21,7 @@ export const safeZodResolver = <TSchema extends z.ZodType<any, any>>(
               message: issue.message,
             };
           }
-        });
+        }
 
         return {
           values: {},

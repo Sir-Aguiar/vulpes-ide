@@ -1,4 +1,7 @@
-export type ProfessorPermissionRequestStatus = "PENDING" | "APPROVED" | "REJECTED";
+export type ProfessorPermissionRequestStatus =
+  | "PENDING"
+  | "APPROVED"
+  | "REJECTED";
 
 export interface IProfessorPermissionRequest {
   professorPermissionRequestId: number;

@@ -16,7 +16,7 @@ API.interceptors.request.use(
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+    return Promise.reject(new Error(String(error)));
   },
 );
 
@@ -34,7 +34,7 @@ API.interceptors.response.use(
         window.location.href = "/login";
       }
     }
-    return Promise.reject(error);
+    return Promise.reject(new Error(String(error)));
   },
 );
 
