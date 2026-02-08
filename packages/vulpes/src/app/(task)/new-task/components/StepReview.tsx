@@ -3,14 +3,16 @@ import MDEditor from "@uiw/react-md-editor";
 import { TestWithId } from "../hooks/useTestCases";
 import { Control, useWatch } from "react-hook-form";
 import { CreateTaskDTO } from "@/@dtos/Task";
+import { IClassListItem } from "@/@types/Class";
 
 interface StepReviewProps {
   control: Control<CreateTaskDTO>;
   code: string;
   testCases: TestWithId[];
+  selectedClasses?: IClassListItem[];
 }
 
-export const StepReview = ({ control, code, testCases }: StepReviewProps) => {
+export const StepReview = ({ control, code, testCases, selectedClasses = [] }: StepReviewProps) => {
   const values = useWatch({ control });
 
   return (
@@ -78,6 +80,39 @@ export const StepReview = ({ control, code, testCases }: StepReviewProps) => {
           ))}
         </div>
       </div>
+
+      <div className="flex flex-col gap-2">
+        <h3 className="text-lg font-bold">Configurações</h3>
+        <div className="grid grid-cols-2 gap-4">
+          <div className="p-3 rounded border border-gray-100/10">
+            <span className="text-sm font-semibold">Visibilidade:</span>{" "}
+            <span className={values.isVisible ? "text-green-400" : "text-yellow-400"}>
+              {values.isVisible ? "Visível" : "Oculta"}
+            </span>
+          </div>
+          <div className="p-3 rounded border border-gray-100/10">
+            <span className="text-sm font-semibold">Acesso:</span>{" "}
+            <span className={values.isPublic ? "text-blue-400" : "text-orange-400"}>
+              {values.isPublic ? "Pública" : "Privada"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {selectedClasses.length > 0 && (
+        <div className="flex flex-col gap-2">
+          <h3 className="text-lg font-bold">Turmas Vinculadas ({selectedClasses.length})</h3>
+          <div className="p-3 rounded border border-gray-100/10">
+            <ul className="list-disc list-inside space-y-1">
+              {selectedClasses.map((classItem) => (
+                <li key={classItem.classId} className="text-sm">
+                  {classItem.name} <span className="opacity-60">(Código: {classItem.code})</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

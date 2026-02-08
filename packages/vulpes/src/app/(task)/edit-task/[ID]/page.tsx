@@ -4,33 +4,51 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { AnimatePresence, motion } from "framer-motion";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 
 import Button from "@mui/material/Button";
 import Step from "@mui/material/Step";
 import StepLabel from "@mui/material/StepLabel";
 import Stepper from "@mui/material/Stepper";
+import CircularProgress from "@mui/material/CircularProgress";
+import Box from "@mui/material/Box";
 
 import {
   extractFunctionCodeFromProgram,
   extractFunctionFromProgram,
   IFunctionData,
+  appendFunctionToCode,
 } from "@/utils/code-extractor";
 import { baseCode } from "@/utils/mocks";
-import { CreateTaskSchema } from "../../../@schemas/Task.schema";
+import { CreateTaskSchema } from "../../../../@schemas/Task.schema";
 
 import { CreateTaskDTO } from "@/@dtos/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
 import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
 import API from "@/services/API";
-import { StepReview } from "./components/StepReview";
-import { StepTaskDescription } from "./components/StepTaskDescription";
-import { StepTestCases } from "./components/StepTestCases";
-import { StepClassSelection } from "./components/StepClassSelection";
-import useTestCases from "./hooks/useTestCases";
+import { StepReview } from "../../new-task/components/StepReview";
+import { StepTaskDescription } from "../../new-task/components/StepTaskDescription";
+import { StepTestCases } from "../../new-task/components/StepTestCases";
+import { StepClassSelection } from "../../new-task/components/StepClassSelection";
+import useTestCases from "../../new-task/hooks/useTestCases";
 import { toast } from "react-toastify";
 import { IMyClassesResponse, IClassListItem } from "@/@types/Class";
+import { ITask } from "@/@types/Task";
+
+interface IClassTask {
+  classId: string;
+  taskId: string;
+  class: {
+    classId: string;
+    name: string;
+    code: number;
+  };
+}
+
+interface ITaskWithClassTasks extends ITask {
+  classTasks?: IClassTask[];
+}
 
 enum FormStep {
   TASK_DETAILS,
@@ -46,17 +64,17 @@ const STEPS_LABELS = [
   "Revisão",
 ];
 
-
 export default function Page() {
   return (
     <AuthGuard requiredRoles={["PROFESSOR", "ADMIN"]}>
       <AppNavBar />
-      <NewTaskContent />
+      <EditTaskContent />
     </AuthGuard>
   );
 }
 
-function NewTaskContent() {
+function EditTaskContent() {
+  const { ID } = useParams();
   const [activeStep, setActiveStep] = useState(0);
   const [code, setCode] = useState(baseCode);
   const [userFunctionData, setUserFunctionData] =
@@ -64,9 +82,11 @@ function NewTaskContent() {
   const [classes, setClasses] = useState<IClassListItem[]>([]);
   const [selectedClasses, setSelectedClasses] = useState<IClassListItem[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
+  const [loadingTask, setLoadingTask] = useState(true);
+  const [originalTask, setOriginalTask] = useState<ITaskWithClassTasks | null>(null);
 
   const router = useRouter();
-  const { testCases, addTestCase, removeTestCase, updateInput, updateOutput } =
+  const { testCases, addTestCase, removeTestCase, updateInput, updateOutput, setTestCases } =
     useTestCases(userFunctionData?.returnType);
 
   const {
@@ -75,6 +95,7 @@ function NewTaskContent() {
     handleSubmit,
     setValue,
     watch,
+    reset,
   } = useForm<CreateTaskDTO>({
     resolver: zodResolver(CreateTaskSchema),
     defaultValues: {
@@ -88,6 +109,61 @@ function NewTaskContent() {
     },
   });
 
+  // Fetch task data
+  useEffect(() => {
+    const fetchTask = async () => {
+      if (!ID) return;
+      
+      setLoadingTask(true);
+      try {
+        const response = await API.get<ITaskWithClassTasks>(`/task/${ID}`);
+        const task = response.data;
+        setOriginalTask(task);
+
+        // Set form values
+        reset({
+          title: task.title,
+          description: task.description,
+          inputMode: task.inputMode as "PARAM" | "LEIA",
+          isVisible: task.isVisible,
+          isPublic: task.isPublic,
+          functionDef: task.functionDef,
+          taskParams: task.taskParams,
+          classIds: task.classTasks?.map((ct) => ct.classId) || [],
+        });
+
+        // Set code
+        const taskCode = appendFunctionToCode(baseCode, task.functionDef);
+        setCode(taskCode);
+        
+        // Extract function data
+        const functionData = extractFunctionFromProgram(taskCode);
+        if (functionData) setUserFunctionData(functionData);
+
+        // Set test cases
+        if (task.taskTests && task.taskTests.length > 0) {
+          setTestCases(
+            task.taskTests.map((test: any) => ({
+              testId: crypto.randomUUID(),
+              input: Array.isArray(test.input) ? test.input : [test.input],
+              expectedOutput: test.expectedOutput,
+              expectedOutputType: test.expectedOutputType,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error("Failed to fetch task:", error);
+        toast.error("Erro ao carregar a tarefa.");
+        router.push("/tasks");
+      } finally {
+        setLoadingTask(false);
+      }
+    };
+
+    fetchTask();
+  }, [ID, reset, router, setTestCases]);
+
+  // Fetch classes
   useEffect(() => {
     const fetchClasses = async () => {
       setLoadingClasses(true);
@@ -104,6 +180,15 @@ function NewTaskContent() {
 
     fetchClasses();
   }, []);
+
+  // Set selected classes when both task and classes are loaded
+  useEffect(() => {
+    if (originalTask?.classTasks && classes.length > 0) {
+      const taskClassIds = originalTask.classTasks.map((ct) => ct.classId);
+      const selected = classes.filter((c) => taskClassIds.includes(c.classId));
+      setSelectedClasses(selected);
+    }
+  }, [originalTask, classes]);
 
   useEffect(() => {
     setValue("classIds", selectedClasses.map((c) => c.classId));
@@ -123,18 +208,15 @@ function NewTaskContent() {
     }
   }, [userFunctionData, code, setValue]);
 
-  useEffect(() => {
-    console.log(activeStep);
-  }, [activeStep]);
-
   const onSubmit = async (data: CreateTaskDTO) => {
     try {
       console.log({ ...data, testCases });
-      await API.post("/task", { ...data, testCases });
-      toast.success("Tarefa criada com sucesso!");
-      router.push("/")
+      await API.put(`/task/${ID}`, { ...data, taskTests: testCases });
+      toast.success("Tarefa atualizada com sucesso!");
+      router.push("/tasks");
     } catch (error) {
-      console.error("Erro ao salvar tarefa", error);
+      console.error("Erro ao atualizar tarefa", error);
+      toast.error("Erro ao atualizar tarefa.");
     }
   };
 
@@ -181,12 +263,29 @@ function NewTaskContent() {
     }
   };
 
+  if (loadingTask) {
+    return (
+      <ContentWrapper>
+        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+          <CircularProgress />
+        </Box>
+      </ContentWrapper>
+    );
+  }
+
   return (
     <ContentWrapper>
       <form
         className="w-full h-screen flex flex-col gap-2 py-4"
         onSubmit={handleSubmit(onSubmit)}
       >
+        <div className="px-4">
+          <h1 className="text-2xl font-bold mb-2">Editar Tarefa</h1>
+          <p className="text-sm opacity-70 mb-4">
+            Editando: {originalTask?.title}
+          </p>
+        </div>
+
         <Stepper activeStep={activeStep} alternativeLabel>
           {STEPS_LABELS.map((step) => (
             <Step key={step}>
@@ -231,7 +330,7 @@ function NewTaskContent() {
             type="button"
           >
             {activeStep === STEPS_LABELS.length - 1
-              ? "Publicar Tarefa"
+              ? "Salvar Alterações"
               : "Próximo"}
           </Button>
         </div>

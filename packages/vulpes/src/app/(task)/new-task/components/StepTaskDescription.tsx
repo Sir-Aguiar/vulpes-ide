@@ -1,3 +1,4 @@
+import RHFCheckBox from "@/components/RHF/CheckBox";
 import RHFMDEditor from "@/components/RHF/MarkdownEditor";
 import RHFSelect from "@/components/RHF/Select";
 import RHFTextField from "@/components/RHF/TextField";
@@ -75,6 +76,22 @@ export const StepTaskDescription = ({
             Ex: <code>funcao inteiro somar() &#123; &#125;</code>
           </span>
         </div>
+      </div>
+
+      <div className="w-full flex flex-col gap-2 p-2 rounded-sm border border-gray-100/10 mt-2">
+        <h3 className="text-lg font-medium mb-2">Visibilidade da Tarefa</h3>
+        <RHFCheckBox
+          control={control}
+          name="isVisible"
+          label="Tarefa visível (aparece nas listagens)"
+          errors={errors}
+        />
+        <RHFCheckBox
+          control={control}
+          name="isPublic"
+          label="Tarefa pública (outros professores podem usar)"
+          errors={errors}
+        />
       </div>
     </div>
   );

@@ -2,6 +2,8 @@
 
 import { ITask } from "@/@types/Task";
 import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import AuthGuard from "@/components/AuthGuard";
+import AppNavBar from "@/components/AppNavBar";
 import Sidebar from "@/components/Sidebar";
 import API from "@/services/API";
 import { appendFunctionToCode } from "@/utils/code-extractor";
@@ -46,6 +48,15 @@ const XIcon = ({ className }: { className?: string }) => (
 );
 
 export default function Page() {
+  return (
+    <AuthGuard>
+      <AppNavBar />
+      <TaskContent />
+    </AuthGuard>
+  );
+}
+
+function TaskContent() {
   const { ID } = useParams();
 
   const [task, setTask] = useState<ITask | null>(null);
@@ -58,12 +69,12 @@ export default function Page() {
 
   const getTask = async () => {
     try {
-      const response = await API.get("/task", { params: { id: ID } });
+      const response = await API.get(`/task/${ID}`);
       console.log(response);
 
       // Converter os inputs dos testCases de string para array, se necessário
       const taskTestCases = response.data.taskTests;
-      const formattedTestCases = taskTestCases.map((testCase: any) => ({
+      const formattedTestCases = taskTestCases?.map((testCase: any) => ({
         ...testCase,
         input:
           typeof testCase.input === "string"

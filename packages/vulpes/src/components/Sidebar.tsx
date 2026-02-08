@@ -1,8 +1,11 @@
 "use client";
 
 import React from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import {
   HelpIcon,
+  LogoutIcon,
   OpenIcon,
   PlayIcon,
   SaveAsIcon,
@@ -11,6 +14,7 @@ import {
   ShareIcon,
   StopIcon,
 } from "./Icons";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface SidebarProps {
   isRunning: boolean;
@@ -19,12 +23,20 @@ interface SidebarProps {
 
 const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
   const [isSharing, setIsSharing] = React.useState<boolean>(false);
+  const router = useRouter();
+  const { logout } = useAuth();
 
   const handleShareFile = () => {
     setIsSharing(true);
     setTimeout(() => {
       setIsSharing(false);
     }, 1000);
+  };
+
+  const handleLogout = () => {
+    logout();
+    toast.info("Logout realizado com sucesso");
+    router.push("/login");
   };
 
   return (
@@ -82,6 +94,20 @@ const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
         className="my-2 mx-4 h-px"
         style={{ backgroundColor: "#445056" }}
       ></div>
+
+      <div className="flex-1"></div>
+
+      <button
+        className="flex items-center justify-center w-16 h-16 border-none transition-all duration-200 cursor-pointer hover:bg-gray-600"
+        style={{
+          backgroundColor: "#121e24",
+          color: "#ff5555",
+        }}
+        title="Sair"
+        onClick={handleLogout}
+      >
+        <LogoutIcon />
+      </button>
     </div>
   );
 };

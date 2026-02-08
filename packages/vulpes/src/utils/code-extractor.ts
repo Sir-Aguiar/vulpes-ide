@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unsafe-call */
 import { IParam } from "@/@schemas/Task.schema";
 import { v4 as uuidv4 } from "uuid";
 
