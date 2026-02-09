@@ -5,7 +5,7 @@ export const SignupSchema = Zod.object({
   email: Zod.email("Email inválido"),
   password: Zod.string().min(6, "Senha deve ter ao menos 6 caracteres"),
   passwordConfirm: Zod.string().min(1, "Confirmação de senha é obrigatória"),
-  institution: Zod.string().optional(),
+  institutionId: Zod.number().optional(),
 }).refine((data) => data.password === data.passwordConfirm, {
   message: "As senhas não coincidem",
   path: ["passwordConfirm"],

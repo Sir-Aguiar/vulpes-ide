@@ -55,7 +55,8 @@ export default function ClassesPage() {
 
 function ClassesContent() {
   const { user } = useAuth();
-  const isProfessorOrAdmin = user?.role === "PROFESSOR" || user?.role === "ADMIN";
+  const isProfessorOrAdmin =
+    user?.role === "PROFESSOR" || user?.role === "ADMIN";
 
   if (isProfessorOrAdmin) {
     return <ProfessorClassesView />;
@@ -72,7 +73,14 @@ function ProfessorClassesView() {
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 3,
+        }}
+      >
         <Typography variant="h4" component="h1">
           Turmas
         </Typography>
@@ -139,7 +147,13 @@ function MyClassesList() {
   }
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 2 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+        gap: 2,
+      }}
+    >
       {classes.map((classItem) => (
         <ClassCard
           key={classItem.classId}
@@ -175,7 +189,9 @@ function AllClassesList() {
         const params: any = { page, limit: 12 };
         if (searchDebounce) params.search = searchDebounce;
 
-        const response = await API.get<IGetClassesResponse>("/class", { params });
+        const response = await API.get<IGetClassesResponse>("/class", {
+          params,
+        });
         setClasses(response.data.classes);
         setTotalPages(response.data.totalPages);
       } catch (error) {
@@ -213,12 +229,24 @@ function AllClassesList() {
       ) : classes.length === 0 ? (
         <Box sx={{ textAlign: "center", py: 8 }}>
           <Typography color="text.secondary">
-            {searchDebounce ? "Nenhuma turma encontrada" : "Nenhuma turma cadastrada"}
+            {searchDebounce
+              ? "Nenhuma turma encontrada"
+              : "Nenhuma turma cadastrada"}
           </Typography>
         </Box>
       ) : (
         <>
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 2 }}>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr",
+                md: "1fr 1fr 1fr",
+              },
+              gap: 2,
+            }}
+          >
             {classes.map((classItem) => (
               <ClassCard
                 key={classItem.classId}
@@ -307,7 +335,13 @@ function StudentMyClassesList() {
   }
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 2 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+        gap: 2,
+      }}
+    >
       {classes.map((classItem) => (
         <ClassCard
           key={classItem.classId}
@@ -363,7 +397,8 @@ function SearchByCodeView() {
   return (
     <Box sx={{ maxWidth: 500 }}>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-        Digite o código de 4 dígitos fornecido pelo professor para encontrar a turma
+        Digite o código de 4 dígitos fornecido pelo professor para encontrar a
+        turma
       </Typography>
 
       <form onSubmit={handleSubmit(onSearch)}>
@@ -444,7 +479,10 @@ function RequestJoinDialog({
       onClose();
     } catch (error: any) {
       if (error?.response?.status === 409) {
-        toast.error(error.response.data.message || "Você já solicitou participação nesta turma");
+        toast.error(
+          error.response.data.message ||
+            "Você já solicitou participação nesta turma",
+        );
       } else {
         toast.error("Erro ao enviar solicitação");
       }
@@ -458,7 +496,8 @@ function RequestJoinDialog({
       <DialogTitle>Solicitar Participação</DialogTitle>
       <DialogContent>
         <Typography sx={{ mb: 2 }}>
-          Enviar solicitação para participar da turma <strong>{classData.name}</strong>
+          Enviar solicitação para participar da turma{" "}
+          <strong>{classData.name}</strong>
         </Typography>
         <TextField
           fullWidth
@@ -474,7 +513,11 @@ function RequestJoinDialog({
         <Button onClick={onClose} disabled={submitting}>
           Cancelar
         </Button>
-        <Button onClick={handleSubmit} variant="contained" disabled={submitting}>
+        <Button
+          onClick={handleSubmit}
+          variant="contained"
+          disabled={submitting}
+        >
           {submitting ? <CircularProgress size={24} /> : "Enviar Solicitação"}
         </Button>
       </DialogActions>
@@ -483,14 +526,16 @@ function RequestJoinDialog({
 }
 
 function MyRequestsView() {
-  const [requests, setRequests] = useState<IStudentClassPermissionRequest[]>([]);
+  const [requests, setRequests] = useState<IStudentClassPermissionRequest[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
 
   const fetchRequests = async () => {
     setLoading(true);
     try {
       const response = await API.get<IStudentClassPermissionRequest[]>(
-        "/student-class-permission-request/my-requests"
+        "/student-class-permission-request/my-requests",
       );
       setRequests(response.data);
     } catch (error) {
@@ -506,7 +551,9 @@ function MyRequestsView() {
 
   const handleCancel = async (classId: string, studentId: string) => {
     try {
-      await API.delete(`/student-class-permission-request/${classId}/${studentId}`);
+      await API.delete(
+        `/student-class-permission-request/${classId}/${studentId}`,
+      );
       toast.success("Solicitação cancelada");
       fetchRequests();
     } catch (error) {
@@ -536,7 +583,13 @@ function MyRequestsView() {
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {requests.map((request) => (
         <Card key={`${request.classId}-${request.studentId}`}>
-          <CardContent sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+          <CardContent
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Box>
               <Typography variant="h6">{request.class.name}</Typography>
               <Typography color="text.secondary" variant="body2">
@@ -548,7 +601,8 @@ function MyRequestsView() {
                 </Typography>
               )}
               <Typography variant="caption" color="text.secondary">
-                Enviada em: {new Date(request.createdAt).toLocaleDateString("pt-BR")}
+                Enviada em:{" "}
+                {new Date(request.createdAt).toLocaleDateString("pt-BR")}
               </Typography>
             </Box>
             <Button

@@ -152,7 +152,9 @@ export default function Home() {
 
           {output && (
             <div className="h-32 bg-gray-800 border-t border-gray-700 p-4 overflow-auto">
-              <h3 className="text-sm font-semibold mb-2 text-gray-300">Saída:</h3>
+              <h3 className="text-sm font-semibold mb-2 text-gray-300">
+                Saída:
+              </h3>
               <pre className="text-sm text-green-400 whitespace-pre-wrap">
                 {output}
               </pre>

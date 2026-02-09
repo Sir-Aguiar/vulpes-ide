@@ -8,14 +8,14 @@ export interface IUser {
   email: string;
   name: string;
   role: "STUDENT" | "PROFESSOR" | "ADMIN";
-  institution: string | null;
+  institutionId: number | null;
 }
 
 export interface ISignupRequest {
   name: string;
   email: string;
   password: string;
-  institution?: string;
+  institutionId?: number;
 }
 
 export interface ILoginRequest {

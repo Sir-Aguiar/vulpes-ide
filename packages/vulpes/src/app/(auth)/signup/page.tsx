@@ -14,7 +14,7 @@ import Link from "@mui/material/Link";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
@@ -27,14 +27,25 @@ import { safeZodResolver } from "@/utils/safeZodResolver";
 import { SignupSchema, ISignupDTO } from "@/@schemas/Auth.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { useAuth } from "@/providers/AuthProvider";
+import RHFSelect from "@/components/RHF/Select";
+import API from "@/services/API";
+import { MenuItem } from "@mui/material";
 
 export default function SignupPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [openProfessorModal, setOpenProfessorModal] = useState(false);
+  const [Institutions, setInstitutions] = useState<any[]>([]);
+
   const router = useRouter();
   const { signup } = useAuth();
+
+  useEffect(() => {
+    API.get("/institution").then((response) => {
+      setInstitutions(response.data);
+    });
+  }, []);
 
   const {
     control,
@@ -48,7 +59,6 @@ export default function SignupPage() {
       email: "",
       password: "",
       passwordConfirm: "",
-      institution: "",
     },
   });
 
@@ -202,13 +212,18 @@ export default function SignupPage() {
                         }}
                       />
 
-                      <RHFTextField
+                      <RHFSelect
                         control={control}
-                        name="institution"
-                        label="Instituição (Opcional)"
+                        name="institutionId"
+                        label="Instituição"
                         errors={errors}
-                        autoComplete="organization"
-                      />
+                      >
+                        {Institutions.map(({ institutionId, name }) => (
+                          <MenuItem key={institutionId} value={institutionId}>
+                            {name}
+                          </MenuItem>
+                        ))}
+                      </RHFSelect>
 
                       <Button
                         type="submit"

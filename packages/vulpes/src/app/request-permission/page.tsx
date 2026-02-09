@@ -7,7 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { safeZodResolver } from "@/utils/safeZodResolver";
@@ -19,6 +19,8 @@ import {
 import RHFTextField from "@/components/RHF/TextField";
 import API from "@/services/API";
 import { useRouter } from "next/navigation";
+import RHFSelect from "@/components/RHF/Select";
+import { MenuItem } from "@mui/material";
 
 export default function RequestPermissionPage() {
   const [isSuccess, setIsSuccess] = useState(false);
@@ -34,10 +36,16 @@ export default function RequestPermissionPage() {
       name: "",
       personalEmail: "",
       institutionalEmail: "",
-      institution: "",
       document: undefined,
     },
   });
+  const [Institutions, setInstitutions] = useState<any[]>([]);
+
+  useEffect(() => {
+    API.get("/institution").then((response) => {
+      setInstitutions(response.data);
+    });
+  }, []);
 
   const router = useRouter();
 
@@ -46,7 +54,10 @@ export default function RequestPermissionPage() {
       const formData = new FormData();
 
       for (const key in data) {
-        formData.append(key, data[key as keyof ICreateTeacherPermissionDTO]);
+        formData.append(
+          key,
+          data[key as keyof ICreateTeacherPermissionDTO].toString(),
+        );
       }
 
       await API.post("professor-permission-request", formData, {
@@ -135,12 +146,18 @@ export default function RequestPermissionPage() {
                       errors={errors}
                     />
 
-                    <RHFTextField
+                    <RHFSelect
                       control={control}
-                      name="institution"
+                      name="institutionId"
                       label="Instituição de Ensino"
                       errors={errors}
-                    />
+                    >
+                      {Institutions.map(({ institutionId, name }) => (
+                        <MenuItem key={institutionId} value={institutionId}>
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </RHFSelect>
 
                     <Controller
                       control={control}
@@ -155,7 +172,9 @@ export default function RequestPermissionPage() {
                             style={{ display: "none" }}
                             id="request-file-upload"
                             type="file"
-                            onChange={(e) => onChange(e.target.files?.[0] || undefined)}
+                            onChange={(e) =>
+                              onChange(e.target.files?.[0] || undefined)
+                            }
                             {...field}
                           />
                           <label htmlFor="request-file-upload">

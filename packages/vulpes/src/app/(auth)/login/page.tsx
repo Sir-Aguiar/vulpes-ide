@@ -178,9 +178,6 @@ export default function LoginPage() {
         <Typography variant="h3" fontWeight="bold" gutterBottom>
           Vulpes IDE
         </Typography>
-        <Typography variant="h6" sx={{ maxWidth: 400, textAlign: "center" }}>
-          Aprenda programação de forma interativa e intuitiva
-        </Typography>
       </Box>
     </Box>
   );

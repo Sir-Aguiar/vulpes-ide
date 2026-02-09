@@ -8,9 +8,10 @@ export interface IProfessorPermissionRequest {
   name: string;
   personalEmail: string;
   institutionalEmail: string;
-  institution: string;
+  institutionId: number | null;
   requestFileUrl: string;
   requestStatus: ProfessorPermissionRequestStatus;
   createdAt: string;
   updatedAt: string;
+  institution: any;
 }

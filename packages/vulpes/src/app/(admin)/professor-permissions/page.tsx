@@ -55,7 +55,7 @@ function ProfessorPermissionsContent() {
     setLoading(true);
     try {
       const response = await API.get<IProfessorPermissionRequest[]>(
-        "/professor-permission-request"
+        "/professor-permission-request",
       );
       setRequests(response.data);
     } catch (error) {
@@ -86,27 +86,35 @@ function ProfessorPermissionsContent() {
   const handleOpenConfirmDialog = (
     action: "APPROVED" | "REJECTED",
     requestId: number,
-    requestName: string
+    requestName: string,
   ) => {
     setConfirmDialog({ open: true, action, requestId, requestName });
   };
 
   const handleCloseConfirmDialog = () => {
-    setConfirmDialog({ open: false, action: null, requestId: null, requestName: "" });
+    setConfirmDialog({
+      open: false,
+      action: null,
+      requestId: null,
+      requestName: "",
+    });
   };
 
   const handleConfirmAction = async () => {
     if (!confirmDialog.requestId || !confirmDialog.action) return;
 
     try {
-      await API.patch(`/professor-permission-request/${confirmDialog.requestId}`, {
-        requestStatus: confirmDialog.action,
-      });
+      await API.patch(
+        `/professor-permission-request/${confirmDialog.requestId}`,
+        {
+          requestStatus: confirmDialog.action,
+        },
+      );
 
       toast.success(
         confirmDialog.action === "APPROVED"
           ? "Solicitação aprovada com sucesso! Usuário promovido a Professor."
-          : "Solicitação rejeitada."
+          : "Solicitação rejeitada.",
       );
 
       fetchRequests();
@@ -124,7 +132,13 @@ function ProfessorPermissionsContent() {
       APPROVED: { label: "Aprovado", color: "success" as const },
       REJECTED: { label: "Rejeitado", color: "error" as const },
     };
-    return <Chip label={config[status].label} color={config[status].color} size="small" />;
+    return (
+      <Chip
+        label={config[status].label}
+        color={config[status].color}
+        size="small"
+      />
+    );
   };
 
   const formatDate = (dateString: string) => {
@@ -139,9 +153,15 @@ function ProfessorPermissionsContent() {
 
   const filteredRequests = getFilteredRequests();
 
-  const pendingCount = requests.filter((r) => r.requestStatus === "PENDING").length;
-  const approvedCount = requests.filter((r) => r.requestStatus === "APPROVED").length;
-  const rejectedCount = requests.filter((r) => r.requestStatus === "REJECTED").length;
+  const pendingCount = requests.filter(
+    (r) => r.requestStatus === "PENDING",
+  ).length;
+  const approvedCount = requests.filter(
+    (r) => r.requestStatus === "APPROVED",
+  ).length;
+  const rejectedCount = requests.filter(
+    (r) => r.requestStatus === "REJECTED",
+  ).length;
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -181,29 +201,58 @@ function ProfessorPermissionsContent() {
                   }}
                 >
                   <Box sx={{ flex: 1, minWidth: 300 }}>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 1,
+                      }}
+                    >
                       <Typography variant="h6">{request.name}</Typography>
                       {getStatusChip(request.requestStatus)}
                     </Box>
 
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
                       <strong>Email Pessoal:</strong> {request.personalEmail}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      <strong>Email Institucional:</strong> {request.institutionalEmail}
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
+                      <strong>Email Institucional:</strong>{" "}
+                      {request.institutionalEmail}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
-                      <strong>Instituição:</strong> {request.institution}
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 0.5 }}
+                    >
+                      <strong>Instituição:</strong> {request.institution.name}
                     </Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                      <strong>Data da Solicitação:</strong> {formatDate(request.createdAt)}
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 1 }}
+                    >
+                      <strong>Data da Solicitação:</strong>{" "}
+                      {formatDate(request.createdAt)}
                     </Typography>
 
                     <Link
                       href={request.requestFileUrl}
                       target="_blank"
                       rel="noopener noreferrer"
-                      sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}
+                      sx={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: 0.5,
+                      }}
                     >
                       <OpenInNewIcon fontSize="small" />
                       Ver Documento Comprobatório
@@ -220,7 +269,7 @@ function ProfessorPermissionsContent() {
                           handleOpenConfirmDialog(
                             "APPROVED",
                             request.professorPermissionRequestId,
-                            request.name
+                            request.name,
                           )
                         }
                       >
@@ -234,7 +283,7 @@ function ProfessorPermissionsContent() {
                           handleOpenConfirmDialog(
                             "REJECTED",
                             request.professorPermissionRequestId,
-                            request.name
+                            request.name,
                           )
                         }
                       >
@@ -252,7 +301,9 @@ function ProfessorPermissionsContent() {
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialog.open} onClose={handleCloseConfirmDialog}>
         <DialogTitle>
-          {confirmDialog.action === "APPROVED" ? "Aprovar Solicitação" : "Rejeitar Solicitação"}
+          {confirmDialog.action === "APPROVED"
+            ? "Aprovar Solicitação"
+            : "Rejeitar Solicitação"}
         </DialogTitle>
         <DialogContent>
           <DialogContentText>

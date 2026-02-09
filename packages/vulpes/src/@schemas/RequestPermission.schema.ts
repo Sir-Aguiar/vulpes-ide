@@ -10,7 +10,7 @@ export const CreateTeacherPermissionSchema = Zod.object({
     1,
     "Email institucional é obrigatório",
   ),
-  institution: Zod.string().min(1, "Instituição de ensino é obrigatória"),
+  institutionId: Zod.number().min(1, "Instituição de ensino é obrigatória"),
   document: Zod.instanceof(File, { message: "Documento é obrigatório" }),
 });
 
