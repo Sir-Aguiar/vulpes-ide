@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useContext, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
@@ -28,7 +28,7 @@ import AddIcon from "@mui/icons-material/Add";
 import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
 import API from "@/services/API";
-import { useAuth } from "@/providers/AuthProvider";
+import { AuthContext, useAuth } from "@/providers/AuthProvider";
 import {
   IClassListItem,
   IGetClassesResponse,
@@ -359,6 +359,8 @@ function SearchByCodeView() {
   const [searching, setSearching] = useState(false);
   const [requestDialogOpen, setRequestDialogOpen] = useState(false);
 
+  const { user } = useContext(AuthContext)!;
+
   const {
     control,
     handleSubmit,
@@ -438,9 +440,11 @@ function SearchByCodeView() {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Código: {foundClass.code}
             </Typography>
-            <Button variant="contained" onClick={handleRequestJoin}>
-              Solicitar Participação
-            </Button>
+            {foundClass.professorId != user?.userId && (
+              <Button variant="contained" onClick={handleRequestJoin}>
+                Solicitar Participação
+              </Button>
+            )}
           </CardContent>
         </Card>
       )}
