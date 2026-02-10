@@ -68,6 +68,7 @@ export default function SignupPage() {
       await signup(signupData);
       setIsSuccess(true);
       toast.success("Conta criada com sucesso!");
+
       setTimeout(() => {
         setOpenProfessorModal(true);
       }, 1000);

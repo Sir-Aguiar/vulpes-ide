@@ -2,6 +2,7 @@
 
 :root {
   --font-inter: "Inter", sans-serif;
+  --appbar-height: 64px;
 }
 
 :root[data-theme="light"] {
@@ -147,4 +148,12 @@ textarea,
 select,
 button {
   font-family: var(--font-inter);
+}
+
+.h-screen-bar {
+  height: calc(100vh - var(--appbar-height));
+}
+
+.min-h-screen-bar {
+  min-height: calc(100vh - var(--appbar-height));
 }

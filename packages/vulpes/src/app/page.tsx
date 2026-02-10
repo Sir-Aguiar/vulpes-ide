@@ -10,156 +10,101 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/providers/AuthProvider";
 import CircularProgress from "@mui/material/CircularProgress";
 import Box from "@mui/material/Box";
+import {
+  Container,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
+} from "@mui/material";
+import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
+import { Montserrat } from "next/font/google";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { ITask } from "@/@types/Task";
+import API from "@/services/API";
+import Link from "next/link";
+
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default function Home() {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const [portugolCode, setPortugolCode] = useState(
-    'programa\n{\n  funcao inicio()\n  {\n    escreva("Olá, Mundo!")\n  }\n}',
-  );
-  const [output, setOutput] = useState("");
-  const [executor, setExecutor] = useState<PortugolExecutor | null>(null);
 
-  // Check authentication
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      router.push("/login");
-    }
-  }, [isAuthenticated, loading, router]);
+  const [Tasks, setTasks] = useState<ITask[]>([]);
 
   useEffect(() => {
-    if (!isAuthenticated || loading) return;
-
-    const exec = new PortugolExecutor(CustomWebWorkersRunner);
-    setExecutor(exec);
-
-    const subscription = exec.stdOut$.subscribe((data) => {
-      setOutput(data);
+    API.get("/task").then((response) => {
+      setTasks(response.data.tasks);
     });
-
-    return () => {
-      subscription.unsubscribe();
-      exec.stop();
-    };
-  }, [isAuthenticated, loading]);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === "Enter") {
-        e.preventDefault();
-        handleRunCode();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [executor, portugolCode]);
-
-  const handleRunCode = () => {
-    if (executor) {
-      executor.run(portugolCode);
-    }
-  };
-
-  const handleSaveFile = () => {
-    console.log("Salvar código:", portugolCode);
-  };
-
-  const handleNewFile = () => {
-    setPortugolCode(
-      'programa\n{\n  funcao inicio()\n  {\n    escreva("Olá, Mundo!")\n  }\n}',
-    );
-  };
-
-  const handleOpenFile = () => {
-    const input = document.createElement("input");
-    input.type = "file";
-    input.accept = ".por";
-    input.onchange = (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0];
-      if (file) {
-        const reader = new FileReader();
-        reader.onload = () => {
-          setPortugolCode(reader.result as string);
-        };
-        reader.readAsText(file);
-      }
-    };
-    input.click();
-  };
-
-  const handleStopCode = () => {
-    if (executor) {
-      executor.stop();
-    }
-  };
-
-  const handleOpenHelp = () => {
-    console.log("Abrir ajuda");
-  };
-
-  const handleOpenSettings = () => {
-    console.log("Abrir configurações");
-  };
-
-  // Show loading while checking authentication
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          height: "100vh",
-          width: "100vw",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "background.default",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
-
-  // Don't render the IDE if not authenticated
-  if (!isAuthenticated) {
-    return null;
-  }
+  }, []);
 
   return (
     <>
-      <AppNavBar />
-      <div className="h-[calc(100vh-64px)] w-screen bg-gray-900 text-white flex">
-        <Sidebar isRunning={!executor} onRunCode={handleRunCode} />
+      <AppNavBar position="sticky" />
+      <div className={`w-full min-h-[200vh] flex flex-col`}>
+        <div className="w-full h-screen pb-24 pt-64 flex flex-col items-center justify-center gap-4">
+          <Typography
+            className={montserrat.className}
+            variant="h2"
+            sx={{ fontWeight: 500 }}
+          >
+            Bem-vindos
+          </Typography>
+          <Typography className={montserrat.className} variant="h5">
+            O ambiente de desenvolvimento integrado para Portugol
+          </Typography>
 
-        <div className="flex-1 flex flex-col">
-          <div className="flex-1">
-            <Editor
-              defaultValue={portugolCode}
-              language="portugol"
-              theme="vs-dark"
-              onChange={(value) => setPortugolCode(value || "")}
-              options={{
-                minimap: { enabled: false },
-                fontSize: 14,
-                lineNumbers: "on",
-                scrollBeyondLastLine: false,
-                automaticLayout: true,
-                tabSize: 2,
-                wordWrap: "on",
-              }}
-            />
+          <div className="flex flex-col items-center mt-auto">
+            <Typography className={montserrat.className} variant="h6">
+              Descubra Mais
+            </Typography>
+            <KeyboardArrowDownIcon fontSize="large" />
           </div>
+        </div>
+        <div className="w-full h-screen py-12 px-8 flex flex-col items-center gap-8">
+          <Typography className={montserrat.className} variant="h4">
+            Tarefas Públicas
+          </Typography>
 
-          {output && (
-            <div className="h-32 bg-gray-800 border-t border-gray-700 p-4 overflow-auto">
-              <h3 className="text-sm font-semibold mb-2 text-gray-300">
-                Saída:
-              </h3>
-              <pre className="text-sm text-green-400 whitespace-pre-wrap">
-                {output}
-              </pre>
-            </div>
-          )}
+          <TableContainer component={Paper}>
+            <Table sx={{ minWidth: 650 }} aria-label="simple table">
+              <TableHead>
+                <TableRow>
+                  <TableCell width={120}></TableCell>
+                  <TableCell>Título</TableCell>
+                  <TableCell align="right">Dificuldade</TableCell>
+                  <TableCell align="right">Data de Criação</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {Tasks.map((task) => (
+                  <TableRow key={task.taskId}>
+                    <TableCell>
+                      <Link
+                        href={`/task/${task.taskId}`}
+                        style={{ textDecoration: "none" }}
+                      >
+                        <Typography variant="body2" color="primary">
+                          Ver Detalhes
+                        </Typography>
+                      </Link>
+                    </TableCell>
+                    <TableCell component="th" scope="row">
+                      {task.title}
+                    </TableCell>
+                    <TableCell align="right">Fácil</TableCell>
+                    <TableCell align="right">
+                      {new Date(task.createdAt).toLocaleDateString()}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
         </div>
       </div>
     </>

@@ -92,7 +92,12 @@ function TaskContent() {
 
   useEffect(() => {
     if (ID) getTask();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = "auto";
+    };
   }, [ID]);
 
   const registerSubmission = async (results: ITestCaseResult[]) => {
@@ -141,9 +146,9 @@ function TaskContent() {
   }
 
   return (
-    <ContentWrapper className="w-full min-h-screen flex flex-row">
+    <ContentWrapper className="w-full min-h-screen-bar flex flex-row">
       <div
-        className="flex flex-row w-full h-screen p-4 gap-2"
+        className="flex flex-row w-full h-screen-bar p-4 gap-2"
         style={{ backgroundColor: "#263238" }}
       >
         <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
@@ -263,14 +268,13 @@ function TaskContent() {
       <MDEditor.Markdown
         source={task?.description || ""}
         style={{
-          minHeight: "100vh",
           height: "100%",
-          maxHeight: "100vh",
           width: "100%",
           padding: "8px 16px",
           overflowY: "auto",
           backgroundColor: "#263238",
         }}
+        className="min-h-screen-bar h-screen-bar"
       />
     </ContentWrapper>
   );
