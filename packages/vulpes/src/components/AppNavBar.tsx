@@ -18,6 +18,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { toast } from "react-toastify";
@@ -107,7 +108,7 @@ export default function AppNavBar(props?: IProps) {
               fontSize: "0.95rem",
               "&:hover": {
                 backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "#FF6D00"
+                color: "#FF6D00",
               },
             }}
           >
@@ -118,13 +119,16 @@ export default function AppNavBar(props?: IProps) {
               key={item.path}
               onClick={() => router.push(item.path)}
               sx={{
-                color: pathname === item.path ? "#FF6D00" : "rgba(255, 255, 255, 0.7)",
+                color:
+                  pathname === item.path
+                    ? "#FF6D00"
+                    : "rgba(255, 255, 255, 0.7)",
                 fontWeight: pathname === item.path ? 600 : 400,
                 textTransform: "none",
                 fontSize: "0.95rem",
                 "&:hover": {
                   backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  color: "#FF6D00"
+                  color: "#FF6D00",
                 },
               }}
             >
@@ -132,6 +136,10 @@ export default function AppNavBar(props?: IProps) {
             </Button>
           ))}
         </Box>
+
+        <Button>
+          <Link href="/new-task">Criar Tarefa</Link>
+        </Button>
 
         {user && (
           <Box>
@@ -145,7 +153,13 @@ export default function AppNavBar(props?: IProps) {
                 aria-expanded={Boolean(anchorEl) ? "true" : undefined}
               >
                 <Avatar
-                  sx={{ width: 32, height: 32, bgcolor: "#FF6D00", color: "#fff", fontWeight: "bold" }}
+                  sx={{
+                    width: 32,
+                    height: 32,
+                    bgcolor: "#FF6D00",
+                    color: "#fff",
+                    fontWeight: "bold",
+                  }}
                 >
                   {user.name ? user.name[0].toUpperCase() : "U"}
                 </Avatar>
@@ -197,21 +211,38 @@ export default function AppNavBar(props?: IProps) {
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{ mt: 0.5, display: "block", color: "#FF6D00", fontWeight: 500 }}
+                  sx={{
+                    mt: 0.5,
+                    display: "block",
+                    color: "#FF6D00",
+                    fontWeight: 500,
+                  }}
                 >
                   {user.role}
                 </Typography>
               </Box>
               <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
-              <MenuItem onClick={handleProfile} sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}>
+              <MenuItem
+                onClick={handleProfile}
+                sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}
+              >
                 <ListItemIcon>
-                  <Person fontSize="small" sx={{ color: "rgba(255, 255, 255, 0.7)" }} />
+                  <Person
+                    fontSize="small"
+                    sx={{ color: "rgba(255, 255, 255, 0.7)" }}
+                  />
                 </ListItemIcon>
                 Perfil
               </MenuItem>
-              <MenuItem onClick={handleLogout} sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}>
+              <MenuItem
+                onClick={handleLogout}
+                sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}
+              >
                 <ListItemIcon>
-                  <Logout fontSize="small" sx={{ color: "rgba(255, 255, 255, 0.7)" }} />
+                  <Logout
+                    fontSize="small"
+                    sx={{ color: "rgba(255, 255, 255, 0.7)" }}
+                  />
                 </ListItemIcon>
                 Sair
               </MenuItem>
