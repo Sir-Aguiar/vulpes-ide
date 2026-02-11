@@ -3,40 +3,35 @@
 import React from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
-import {
-  HelpIcon,
-  LogoutIcon,
-  OpenIcon,
-  PlayIcon,
-  SaveAsIcon,
-  SaveIcon,
-  SettingsIcon,
-  ShareIcon,
-  StopIcon,
-} from "./Icons";
+import { PlayIcon } from "./Icons";
+
+import ShareIcon from "@mui/icons-material/Share";
+import SaveIcon from "@mui/icons-material/Save";
+
 import { useAuth } from "@/providers/AuthProvider";
+import { Switch } from "@mui/material";
 
 interface SidebarProps {
   isRunning: boolean;
   onRunCode: () => void;
+  registerSubmission?: boolean;
+  handleRegisterSubmissionChange?: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
+const Sidebar: React.FC<SidebarProps> = ({
+  isRunning,
+  onRunCode,
+  registerSubmission,
+  handleRegisterSubmissionChange,
+}) => {
   const [isSharing, setIsSharing] = React.useState<boolean>(false);
   const router = useRouter();
-  const { logout } = useAuth();
 
   const handleShareFile = () => {
     setIsSharing(true);
     setTimeout(() => {
       setIsSharing(false);
     }, 1000);
-  };
-
-  const handleLogout = () => {
-    logout();
-    toast.info("Logout realizado com sucesso");
-    router.push("/login");
   };
 
   return (
@@ -58,7 +53,6 @@ const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
       >
         <PlayIcon />
       </button>
-
       <div
         className="my-2 mx-4 h-px"
         style={{ backgroundColor: "#445056" }}
@@ -72,7 +66,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
         }}
         title="Salvar como…"
       >
-        <SaveAsIcon />
+        <SaveIcon />
       </button>
 
       <button
@@ -95,19 +89,17 @@ const Sidebar: React.FC<SidebarProps> = ({ isRunning, onRunCode }) => {
         style={{ backgroundColor: "#445056" }}
       ></div>
 
-      <div className="flex-1"></div>
-
       <button
-        className="flex items-center justify-center w-16 h-16 border-none transition-all duration-200 cursor-pointer hover:bg-gray-600"
-        style={{
-          backgroundColor: "#121e24",
-          color: "#ff5555",
-        }}
-        title="Sair"
-        onClick={handleLogout}
+        className={`flex items-center justify-center my-2 cursor-pointer`}
+        title="Enviar tarefa ao executar código?"
       >
-        <LogoutIcon />
+        <Switch
+          onChange={handleRegisterSubmissionChange}
+          value={registerSubmission}
+          size="small"
+        />
       </button>
+      <div className="flex-1"></div>
     </div>
   );
 };

@@ -66,11 +66,11 @@ function TaskContent() {
   const [submissionStatus, setSubmissionStatus] = useState<
     "success" | "error" | null
   >(null);
+  const [canRegisterSubmission, setCanRegisterSubmission] = useState(false);
 
   const getTask = async () => {
     try {
       const response = await API.get(`/task/${ID}`);
-      console.log(response);
 
       // Converter os inputs dos testCases de string para array, se necessário
       const taskTestCases = response.data.taskTests;
@@ -114,6 +114,7 @@ function TaskContent() {
       setIsRunning(true);
       setSubmissionStatus(null);
       setLastResults([]);
+
       try {
         const results = await executeWithTestInputs(code, task);
         const resultsArray: ITestCaseResult[] = [];
@@ -125,7 +126,7 @@ function TaskContent() {
 
         setLastResults(resultsArray);
 
-        await registerSubmission(resultsArray);
+        if (canRegisterSubmission) await registerSubmission(resultsArray);
 
         const allPassed = resultsArray.every((r) => r.passed);
         setSubmissionStatus(allPassed ? "success" : "error");
@@ -151,7 +152,14 @@ function TaskContent() {
         className="flex flex-row w-full h-screen-bar p-4 gap-2"
         style={{ backgroundColor: "#263238" }}
       >
-        <Sidebar isRunning={isRunning} onRunCode={handleRunCode} />
+        <Sidebar
+          isRunning={isRunning}
+          onRunCode={handleRunCode}
+          registerSubmission={canRegisterSubmission}
+          handleRegisterSubmissionChange={() =>
+            setCanRegisterSubmission(!canRegisterSubmission)
+          }
+        />
         <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1">
           <div className="flex-1">
             <Editor
