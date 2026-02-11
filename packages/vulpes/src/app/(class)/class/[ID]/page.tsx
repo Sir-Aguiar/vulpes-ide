@@ -35,6 +35,7 @@ import { IClass } from "@/@types/Class";
 import { toast } from "react-toastify";
 import { ITask } from "@/@types/Task";
 import Link from "next/link";
+import { map } from "rxjs";
 
 interface IClassRequest {
   classId: string;
@@ -131,7 +132,10 @@ function ClassContent() {
       ];
     }
 
-    return [{ key: "lists", label: "Listas" }];
+    return [
+      { key: "lists", label: "Listas" },
+      { key: "tasks", label: "Tarefas" },
+    ];
   }, [isOwnerOrAdmin]);
 
   useEffect(() => {
@@ -194,7 +198,12 @@ function ClassContent() {
         ))}
       </Tabs>
 
-      {activeTab === "tasks" && <TasksTab classId={classData.classId} />}
+      {activeTab === "tasks" && (
+        <TasksTab
+          classId={classData.classId}
+          isProfessorOrAdmin={isProfessorOrAdmin}
+        />
+      )}
       {activeTab === "requests" && <RequestsTab classId={classData.classId} />}
       {activeTab === "create" && (
         <CreateListTab
@@ -209,7 +218,12 @@ function ClassContent() {
   );
 }
 
-function TasksTab({ classId }: { classId: string }) {
+interface ITaskTabProps {
+  classId: string;
+  isProfessorOrAdmin: boolean;
+}
+
+function TasksTab({ classId, isProfessorOrAdmin }: ITaskTabProps) {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -226,11 +240,12 @@ function TasksTab({ classId }: { classId: string }) {
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const response = await API.get(`/task`, {
-        params: { page: 1, limit: 50, classId },
-      });
+      const response = await API.get(`/class-task/class/${classId}`);
+      const filteredTasks = response.data.classTasks.map(
+        ({ task }: { task: ITask }) => task,
+      );
 
-      setTasks(response.data.tasks);
+      setTasks(filteredTasks);
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
       toast.error("Erro ao carregar tarefas.");
@@ -245,7 +260,9 @@ function TasksTab({ classId }: { classId: string }) {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Button onClick={handleOpenModal}>Víncular Novas Tarefas</Button>
+      {isProfessorOrAdmin && (
+        <Button onClick={handleOpenModal}>Víncular Novas Tarefas</Button>
+      )}
 
       {loading ? (
         <CircularProgress />
