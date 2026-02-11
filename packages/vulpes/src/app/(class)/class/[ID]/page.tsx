@@ -1,7 +1,16 @@
 "use client";
 
-import { FormEvent, useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
+import { IClass } from "@/@types/Class";
+import { ISubmission } from "@/@types/Submission";
+import { ITask } from "@/@types/Task";
+import AppNavBar from "@/components/AppNavBar";
+import AuthGuard from "@/components/AuthGuard";
+import { useAuth } from "@/providers/AuthProvider";
+import API from "@/services/API";
+import { Editor } from "@monaco-editor/react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import CheckBoxIcon from "@mui/icons-material/CheckBox";
+import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
 import {
   Alert,
   Autocomplete,
@@ -12,8 +21,10 @@ import {
   Checkbox,
   CircularProgress,
   Container,
+  Divider,
   Modal,
   Paper,
+  Stack,
   Tab,
   Table,
   TableBody,
@@ -25,17 +36,13 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import CheckBoxOutlineBlankIcon from "@mui/icons-material/CheckBoxOutlineBlank";
-import CheckBoxIcon from "@mui/icons-material/CheckBox";
-import AuthGuard from "@/components/AuthGuard";
-import AppNavBar from "@/components/AppNavBar";
-import API from "@/services/API";
-import { useAuth } from "@/providers/AuthProvider";
-import { IClass } from "@/@types/Class";
-import { toast } from "react-toastify";
-import { ITask } from "@/@types/Task";
+import { AnimatePresence, motion } from "framer-motion";
 import Link from "next/link";
-import { map } from "rxjs";
+import { useParams } from "next/navigation";
+import { FormEvent, useEffect, useMemo, useState } from "react";
+import { toast } from "react-toastify";
+import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
+import MDEditor from "@uiw/react-md-editor";
 
 interface IClassRequest {
   classId: string;
@@ -226,10 +233,11 @@ interface ITaskTabProps {
 function TasksTab({ classId, isProfessorOrAdmin }: ITaskTabProps) {
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState(true);
-
+  const [showSubmissions, setShowSubmissions] = useState(false);
+  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleOpenModal = () => {
+  const handleOpenModal = (taskId: string) => {
     setIsModalOpen(true);
   };
 
@@ -258,72 +266,240 @@ function TasksTab({ classId, isProfessorOrAdmin }: ITaskTabProps) {
     fetchTasks();
   }, [classId]);
 
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      {isProfessorOrAdmin && (
-        <Button onClick={handleOpenModal}>Víncular Novas Tarefas</Button>
-      )}
+  function SubmissionsContent({
+    onBack,
+    taskId,
+  }: {
+    onBack: () => void;
+    taskId: string;
+  }) {
+    const [submissions, setSubmissions] = useState<ISubmission[]>([]);
+    const [selectedSubmission, setSelectedSubmission] =
+      useState<ISubmission | null>(null);
 
-      {loading ? (
-        <CircularProgress />
-      ) : (
+    const fetchSubmissions = async () => {
+      const submissions = await API.get(`/submission/task/${taskId}`);
+      setSubmissions(submissions.data);
+    };
+
+    useEffect(() => {
+      fetchSubmissions();
+
+      return () => setSubmissions([]);
+    }, []);
+
+    const handleEditorDidMount = (editorInstance: any, monacoInstance: any) => {
+      registerPortugolLanguage(monacoInstance);
+      monacoInstance.editor.setTheme("vs-dark");
+    };
+
+    return (
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={onBack}
+          variant="outlined"
+          sx={{ maxWidth: 128 }}
+        >
+          Voltar
+        </Button>
+        <AnimatePresence mode="wait" initial={false}>
+          {selectedSubmission && (
+            <motion.div
+              key="sbumission-review"
+              initial={{ y: -100, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ x: -100, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              <Divider sx={{ my: 2 }} />
+              <Stack direction="row" gap={1} sx={{ height: 300 }}>
+                <Editor
+                  height="100%"
+                  theme="vs-dark"
+                  language="portugol"
+                  onMount={handleEditorDidMount}
+                  value={selectedSubmission ? selectedSubmission.code : ""}
+                />
+                <MDEditor height="100%" style={{ width: "100%" }} />
+              </Stack>
+              <Stack
+                direction="row"
+                gap={1}
+                alignItems="center"
+                justifyContent="flex-end"
+                sx={{ my: 2 }}
+              >
+                <Button onClick={() => setSelectedSubmission(null)}>
+                  Cancelar
+                </Button>
+                <Button variant="contained">Enviar Feedback</Button>
+              </Stack>
+              <Divider />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         <TableContainer component={Paper}>
-          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+          <Table>
             <TableHead>
               <TableRow>
-                <TableCell width={120}></TableCell>
-                <TableCell>Título</TableCell>
-                <TableCell align="right">Dificuldade</TableCell>
-                <TableCell align="right">Data de Criação</TableCell>
+                <TableCell width={320}>Nome</TableCell>
+                <TableCell>Email</TableCell>
+                <TableCell width={130} align="center">
+                  Resultado
+                </TableCell>
+                <TableCell width={130} align="center">
+                  Código
+                </TableCell>
+                <TableCell width={250}>Data</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
-              {tasks.map((task) => (
-                <TableRow key={task.taskId}>
+              {submissions.map((submission) => (
+                <TableRow key={submission.submissionId}>
+                  <TableCell>{submission.student.name}</TableCell>
+                  <TableCell>{submission.student.email}</TableCell>
+                  <TableCell align="center">
+                    {submission.isCorrect ? (
+                      <Typography color="success.main">Correto</Typography>
+                    ) : (
+                      <Typography color="error.main">Incorreto</Typography>
+                    )}
+                  </TableCell>
+                  <TableCell align="center">
+                    <Button onClick={() => setSelectedSubmission(submission)}>
+                      Analisar
+                    </Button>
+                  </TableCell>
                   <TableCell>
-                    <Link
-                      href={`/task/${task.taskId}`}
-                      style={{ textDecoration: "none" }}
-                    >
-                      <Typography variant="body2" color="primary">
-                        Ver Detalhes
-                      </Typography>
-                    </Link>
-                  </TableCell>
-                  <TableCell component="th" scope="row">
-                    {task.title}
-                  </TableCell>
-                  <TableCell align="right">Fácil</TableCell>
-                  <TableCell align="right">
-                    {new Date(task.createdAt).toLocaleDateString()}
+                    {new Date(submission.submittedAt).toLocaleString()}
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         </TableContainer>
-      )}
-      <Modal open={isModalOpen} onClose={handleCloseModal}>
-        <Box
-          sx={{
-            position: "absolute" as "absolute",
-            top: "50%",
-            left: "50%",
-            transform: "translate(-50%, -50%)",
-            width: { xs: "90%", sm: 500 },
-            bgcolor: "background.paper",
-            boxShadow: 24,
-            p: 4,
-          }}
-        >
-          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-            Víncular Novas Tarefas
-          </Typography>
-          <Typography variant="body1">
-            Esta funcionalidade ainda está em desenvolvimento.
-          </Typography>
-        </Box>
-      </Modal>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ position: "relative", overflowX: "hidden", minHeight: 400 }}>
+      <AnimatePresence mode="wait" initial={false}>
+        {!showSubmissions ? (
+          <motion.div
+            key="list"
+            initial={{ x: -100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: -100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+              {isProfessorOrAdmin && (
+                <Button onClick={handleOpenModal}>
+                  Víncular Novas Tarefas
+                </Button>
+              )}
+
+              {loading ? (
+                <CircularProgress />
+              ) : (
+                <TableContainer component={Paper}>
+                  <Table sx={{ minWidth: 650 }}>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell width={120}></TableCell>
+                        <TableCell width={40}>Envios</TableCell>
+                        <TableCell>Título</TableCell>
+                        <TableCell align="center" width={100}>
+                          Dificuldade
+                        </TableCell>
+                        <TableCell align="center" width={150}>
+                          Data de Criação
+                        </TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {tasks.map((task) => (
+                        <TableRow key={task.taskId}>
+                          <TableCell>
+                            <Link
+                              href={`/task/${task.taskId}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Typography variant="body2" color="primary">
+                                Ver Detalhes
+                              </Typography>
+                            </Link>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Box
+                              onClick={() => {
+                                setShowSubmissions(true);
+                                setSelectedTaskId(task.taskId);
+                              }}
+                              sx={{
+                                cursor: "pointer",
+                                textDecoration: "underline",
+                                color: "primary.main",
+                                "&:hover": { fontWeight: "bold" },
+                              }}
+                            >
+                              1
+                            </Box>
+                          </TableCell>
+                          <TableCell component="th" scope="row">
+                            {task.title}
+                          </TableCell>
+                          <TableCell align="center">Fácil</TableCell>
+                          <TableCell align="center">
+                            {new Date(task.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+              <Modal open={isModalOpen} onClose={handleCloseModal}>
+                <Box
+                  sx={{
+                    position: "absolute" as "absolute",
+                    top: "50%",
+                    left: "50%",
+                    transform: "translate(-50%, -50%)",
+                    width: { xs: "90%", sm: 500 },
+                    bgcolor: "background.paper",
+                    boxShadow: 24,
+                    p: 4,
+                  }}
+                >
+                  <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+                    Víncular Novas Tarefas
+                  </Typography>
+                  <Typography variant="body1">
+                    Esta funcionalidade ainda está em desenvolvimento.
+                  </Typography>
+                </Box>
+              </Modal>
+            </Box>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="submissions"
+            initial={{ x: 100, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            exit={{ x: 100, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <SubmissionsContent
+              onBack={() => setShowSubmissions(false)}
+              taskId={selectedTaskId!}
+            />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }
