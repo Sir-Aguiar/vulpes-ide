@@ -12,7 +12,15 @@ import {
   Checkbox,
   CircularProgress,
   Container,
+  Modal,
+  Paper,
   Tab,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Tabs,
   TextField,
   Typography,
@@ -25,6 +33,8 @@ import API from "@/services/API";
 import { useAuth } from "@/providers/AuthProvider";
 import { IClass } from "@/@types/Class";
 import { toast } from "react-toastify";
+import { ITask } from "@/@types/Task";
+import Link from "next/link";
 
 interface IClassRequest {
   classId: string;
@@ -99,7 +109,8 @@ function ClassContent() {
   const { ID } = useParams();
   const { user } = useAuth();
   const classId = Array.isArray(ID) ? ID[0] : ID;
-  const isProfessorOrAdmin = user?.role === "PROFESSOR" || user?.role === "ADMIN";
+  const isProfessorOrAdmin =
+    user?.role === "PROFESSOR" || user?.role === "ADMIN";
 
   const [tabIndex, setTabIndex] = useState(0);
   const [classData, setClassData] = useState<IClass | null>(null);
@@ -113,6 +124,7 @@ function ClassContent() {
   const tabs = useMemo(() => {
     if (isOwnerOrAdmin) {
       return [
+        { key: "tasks", label: "Tarefas" },
         { key: "requests", label: "Solicitações" },
         { key: "create", label: "Criar Lista" },
         { key: "lists", label: "Listas" },
@@ -182,14 +194,120 @@ function ClassContent() {
         ))}
       </Tabs>
 
-      {activeTab === "requests" && (
-        <RequestsTab classId={classData.classId} />
-      )}
+      {activeTab === "tasks" && <TasksTab classId={classData.classId} />}
+      {activeTab === "requests" && <RequestsTab classId={classData.classId} />}
       {activeTab === "create" && (
-        <CreateListTab classId={classData.classId} onCreated={() => setTabIndex(tabs.findIndex((t) => t.key === "lists"))} />
+        <CreateListTab
+          classId={classData.classId}
+          onCreated={() =>
+            setTabIndex(tabs.findIndex((t) => t.key === "lists"))
+          }
+        />
       )}
       {activeTab === "lists" && <ListsTab classId={classData.classId} />}
     </Container>
+  );
+}
+
+function TasksTab({ classId }: { classId: string }) {
+  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
+  const handleOpenModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+  };
+
+  const fetchTasks = async () => {
+    setLoading(true);
+    try {
+      const response = await API.get(`/task`, {
+        params: { page: 1, limit: 50, classId },
+      });
+
+      setTasks(response.data.tasks);
+    } catch (error) {
+      console.error("Failed to fetch tasks:", error);
+      toast.error("Erro ao carregar tarefas.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchTasks();
+  }, [classId]);
+
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <Button onClick={handleOpenModal}>Víncular Novas Tarefas</Button>
+
+      {loading ? (
+        <CircularProgress />
+      ) : (
+        <TableContainer component={Paper}>
+          <Table sx={{ minWidth: 650 }} aria-label="simple table">
+            <TableHead>
+              <TableRow>
+                <TableCell width={120}></TableCell>
+                <TableCell>Título</TableCell>
+                <TableCell align="right">Dificuldade</TableCell>
+                <TableCell align="right">Data de Criação</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {tasks.map((task) => (
+                <TableRow key={task.taskId}>
+                  <TableCell>
+                    <Link
+                      href={`/task/${task.taskId}`}
+                      style={{ textDecoration: "none" }}
+                    >
+                      <Typography variant="body2" color="primary">
+                        Ver Detalhes
+                      </Typography>
+                    </Link>
+                  </TableCell>
+                  <TableCell component="th" scope="row">
+                    {task.title}
+                  </TableCell>
+                  <TableCell align="right">Fácil</TableCell>
+                  <TableCell align="right">
+                    {new Date(task.createdAt).toLocaleDateString()}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      )}
+      <Modal open={isModalOpen} onClose={handleCloseModal}>
+        <Box
+          sx={{
+            position: "absolute" as "absolute",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            width: { xs: "90%", sm: 500 },
+            bgcolor: "background.paper",
+            boxShadow: 24,
+            p: 4,
+          }}
+        >
+          <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
+            Víncular Novas Tarefas
+          </Typography>
+          <Typography variant="body1">
+            Esta funcionalidade ainda está em desenvolvimento.
+          </Typography>
+        </Box>
+      </Modal>
+    </Box>
   );
 }
 
@@ -202,7 +320,7 @@ function RequestsTab({ classId }: { classId: string }) {
     try {
       const response = await API.get<IGetClassRequestsResponse>(
         `/student-class-permission-request/class/${classId}`,
-        { params: { page: 1, limit: 50 } }
+        { params: { page: 1, limit: 50 } },
       );
       setRequests(response.data.requests);
     } catch (error) {
@@ -220,7 +338,7 @@ function RequestsTab({ classId }: { classId: string }) {
   const handleApprove = async (studentId: string) => {
     try {
       await API.patch(
-        `/student-class-permission-request/${classId}/${studentId}/approve`
+        `/student-class-permission-request/${classId}/${studentId}/approve`,
       );
       toast.success("Solicitação aprovada.");
       fetchRequests();
@@ -232,7 +350,7 @@ function RequestsTab({ classId }: { classId: string }) {
   const handleReject = async (studentId: string) => {
     try {
       await API.patch(
-        `/student-class-permission-request/${classId}/${studentId}/reject`
+        `/student-class-permission-request/${classId}/${studentId}/reject`,
       );
       toast.success("Solicitação rejeitada.");
       fetchRequests();
@@ -285,7 +403,8 @@ function RequestsTab({ classId }: { classId: string }) {
                 </Typography>
               )}
               <Typography variant="caption" color="text.secondary">
-                Enviada em: {new Date(request.createdAt).toLocaleDateString("pt-BR")}
+                Enviada em:{" "}
+                {new Date(request.createdAt).toLocaleDateString("pt-BR")}
               </Typography>
             </Box>
             <Box sx={{ display: "flex", gap: 1 }}>
@@ -386,7 +505,7 @@ function CreateListTab({
       toast.success(
         taskCount > 0
           ? `Lista criada com ${taskCount} tarefa(s)!`
-          : "Lista criada com sucesso!"
+          : "Lista criada com sucesso!",
       );
       setTitle("");
       setDeadline("");
@@ -460,12 +579,16 @@ function CreateListTab({
           <TextField
             {...params}
             label="Tarefas (opcional)"
-            placeholder={selectedTasks.length === 0 ? "Selecione tarefas..." : ""}
+            placeholder={
+              selectedTasks.length === 0 ? "Selecione tarefas..." : ""
+            }
             InputProps={{
               ...params.InputProps,
               endAdornment: (
                 <>
-                  {loadingTasks ? <CircularProgress color="inherit" size={20} /> : null}
+                  {loadingTasks ? (
+                    <CircularProgress color="inherit" size={20} />
+                  ) : null}
                   {params.InputProps.endAdornment}
                 </>
               ),
@@ -488,8 +611,9 @@ function ListsTab({ classId }: { classId: string }) {
   const fetchLists = async () => {
     setLoading(true);
     try {
-      const response = await API.get<IGetListsResponse>(`/list/class/${classId}`,
-        { params: { page: 1, limit: 50 } }
+      const response = await API.get<IGetListsResponse>(
+        `/list/class/${classId}`,
+        { params: { page: 1, limit: 50 } },
       );
       setLists(response.data.lists);
     } catch (error) {
@@ -515,13 +639,21 @@ function ListsTab({ classId }: { classId: string }) {
   if (lists.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 8 }}>
-        <Typography color="text.secondary">Nenhuma lista cadastrada.</Typography>
+        <Typography color="text.secondary">
+          Nenhuma lista cadastrada.
+        </Typography>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" }, gap: 2 }}>
+    <Box
+      sx={{
+        display: "grid",
+        gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
+        gap: 2,
+      }}
+    >
       {lists.map((list) => (
         <Card key={list.listId}>
           <CardContent>
