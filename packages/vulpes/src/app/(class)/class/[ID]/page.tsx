@@ -446,7 +446,7 @@ function TasksTab({ classId, isProfessorOrAdmin }: ITaskTabProps) {
                                 "&:hover": { fontWeight: "bold" },
                               }}
                             >
-                              1
+                              Ver
                             </Box>
                           </TableCell>
                           <TableCell component="th" scope="row">
