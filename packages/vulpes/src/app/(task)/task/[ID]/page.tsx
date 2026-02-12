@@ -11,9 +11,12 @@ import { executeWithTestInputs, ITestCaseResult } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
 import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useParams, useSearchParams } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
+import { ISubmission } from "@/@types/Submission";
+import { set } from "zod";
+import { IList } from "@/@types/List";
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg
@@ -59,10 +62,33 @@ export default function Page() {
 function TaskContent() {
   const { ID } = useParams();
 
+  // Pega o parâmetro de lista (caso seja redirecionado) e apaga da URL
+  const searchParams = useSearchParams();
+  const [listId, setListId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const storageKey = `task_context_list_${ID}`;
+
+    const listIdFromParams = searchParams.get("listId");
+    const storedListId = sessionStorage.getItem(storageKey);
+
+    const currentListId = listIdFromParams || storedListId;
+
+    if (currentListId) {
+      setListId(currentListId);
+      sessionStorage.setItem(storageKey, currentListId);
+
+      console.log("List ID associada à tarefa:", currentListId);
+
+      window.history.replaceState(null, "", window.location.pathname);
+    }
+  }, [searchParams, ID]);
+
   const [task, setTask] = useState<ITask | null>(null);
   const [code, setCode] = useState<string>(baseCode);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
+  const [isForbiddenToSubmit, setIsForbiddenToSubmit] = useState(false);
   const [submissionStatus, setSubmissionStatus] = useState<
     "success" | "error" | null
   >(null);
@@ -90,23 +116,60 @@ function TaskContent() {
     }
   };
 
+  const [list, setList] = useState<IList | null>(null);
+
+  const getList = async () => {
+    if (!listId) return;
+
+    try {
+      const response = await API.get(`/list/${listId}/${ID}`);
+      console.log(response.data);
+      setList(response.data);
+    } catch (e) {
+      console.error("Failed to load list", e);
+    }
+  };
+
+  useEffect(() => {
+    // Se o limite de submissões for atingido, avisa na tela com um toast e desabilita o registro automático de submissões
+    if (list) {
+      const submissionLimit = list.submissionLimit;
+      const currentSubmissions = list.submissions;
+
+      if (submissionLimit) {
+        if (currentSubmissions.length >= submissionLimit) {
+          setCanRegisterSubmission(false);
+          setIsForbiddenToSubmit(true);
+          alert(
+            `Limite de submissões atingido para esta lista (${submissionLimit} submissões). Novas submissões não serão registradas.`,
+          );
+        }
+      }
+    }
+  }, [list]);
+
   useEffect(() => {
     if (ID) getTask();
+
+    if (listId) getList();
 
     document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [ID]);
+  }, [ID, listId]);
 
   const registerSubmission = async (results: ITestCaseResult[]) => {
     const isCorrect = results.every((res) => res.passed);
-    return await API.post("/submission", {
+    const result = await API.post("/submission", {
       taskId: ID,
+      listId: listId || undefined,
       code,
       isCorrect,
     });
+
+    return result;
   };
 
   const handleRunCode = async () => {
@@ -156,9 +219,10 @@ function TaskContent() {
           isRunning={isRunning}
           onRunCode={handleRunCode}
           registerSubmission={canRegisterSubmission}
-          handleRegisterSubmissionChange={() =>
-            setCanRegisterSubmission(!canRegisterSubmission)
-          }
+          handleRegisterSubmissionChange={() => {
+            setCanRegisterSubmission((prev) => !prev);
+          }}
+          isForbiddenToSubmit={isForbiddenToSubmit}
         />
         <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1">
           <div className="flex-1">

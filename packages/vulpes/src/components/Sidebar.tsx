@@ -16,12 +16,14 @@ interface SidebarProps {
   onRunCode: () => void;
   registerSubmission?: boolean;
   handleRegisterSubmissionChange?: () => void;
+  isForbiddenToSubmit?: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
   isRunning,
   onRunCode,
   registerSubmission,
+  isForbiddenToSubmit,
   handleRegisterSubmissionChange,
 }) => {
   const [isSharing, setIsSharing] = React.useState<boolean>(false);
@@ -93,11 +95,13 @@ const Sidebar: React.FC<SidebarProps> = ({
         className={`flex items-center justify-center my-2 cursor-pointer`}
         title="Enviar tarefa ao executar código?"
       >
-        <Switch
-          onChange={handleRegisterSubmissionChange}
-          value={registerSubmission}
-          size="small"
-        />
+        {!isForbiddenToSubmit && (
+          <Switch
+            onChange={handleRegisterSubmissionChange}
+            value={registerSubmission}
+            size="small"
+          />
+        )}
       </button>
       <div className="flex-1"></div>
     </div>

@@ -1,7 +1,10 @@
+import { IList } from "./List";
+
 export interface ISubmission {
   submissionId: string;
   studentId: string;
   taskId: string;
+  listId?: string;
   code: string;
   isCorrect: boolean;
   submittedAt: string;
@@ -13,4 +16,5 @@ export interface ISubmission {
       name: string;
     };
   };
+  list: IList;
 }
