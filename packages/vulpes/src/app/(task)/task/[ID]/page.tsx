@@ -17,6 +17,7 @@ import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import { ISubmission } from "@/@types/Submission";
 import { set } from "zod";
 import { IList } from "@/@types/List";
+import { toast } from "react-toastify";
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg
@@ -77,9 +78,7 @@ function TaskContent() {
     if (currentListId) {
       setListId(currentListId);
       sessionStorage.setItem(storageKey, currentListId);
-
-      console.log("List ID associada à tarefa:", currentListId);
-
+      getList(currentListId);
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, [searchParams, ID]);
@@ -118,47 +117,51 @@ function TaskContent() {
 
   const [list, setList] = useState<IList | null>(null);
 
-  const getList = async () => {
-    if (!listId) return;
+  const getList = async (pListId: string) => {
+    if (!pListId) return;
 
     try {
-      const response = await API.get(`/list/${listId}/${ID}`);
-      console.log(response.data);
-      setList(response.data);
+      const response = await API.get(`/list/${pListId}/${ID}`);
+      const resposeList = response.data;
+
+      const isListValid = checkIfListIsValid(resposeList);
+
+      if (!isListValid) blockSubmissions();
+
+      setList(resposeList);
     } catch (e) {
       console.error("Failed to load list", e);
     }
   };
 
-  useEffect(() => {
-    // Se o limite de submissões for atingido, avisa na tela com um toast e desabilita o registro automático de submissões
-    if (list) {
-      const submissionLimit = list.submissionLimit;
-      const currentSubmissions = list.submissions;
+  const blockSubmissions = () => {
+    setCanRegisterSubmission(false);
+    setIsForbiddenToSubmit(true);
+    toast.info(
+      "O limite de envios para esta tarefa foi atingido, você pode executar o código, mas não enviar para avaliação",
+    );
+  };
 
-      if (submissionLimit) {
-        if (currentSubmissions.length >= submissionLimit) {
-          setCanRegisterSubmission(false);
-          setIsForbiddenToSubmit(true);
-          alert(
-            `Limite de submissões atingido para esta lista (${submissionLimit} submissões). Novas submissões não serão registradas.`,
-          );
-        }
-      }
+  const checkIfListIsValid = (list: IList) => {
+    const submissionLimit = list.submissionLimit;
+    const currentSubmissions = list.submissions;
+
+    if (submissionLimit) {
+      return currentSubmissions.length < submissionLimit;
     }
-  }, [list]);
+
+    return true;
+  };
 
   useEffect(() => {
     if (ID) getTask();
-
-    if (listId) getList();
 
     document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [ID, listId]);
+  }, [ID]);
 
   const registerSubmission = async (results: ITestCaseResult[]) => {
     const isCorrect = results.every((res) => res.passed);
@@ -168,6 +171,8 @@ function TaskContent() {
       code,
       isCorrect,
     });
+
+    if (listId) await getList(listId);
 
     return result;
   };
