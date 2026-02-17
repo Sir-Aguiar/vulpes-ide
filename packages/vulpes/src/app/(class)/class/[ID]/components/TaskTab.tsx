@@ -27,6 +27,7 @@ import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
 import { ISubmission } from "@/@types/Submission";
 import Link from "next/link";
+import { useAuth } from "@/providers/AuthProvider";
 
 interface ITaskTabProps {
   classId: string;
@@ -37,6 +38,7 @@ export default function TasksTab({
   classId,
   isProfessorOrAdmin,
 }: ITaskTabProps) {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState<ITask[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubmissions, setShowSubmissions] = useState(false);
@@ -227,7 +229,10 @@ export default function TasksTab({
                     <TableHead>
                       <TableRow>
                         <TableCell width={120}></TableCell>
-                        <TableCell width={40}>Envios</TableCell>
+
+                        {user?.role !== "STUDENT" && (
+                          <TableCell width={40}>Envios</TableCell>
+                        )}
                         <TableCell>Título</TableCell>
                         <TableCell align="center" width={100}>
                           Dificuldade
@@ -250,22 +255,25 @@ export default function TasksTab({
                               </Typography>
                             </Link>
                           </TableCell>
-                          <TableCell align="center">
-                            <Box
-                              onClick={() => {
-                                setShowSubmissions(true);
-                                setSelectedTaskId(task.taskId);
-                              }}
-                              sx={{
-                                cursor: "pointer",
-                                textDecoration: "underline",
-                                color: "primary.main",
-                                "&:hover": { fontWeight: "bold" },
-                              }}
-                            >
-                              Ver
-                            </Box>
-                          </TableCell>
+                          {user?.role !== "STUDENT" && (
+                            <TableCell align="center">
+                              <Box
+                                onClick={() => {
+                                  setShowSubmissions(true);
+                                  setSelectedTaskId(task.taskId);
+                                }}
+                                sx={{
+                                  cursor: "pointer",
+                                  textDecoration: "underline",
+                                  color: "primary.main",
+                                  "&:hover": { fontWeight: "bold" },
+                                }}
+                              >
+                                Ver
+                              </Box>
+                            </TableCell>
+                          )}
+
                           <TableCell component="th" scope="row">
                             {task.title}
                           </TableCell>
