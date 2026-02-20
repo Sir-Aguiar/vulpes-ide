@@ -3,11 +3,8 @@ import API from "@/services/API";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
   Divider,
-  Modal,
   Paper,
   Stack,
   Table,
@@ -28,6 +25,7 @@ import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
 import { ISubmission } from "@/@types/Submission";
 import Link from "next/link";
 import { useAuth } from "@/providers/AuthProvider";
+import LinkTask from "./LinkTask";
 
 interface ITaskTabProps {
   classId: string;
@@ -287,27 +285,10 @@ export default function TasksTab({
                   </Table>
                 </TableContainer>
               )}
-              <Modal open={isModalOpen} onClose={handleCloseModal}>
-                <Box
-                  sx={{
-                    position: "absolute" as "absolute",
-                    top: "50%",
-                    left: "50%",
-                    transform: "translate(-50%, -50%)",
-                    width: { xs: "90%", sm: 500 },
-                    bgcolor: "background.paper",
-                    boxShadow: 24,
-                    p: 4,
-                  }}
-                >
-                  <Typography variant="h6" component="h2" sx={{ mb: 2 }}>
-                    Víncular Novas Tarefas
-                  </Typography>
-                  <Typography variant="body1">
-                    Esta funcionalidade ainda está em desenvolvimento.
-                  </Typography>
-                </Box>
-              </Modal>
+              <LinkTask
+                isModalOpen={isModalOpen}
+                handleCloseModal={handleCloseModal}
+              />
             </Box>
           </motion.div>
         ) : (

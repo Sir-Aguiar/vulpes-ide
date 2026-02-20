@@ -164,6 +164,10 @@ function TaskContent() {
   }, [ID]);
 
   const registerSubmission = async (results: ITestCaseResult[]) => {
+    const isListValid = !!list && checkIfListIsValid(list);
+
+    if (!isListValid) return;
+
     const isCorrect = results.every((res) => res.passed);
     const result = await API.post("/submission", {
       taskId: ID,
