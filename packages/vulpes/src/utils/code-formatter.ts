@@ -71,6 +71,19 @@ export function generatePrintStatement(
   return `escreva("Saída recebida: " + ${functionData.functionName}(${paramsString}) + "\\n")`;
 }
 
+export function appendLibrariesToCode(
+  code: string,
+  libraries: string[],
+): string {
+  if (libraries.length === 0) return code;
+
+  const librariesString = libraries.join("\n\t");
+  const regex = /(programa\s*{)/;
+
+  // Insere as bibliotecas logo após a abertura do programa
+  return code.replace(regex, `$1\n\t${librariesString}\n`);
+}
+
 export function formatPortugolCode(
   code: string,
   indentSize: number = 2,

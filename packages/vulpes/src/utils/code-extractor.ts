@@ -215,3 +215,17 @@ export const extractFunctionCodeFromProgram = (code: string): string | null => {
 
   return null;
 };
+
+export const extractLibariesFromPrograma = (code: string): string[] => {
+  const libraryRegex = /inclua\s+biblioteca\s+(\w+)\s*-->\s*(\w+)/g;
+  const libraries: string[] = [];
+  let match;
+
+  while ((match = libraryRegex.exec(code)) !== null) {
+    const libraryName = match[1];
+    const alias = match[2];
+    libraries.push(`inclua biblioteca ${libraryName} --> ${alias}`);
+  }
+
+  return libraries;
+};
