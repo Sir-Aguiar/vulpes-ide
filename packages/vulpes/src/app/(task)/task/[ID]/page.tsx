@@ -6,7 +6,6 @@ import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
 import Sidebar from "@/components/Sidebar";
 import API from "@/services/API";
-import { appendFunctionToCode } from "@/utils/code-extractor";
 import { executeWithTestInputs, ITestCaseResult } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
 import { Editor } from "@monaco-editor/react";
@@ -18,6 +17,7 @@ import { ISubmission } from "@/@types/Submission";
 import { set } from "zod";
 import { IList } from "@/@types/List";
 import { toast } from "react-toastify";
+import { appendFunctionToCode } from "@/utils/code-formatter";
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg
@@ -109,7 +109,7 @@ function TaskContent() {
 
       const taskData = { ...response.data, taskTests: formattedTestCases };
       setTask(taskData);
-      setCode(appendFunctionToCode(baseCode, response.data.functionDef));
+      setCode(appendFunctionToCode(baseCode, taskData.functionDef));
     } catch (e) {
       console.error("Failed to load task", e);
     }
@@ -202,8 +202,6 @@ function TaskContent() {
 
         const allPassed = resultsArray.every((r) => r.passed);
         setSubmissionStatus(allPassed ? "success" : "error");
-
-        console.log("Resultados dos testes:", results);
       } catch (error) {
         console.error("Erro ao executar testes:", error);
         setSubmissionStatus("error");

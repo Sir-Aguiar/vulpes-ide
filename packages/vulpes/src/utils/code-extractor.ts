@@ -86,28 +86,30 @@ export const extractUserFunction = (
   code: string,
   functionName: string,
 ): string | null => {
-  const functionRegex = new RegExp(
-    `funcao\\s+.*\\s+${functionName}\\s*\\(.*\\)\\s*{([\\s\\S]*?)}\\s*`,
+  const regex = new RegExp(
+    `funcao\\s+(?:[\\w\\[\\]]+\\s+)?${functionName}\\s*\\([^)]*\\)\\s*\\{`,
   );
-  const userFunction = code.match(functionRegex)?.[0];
-  return userFunction || null;
-};
+  const match = regex.exec(code);
 
-export const appendFunctionToCode = (
-  code: string,
-  functionDef: string,
-): string => {
-  const insertionPoint = "funcao inicio()";
-  const insertionIndex = code.indexOf(insertionPoint);
+  if (!match) return null;
 
-  if (insertionIndex === -1) {
-    return code;
+  const startIndex = match.index;
+  let openBraces = 0;
+  let i = startIndex + match[0].length - 1; // Aponta para a primeira '{' da função
+
+  for (; i < code.length; i++) {
+    if (code[i] === "{") {
+      openBraces++;
+    } else if (code[i] === "}") {
+      openBraces--;
+      if (openBraces === 0) {
+        // eslint-disable-next-line unicorn/prefer-string-slice
+        return code.substring(startIndex, i + 1);
+      }
+    }
   }
 
-  const before = code.slice(0, Math.max(0, insertionIndex));
-  const after = code.slice(Math.max(0, insertionIndex));
-
-  return `${before}${functionDef}\n  ${after}`;
+  return null;
 };
 
 /**
@@ -217,14 +219,19 @@ export const extractFunctionCodeFromProgram = (code: string): string | null => {
 };
 
 export const extractLibariesFromPrograma = (code: string): string[] => {
-  const libraryRegex = /inclua\s+biblioteca\s+(\w+)\s*-->\s*(\w+)/g;
+  const libraryRegex = /inclua\s+biblioteca\s+(\w+)(?:\s*-->\s*(\w+))?/g;
   const libraries: string[] = [];
   let match;
 
   while ((match = libraryRegex.exec(code)) !== null) {
     const libraryName = match[1];
     const alias = match[2];
-    libraries.push(`inclua biblioteca ${libraryName} --> ${alias}`);
+
+    if (alias) {
+      libraries.push(`inclua biblioteca ${libraryName} --> ${alias}`);
+    } else {
+      libraries.push(`inclua biblioteca ${libraryName}`);
+    }
   }
 
   return libraries;

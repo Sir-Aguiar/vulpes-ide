@@ -84,6 +84,16 @@ export function appendLibrariesToCode(
   return code.replace(regex, `$1\n\t${librariesString}\n`);
 }
 
+export const appendFunctionToCode = (
+  code: string,
+  functionDef: string,
+): string => {
+  const regex = /(programa\s*{)/;
+
+  // Insere a função logo após a abertura do programa
+  return code.replace(regex, `$1\n\t${functionDef}`);
+};
+
 export function formatPortugolCode(
   code: string,
   indentSize: number = 2,

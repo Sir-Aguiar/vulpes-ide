@@ -2,10 +2,12 @@ import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { IExecutableTestCase, ITask } from "../@types/Task";
 import {
   extractFunctionTypeAndParams,
+  extractLibariesFromPrograma,
   extractUserFunction,
 } from "./code-extractor";
 import {
   appendArrayVariablesToCode,
+  appendLibrariesToCode,
   formatPortugolCode,
   generateArrayVariable,
   generatePrintStatement,
@@ -21,12 +23,13 @@ export interface ITestCaseResult {
 
 export const executeWithTestInputs = async (code: string, task: ITask) => {
   const functionData = extractFunctionTypeAndParams(task.functionDef)!;
-
+  const libariesDeclarations = extractLibariesFromPrograma(code);
   const functionMatch = extractUserFunction(code, functionData.functionName);
 
   const executableTestCases: IExecutableTestCase[] = task.taskTests.map(
     (testCase) => ({
       ...testCase,
+      input: [...testCase.input],
       arraysDeclarations: [],
     }),
   );
@@ -66,7 +69,8 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
       });
 
       let baseCode = `
-        programa {
+
+      programa {
           ${functionMatch || ""}
 
           funcao inicio() {
@@ -79,6 +83,8 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
         baseCode,
         testCase.arraysDeclarations.map((decl) => decl.declaration),
       );
+
+      baseCode = appendLibrariesToCode(baseCode, libariesDeclarations);
 
       baseCode = formatPortugolCode(baseCode);
 
