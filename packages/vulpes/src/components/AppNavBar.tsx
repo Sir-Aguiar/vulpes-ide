@@ -58,6 +58,11 @@ export default function AppNavBar(props?: IProps) {
       roles: ["STUDENT", "PROFESSOR", "ADMIN"],
     },
     {
+      label: "Tarefas",
+      path: "/tasks",
+      roles: ["STUDENT", "PROFESSOR", "ADMIN"],
+    },
+    {
       label: "Permissões",
       path: "/professor-permissions",
       roles: ["ADMIN"],

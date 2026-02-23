@@ -17,7 +17,6 @@ import {
   extractFunctionCodeFromProgram,
   extractFunctionFromProgram,
   IFunctionData,
-  appendFunctionToCode,
 } from "@/utils/code-extractor";
 import { baseCode } from "@/utils/mocks";
 import { CreateTaskSchema } from "../../../../@schemas/Task.schema";
@@ -35,6 +34,7 @@ import useTestCases from "../../new-task/hooks/useTestCases";
 import { toast } from "react-toastify";
 import { IMyClassesResponse, IClassListItem } from "@/@types/Class";
 import { ITask } from "@/@types/Task";
+import { appendFunctionToCode } from "@/utils/code-formatter";
 
 interface IClassTask {
   classId: string;
@@ -83,11 +83,19 @@ function EditTaskContent() {
   const [selectedClasses, setSelectedClasses] = useState<IClassListItem[]>([]);
   const [loadingClasses, setLoadingClasses] = useState(true);
   const [loadingTask, setLoadingTask] = useState(true);
-  const [originalTask, setOriginalTask] = useState<ITaskWithClassTasks | null>(null);
+  const [originalTask, setOriginalTask] = useState<ITaskWithClassTasks | null>(
+    null,
+  );
 
   const router = useRouter();
-  const { testCases, addTestCase, removeTestCase, updateInput, updateOutput, setTestCases } =
-    useTestCases(userFunctionData?.returnType);
+  const {
+    testCases,
+    addTestCase,
+    removeTestCase,
+    updateInput,
+    updateOutput,
+    setTestCases,
+  } = useTestCases(userFunctionData?.returnType);
 
   const {
     control,
@@ -113,7 +121,7 @@ function EditTaskContent() {
   useEffect(() => {
     const fetchTask = async () => {
       if (!ID) return;
-      
+
       setLoadingTask(true);
       try {
         const response = await API.get<ITaskWithClassTasks>(`/task/${ID}`);
@@ -135,7 +143,7 @@ function EditTaskContent() {
         // Set code
         const taskCode = appendFunctionToCode(baseCode, task.functionDef);
         setCode(taskCode);
-        
+
         // Extract function data
         const functionData = extractFunctionFromProgram(taskCode);
         if (functionData) setUserFunctionData(functionData);
@@ -148,7 +156,7 @@ function EditTaskContent() {
               input: Array.isArray(test.input) ? test.input : [test.input],
               expectedOutput: test.expectedOutput,
               expectedOutputType: test.expectedOutputType,
-            }))
+            })),
           );
         }
       } catch (error) {
@@ -191,7 +199,10 @@ function EditTaskContent() {
   }, [originalTask, classes]);
 
   useEffect(() => {
-    setValue("classIds", selectedClasses.map((c) => c.classId));
+    setValue(
+      "classIds",
+      selectedClasses.map((c) => c.classId),
+    );
   }, [selectedClasses, setValue]);
 
   const onEditorChange = useCallback((value: string | undefined) => {
@@ -256,7 +267,12 @@ function EditTaskContent() {
         );
       case FormStep.REVIEW:
         return (
-          <StepReview control={control} code={code} testCases={testCases} selectedClasses={selectedClasses} />
+          <StepReview
+            control={control}
+            code={code}
+            testCases={testCases}
+            selectedClasses={selectedClasses}
+          />
         );
       default:
         return null;
@@ -266,7 +282,14 @@ function EditTaskContent() {
   if (loadingTask) {
     return (
       <ContentWrapper>
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", height: "100vh" }}>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            height: "100vh",
+          }}
+        >
           <CircularProgress />
         </Box>
       </ContentWrapper>
