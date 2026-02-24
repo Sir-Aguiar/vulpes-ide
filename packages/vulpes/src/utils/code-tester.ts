@@ -111,10 +111,13 @@ export const executeWithTestInputs = async (code: string, task: ITask) => {
           eventsSubscription.unsubscribe();
           executor.stop();
 
+          console.log(event.error);
+          console.log(executor.byteCode);
           reject(new Error("Erro na execução do código"));
         }
       });
 
+      console.log(baseCode);
       executor.run(baseCode);
     });
   }
