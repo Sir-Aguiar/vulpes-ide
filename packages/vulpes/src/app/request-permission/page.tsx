@@ -18,16 +18,18 @@ import {
 } from "@/@schemas/RequestPermission.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import API from "@/services/API";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import RHFSelect from "@/components/RHF/Select";
 import { MenuItem } from "@mui/material";
 
 export default function RequestPermissionPage() {
+  const searchParams = useSearchParams();
   const [isSuccess, setIsSuccess] = useState(false);
 
   const {
     control,
     handleSubmit,
+    setValue,
     formState: { errors, isSubmitting },
   } = useForm<ICreateTeacherPermissionDTO>({
     resolver: safeZodResolver(CreateTeacherPermissionSchema),
@@ -41,12 +43,6 @@ export default function RequestPermissionPage() {
   });
   const [Institutions, setInstitutions] = useState<any[]>([]);
 
-  useEffect(() => {
-    API.get("/institution").then((response) => {
-      setInstitutions(response.data);
-    });
-  }, []);
-
   const router = useRouter();
 
   const onSubmit = async (data: ICreateTeacherPermissionDTO) => {
@@ -54,10 +50,13 @@ export default function RequestPermissionPage() {
       const formData = new FormData();
 
       for (const key in data) {
-        formData.append(
-          key,
-          data[key as keyof ICreateTeacherPermissionDTO].toString(),
-        );
+        const value = data[key as keyof ICreateTeacherPermissionDTO];
+
+        if (value instanceof File) {
+          formData.append(key, value);
+        } else if (value !== undefined && value !== null) {
+          formData.append(key, String(value));
+        }
       }
 
       await API.post("professor-permission-request", formData, {
@@ -75,26 +74,41 @@ export default function RequestPermissionPage() {
     }
   };
 
+  useEffect(() => {
+    API.get("/institution").then((response) => {
+      setInstitutions(response.data);
+    });
+
+    const name = searchParams.get("name");
+    const email = searchParams.get("email");
+    const institutionId = searchParams.get("institutionId");
+
+    if (name && email) {
+      setValue("name", name);
+      setValue("personalEmail", email);
+    }
+
+    if (institutionId) {
+      setValue("institutionId", Number(institutionId));
+    }
+
+    window.history.replaceState({}, document.title, "/request-permission");
+  }, [searchParams]);
+
   return (
     <Box
       sx={{
         height: "100vh",
         width: "100vw",
-        overflow: "hidden",
         display: "flex",
+        minHeight: "690px",
       }}
     >
       <Box
         sx={{
           flex: 1,
-          height: "100%",
           display: "flex",
-          flexDirection: "column",
-          justifyContent: "center",
-          alignItems: "center",
-          p: 6,
-          bgcolor: "background.paper",
-          overflowY: "auto",
+          p: 4,
         }}
       >
         <Box sx={{ width: "100%", maxWidth: 480 }}>
@@ -122,7 +136,7 @@ export default function RequestPermissionPage() {
                 </Stack>
 
                 <form onSubmit={handleSubmit(onSubmit)}>
-                  <Stack spacing={3}>
+                  <Stack spacing={2}>
                     <RHFTextField
                       control={control}
                       name="name"
@@ -185,7 +199,7 @@ export default function RequestPermissionPage() {
                                   ? "error.main"
                                   : "primary.main",
                                 borderRadius: 2,
-                                p: 3,
+                                p: 2,
                                 display: "flex",
                                 flexDirection: "column",
                                 alignItems: "center",
@@ -359,16 +373,6 @@ export default function RequestPermissionPage() {
           </AnimatePresence>
         </Box>
       </Box>
-
-      {/*Placeholder */}
-      <Box
-        sx={{
-          flex: 1,
-          bgcolor: "grey.100",
-          display: { xs: "none", md: "block" },
-          position: "relative",
-        }}
-      ></Box>
     </Box>
   );
 }

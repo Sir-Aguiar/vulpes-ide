@@ -16,7 +16,7 @@ import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -51,6 +51,7 @@ export default function SignupPage() {
     control,
     handleSubmit,
     formState: { errors, isValid, isSubmitting },
+    getValues,
   } = useForm<ISignupDTO>({
     resolver: safeZodResolver(SignupSchema),
     mode: "onChange",
@@ -88,241 +89,247 @@ export default function SignupPage() {
 
   const handleRequestProfessorAccess = () => {
     setOpenProfessorModal(false);
-    router.push("/request-permission");
+
+    const { name, email, institutionId } = getValues();
+
+    const queryParams = new URLSearchParams({
+      name,
+      email,
+    }).toString();
+
+    const requestURL = window.location.origin + "/request-permission";
+
+    redirect(
+      `${requestURL}?${queryParams}${institutionId ? `&institutionId=${institutionId}` : ""}`,
+    );
   };
 
   return (
-    <>
+    <Box
+      sx={{
+        height: "100vh",
+        width: "100vw",
+        overflow: "hidden",
+        display: "flex",
+      }}
+    >
       <Box
         sx={{
-          height: "100vh",
-          width: "100vw",
-          overflow: "hidden",
+          flex: 1,
+          height: "100%",
           display: "flex",
+          flexDirection: "column",
+          justifyContent: "center",
+          alignItems: "center",
+          p: 6,
+          bgcolor: "background.paper",
         }}
       >
-        {/* Form Side */}
-        <Box
-          sx={{
-            flex: 1,
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            justifyContent: "center",
-            alignItems: "center",
-            p: 6,
-            bgcolor: "background.paper",
-            overflowY: "auto",
-          }}
-        >
-          <Box sx={{ width: "100%", maxWidth: 480 }}>
-            <AnimatePresence mode="wait">
-              {!isSuccess ? (
-                <motion.div
-                  key="form"
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <Stack spacing={1} sx={{ mb: 5 }}>
-                    <Typography
-                      variant="h4"
-                      fontWeight="bold"
-                      color="text.primary"
-                    >
-                      Criar Conta
-                    </Typography>
-                    <Typography variant="body1" color="text.secondary">
-                      Preencha os dados abaixo para começar a usar a plataforma.
-                    </Typography>
-                  </Stack>
-
-                  <form onSubmit={handleSubmit(onSubmit)}>
-                    <Stack spacing={3}>
-                      <RHFTextField
-                        control={control}
-                        name="name"
-                        label="Nome Completo"
-                        errors={errors}
-                        autoComplete="name"
-                      />
-
-                      <RHFTextField
-                        control={control}
-                        name="email"
-                        label="Email"
-                        type="email"
-                        errors={errors}
-                        autoComplete="email"
-                      />
-
-                      <RHFTextField
-                        control={control}
-                        name="password"
-                        label="Senha"
-                        type={showPassword ? "text" : "password"}
-                        errors={errors}
-                        autoComplete="new-password"
-                        slotProps={{
-                          input: {
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  onClick={() => setShowPassword(!showPassword)}
-                                  edge="end"
-                                >
-                                  {showPassword ? (
-                                    <VisibilityOffIcon />
-                                  ) : (
-                                    <VisibilityIcon />
-                                  )}
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
-
-                      <RHFTextField
-                        control={control}
-                        name="passwordConfirm"
-                        label="Confirmar Senha"
-                        type={showPasswordConfirm ? "text" : "password"}
-                        errors={errors}
-                        autoComplete="new-password"
-                        slotProps={{
-                          input: {
-                            endAdornment: (
-                              <InputAdornment position="end">
-                                <IconButton
-                                  onClick={() =>
-                                    setShowPasswordConfirm(!showPasswordConfirm)
-                                  }
-                                  edge="end"
-                                >
-                                  {showPasswordConfirm ? (
-                                    <VisibilityOffIcon />
-                                  ) : (
-                                    <VisibilityIcon />
-                                  )}
-                                </IconButton>
-                              </InputAdornment>
-                            ),
-                          },
-                        }}
-                      />
-
-                      <RHFSelect
-                        control={control}
-                        name="institutionId"
-                        label="Instituição"
-                        errors={errors}
-                      >
-                        {Institutions.map(({ institutionId, name }) => (
-                          <MenuItem key={institutionId} value={institutionId}>
-                            {name}
-                          </MenuItem>
-                        ))}
-                      </RHFSelect>
-
-                      <Button
-                        type="submit"
-                        variant="contained"
-                        size="large"
-                        disabled={!isValid || isSubmitting}
-                        sx={{ mt: 2 }}
-                      >
-                        {isSubmitting ? (
-                          <CircularProgress size={24} color="inherit" />
-                        ) : (
-                          "Criar Conta"
-                        )}
-                      </Button>
-
-                      <Box sx={{ textAlign: "center", mt: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          Já tem uma conta?{" "}
-                          <Link
-                            href="/login"
-                            underline="hover"
-                            sx={{ cursor: "pointer", fontWeight: 600 }}
-                          >
-                            Faça login
-                          </Link>
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  </form>
-                </motion.div>
-              ) : (
-                <motion.div
-                  key="success"
-                  initial={{ opacity: 0, scale: 0.8 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  transition={{ duration: 0.5 }}
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    textAlign: "center",
-                  }}
-                >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    animate={{ scale: 1 }}
-                    transition={{
-                      delay: 0.2,
-                      type: "spring",
-                      stiffness: 200,
-                      damping: 15,
-                    }}
+        <Box sx={{ width: "100%", maxWidth: 480 }}>
+          <AnimatePresence mode="wait">
+            {!isSuccess ? (
+              <motion.div
+                key="form"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.3 }}
+              >
+                <Stack spacing={1} sx={{ mb: 5 }}>
+                  <Typography
+                    variant="h4"
+                    fontWeight="bold"
+                    color="text.primary"
                   >
-                    <CheckCircleIcon
-                      sx={{
-                        fontSize: 120,
-                        color: "success.main",
-                        mb: 3,
-                      }}
-                    />
-                  </motion.div>
-                  <Typography variant="h4" fontWeight="bold" gutterBottom>
-                    Conta Criada com Sucesso!
+                    Criar Conta
                   </Typography>
                   <Typography variant="body1" color="text.secondary">
-                    Bem-vindo à plataforma Vulpes IDE.
+                    Preencha os dados abaixo para começar a usar a plataforma.
                   </Typography>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </Box>
-        </Box>
+                </Stack>
 
-        {/* Hero Side */}
-        <Box
-          sx={{
-            flex: 1,
-            height: "100%",
-            bgcolor: "primary.main",
-            display: { xs: "none", md: "flex" },
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            p: 6,
-            color: "primary.contrastText",
-          }}
-        >
-          <Typography variant="h3" fontWeight="bold" gutterBottom>
-            Vulpes IDE
-          </Typography>
-          <Typography variant="h6" sx={{ maxWidth: 400, textAlign: "center" }}>
-            Aprenda programação de forma interativa e intuitiva
-          </Typography>
+                <form onSubmit={handleSubmit(onSubmit)}>
+                  <Stack spacing={3}>
+                    <RHFTextField
+                      control={control}
+                      name="name"
+                      label="Nome Completo"
+                      errors={errors}
+                      autoComplete="name"
+                    />
+
+                    <RHFTextField
+                      control={control}
+                      name="email"
+                      label="Email"
+                      type="email"
+                      errors={errors}
+                      autoComplete="email"
+                    />
+
+                    <RHFTextField
+                      control={control}
+                      name="password"
+                      label="Senha"
+                      type={showPassword ? "text" : "password"}
+                      errors={errors}
+                      autoComplete="new-password"
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() => setShowPassword(!showPassword)}
+                                edge="end"
+                              >
+                                {showPassword ? (
+                                  <VisibilityOffIcon />
+                                ) : (
+                                  <VisibilityIcon />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+
+                    <RHFTextField
+                      control={control}
+                      name="passwordConfirm"
+                      label="Confirmar Senha"
+                      type={showPasswordConfirm ? "text" : "password"}
+                      errors={errors}
+                      autoComplete="new-password"
+                      slotProps={{
+                        input: {
+                          endAdornment: (
+                            <InputAdornment position="end">
+                              <IconButton
+                                onClick={() =>
+                                  setShowPasswordConfirm(!showPasswordConfirm)
+                                }
+                                edge="end"
+                              >
+                                {showPasswordConfirm ? (
+                                  <VisibilityOffIcon />
+                                ) : (
+                                  <VisibilityIcon />
+                                )}
+                              </IconButton>
+                            </InputAdornment>
+                          ),
+                        },
+                      }}
+                    />
+
+                    <RHFSelect
+                      control={control}
+                      name="institutionId"
+                      label="Instituição"
+                      errors={errors}
+                    >
+                      {Institutions.map(({ institutionId, name }) => (
+                        <MenuItem key={institutionId} value={institutionId}>
+                          {name}
+                        </MenuItem>
+                      ))}
+                    </RHFSelect>
+
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      size="large"
+                      disabled={!isValid || isSubmitting}
+                      sx={{ mt: 2 }}
+                    >
+                      {isSubmitting ? (
+                        <CircularProgress size={24} color="inherit" />
+                      ) : (
+                        "Criar Conta"
+                      )}
+                    </Button>
+
+                    <Box sx={{ textAlign: "center", mt: 2 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Já tem uma conta?{" "}
+                        <Link
+                          href="/login"
+                          underline="hover"
+                          sx={{ cursor: "pointer", fontWeight: 600 }}
+                        >
+                          Faça login
+                        </Link>
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </form>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="success"
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.5 }}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  textAlign: "center",
+                }}
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{
+                    delay: 0.2,
+                    type: "spring",
+                    stiffness: 200,
+                    damping: 15,
+                  }}
+                >
+                  <CheckCircleIcon
+                    sx={{
+                      fontSize: 120,
+                      color: "success.main",
+                      mb: 3,
+                    }}
+                  />
+                </motion.div>
+                <Typography variant="h4" fontWeight="bold" gutterBottom>
+                  Conta Criada com Sucesso!
+                </Typography>
+                <Typography variant="body1" color="text.secondary">
+                  Bem-vindo à plataforma Vulpes IDE.
+                </Typography>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </Box>
       </Box>
 
-      {/* Professor Permission Modal */}
+      <Box
+        sx={{
+          flex: 1,
+          height: "100%",
+          bgcolor: "primary.main",
+          display: { xs: "none", md: "flex" },
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          p: 6,
+          color: "primary.contrastText",
+        }}
+      >
+        <Typography variant="h3" fontWeight="bold" gutterBottom>
+          Vulpes IDE
+        </Typography>
+        <Typography variant="h6" sx={{ maxWidth: 400, textAlign: "center" }}>
+          Aprenda programação de forma interativa e intuitiva
+        </Typography>
+      </Box>
+
       <Dialog
         open={openProfessorModal}
         onClose={handleContinueAsStudent}
@@ -359,6 +366,6 @@ export default function SignupPage() {
           </Button>
         </DialogActions>
       </Dialog>
-    </>
+    </Box>
   );
 }
