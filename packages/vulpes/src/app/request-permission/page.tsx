@@ -7,7 +7,7 @@ import CircularProgress from "@mui/material/CircularProgress";
 import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { safeZodResolver } from "@/utils/safeZodResolver";
@@ -22,7 +22,29 @@ import { useRouter, useSearchParams } from "next/navigation";
 import RHFSelect from "@/components/RHF/Select";
 import { MenuItem } from "@mui/material";
 
-export default function RequestPermissionPage() {
+export default function Page() {
+  const [isWindowReady, setIsWindowReady] = useState(false);
+
+  useEffect(() => {
+    setIsWindowReady(true);
+  }, []);
+
+  return (
+    <Suspense fallback={<SuspenseFallback />}>
+      {isWindowReady && <RequestPermissionPage />}
+    </Suspense>
+  );
+}
+
+function SuspenseFallback() {
+  return (
+    <div className="w-full h-screen flex items-center justify-center">
+      <CircularProgress />
+    </div>
+  );
+}
+
+function RequestPermissionPage() {
   const searchParams = useSearchParams();
   const [isSuccess, setIsSuccess] = useState(false);
 
