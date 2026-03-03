@@ -34,7 +34,7 @@ export default function LoginPage() {
     resolver: safeZodResolver(LoginSchema),
     mode: "onChange",
     defaultValues: {
-      email: "",
+      email: "",  
       password: "",
     },
   });

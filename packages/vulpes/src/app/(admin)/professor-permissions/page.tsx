@@ -262,7 +262,6 @@ function ProfessorPermissionsContent() {
                   {request.requestStatus === "PENDING" && (
                     <Box sx={{ display: "flex", gap: 1 }}>
                       <Button
-                        variant="contained"
                         color="success"
                         startIcon={<CheckIcon />}
                         onClick={() =>
@@ -276,7 +275,6 @@ function ProfessorPermissionsContent() {
                         Aprovar
                       </Button>
                       <Button
-                        variant="contained"
                         color="error"
                         startIcon={<CloseIcon />}
                         onClick={() =>
