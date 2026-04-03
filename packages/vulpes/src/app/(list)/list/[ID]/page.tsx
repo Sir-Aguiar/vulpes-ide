@@ -59,29 +59,10 @@ export default function Page() {
 }
 
 function TaskContent() {
-  const { ID } = useParams();
+  const { ID: listId } = useParams();
 
-  // Pega o parâmetro de lista (caso seja redirecionado) e apaga da URL
-  const searchParams = useSearchParams();
-  const [listId, setListId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storageKey = `task_context_list_${ID}`;
-
-    const listIdFromParams = searchParams.get("listId");
-    const storedListId = sessionStorage.getItem(storageKey);
-
-    const currentListId = listIdFromParams || storedListId;
-
-    if (currentListId) {
-      setListId(currentListId);
-      sessionStorage.setItem(storageKey, currentListId);
-      getList(currentListId);
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  }, [searchParams, ID]);
-
-  const [task, setTask] = useState<ITask | null>(null);
+  const [currentTask, setCurrentTask] = useState<ITask | null>(null);
+  const [tasks, setTasks] = useState<ITask[]>([]);
   const [code, setCode] = useState<string>(baseCode);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
@@ -91,23 +72,27 @@ function TaskContent() {
   >(null);
   const [canRegisterSubmission, setCanRegisterSubmission] = useState(false);
 
-  const getTask = async () => {
+  const getTasks = async () => {
     try {
-      const response = await API.get(`/task/${ID}`);
+      const response = await API.get(`/class-task-list/task/${listId}`);
 
-      // Converter os inputs dos testCases de string para array, se necessário
-      const taskTestCases = response.data.taskTests;
-      const formattedTestCases = taskTestCases?.map((testCase: any) => ({
-        ...testCase,
-        input:
-          typeof testCase.input === "string"
-            ? JSON.parse(testCase.input)
-            : testCase.input,
-      }));
+      const formatedTasks = response.data.tasks.map((task: ITask) => {
+        // Converter os inputs dos testCases de string para array, se necessário
+        const taskTestCases = task.taskTests;
+        const formattedTestCases = taskTestCases?.map((testCase: any) => ({
+          ...testCase,
+          input:
+            typeof testCase.input === "string"
+              ? JSON.parse(testCase.input)
+              : testCase.input,
+        }));
 
-      const taskData = { ...response.data, taskTests: formattedTestCases };
-      setTask(taskData);
-      setCode(appendFunctionToCode(baseCode, taskData.functionDef));
+        return { ...task, taskTests: formattedTestCases };
+      });
+
+      setCurrentTask(formatedTasks[0]);
+      setTasks(formatedTasks);
+      setCode(appendFunctionToCode(baseCode, formatedTasks[0].functionDef));
     } catch (e) {
       console.error("Failed to load task", e);
     }
@@ -115,11 +100,9 @@ function TaskContent() {
 
   const [list, setList] = useState<IList | null>(null);
 
-  const getList = async (pListId: string) => {
-    if (!pListId) return;
-
+  const getList = async () => {
     try {
-      const response = await API.get(`/list/${pListId}/${ID}`);
+      const response = await API.get(`/list/${listId}`);
       const resposeList = response.data;
 
       const isListValid = checkIfListIsValid(resposeList);
@@ -152,41 +135,23 @@ function TaskContent() {
   };
 
   useEffect(() => {
-    if (ID) getTask();
+    if (listId) getTasks();
 
     document.body.style.overflow = "hidden";
 
     return () => {
       document.body.style.overflow = "auto";
     };
-  }, [ID]);
-
-  const registerSubmission = async (results: ITestCaseResult[]) => {
-    const isListValid = !!list && checkIfListIsValid(list);
-
-    if (!isListValid) return;
-
-    const isCorrect = results.every((res) => res.passed);
-    const result = await API.post("/submission", {
-      taskId: ID,
-      listId: listId || undefined,
-      code,
-      isCorrect,
-    });
-
-    if (listId) await getList(listId);
-
-    return result;
-  };
+  }, [listId]);
 
   const handleRunCode = async () => {
-    if (code && task) {
+    if (code && currentTask) {
       setIsRunning(true);
       setSubmissionStatus(null);
       setLastResults([]);
 
       try {
-        const results = await executeWithTestInputs(code, task);
+        const results = await executeWithTestInputs(code, currentTask);
         const resultsArray: ITestCaseResult[] = [];
 
         results.keys().forEach((key) => {
@@ -195,8 +160,6 @@ function TaskContent() {
         });
 
         setLastResults(resultsArray);
-
-        if (canRegisterSubmission) await registerSubmission(resultsArray);
 
         const allPassed = resultsArray.every((r) => r.passed);
         setSubmissionStatus(allPassed ? "success" : "error");
@@ -227,6 +190,8 @@ function TaskContent() {
           handleRegisterSubmissionChange={() => {
             setCanRegisterSubmission((prev) => !prev);
           }}
+          isInList
+          tasksInList={tasks}
         />
         <div className="flex-1 flex flex-col rounded-md overflow-hidden gap-1">
           <div className="flex-1">
@@ -342,7 +307,7 @@ function TaskContent() {
         </div>
       </div>
       <MDEditor.Markdown
-        source={task?.description || ""}
+        source={currentTask?.description || ""}
         style={{
           height: "100%",
           width: "100%",

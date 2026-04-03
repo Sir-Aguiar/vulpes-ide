@@ -1,32 +1,24 @@
 "use client";
 
-import Sidebar from "@/components/Sidebar";
-import AppNavBar from "@/components/AppNavBar";
-import { CustomWebWorkersRunner } from "@/utils/WebWorkerRunner";
-import Editor from "@monaco-editor/react";
-import { PortugolExecutor } from "@portugol-webstudio/runner";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import { useAuth } from "@/providers/AuthProvider";
-import CircularProgress from "@mui/material/CircularProgress";
-import Box from "@mui/material/Box";
-import {
-  Container,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Typography,
-} from "@mui/material";
-import ContentWrapper from "@/components/ContentWrapper/ContentWrapper";
-import { Montserrat } from "next/font/google";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { ITask } from "@/@types/Task";
+import AppNavBar from "@/components/AppNavBar";
+import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import {
+    Paper,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Typography
+} from "@mui/material";
+import { Montserrat } from "next/font/google";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 

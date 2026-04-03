@@ -1,0 +1,4 @@
+.editor_container {
+  @apply w-full min-h-screen h-full bg-black;
+  @apply flex items-center justify-center;
+}
