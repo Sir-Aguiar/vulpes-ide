@@ -2,3 +2,8 @@
   @apply w-full min-h-screen h-full bg-black;
   @apply flex items-center justify-center;
 }
+
+.layout_container {
+  @apply "h-[calc(100vh-64px)] w-full grid gap-4 p-2";
+  @apply lg:grid-cols-12 lg:grid-rows-12 max-lg:grid-cols-10 max-lg:grid-rows-16;
+}

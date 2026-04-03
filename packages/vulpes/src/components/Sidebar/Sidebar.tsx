@@ -23,15 +23,21 @@ interface SidebarProps {
 }
 
 const BoxStyle: SxProps = {
-  width: "64px",
-  height: "100%",
-  backgroundColor: COLORS.dark.background[900],
+  gridColumn: "1 / 1",
+  gridRow: "1 / 13",
+  maxWidth: "84px",
+  bgcolor: "#222",
   display: "flex",
   flexDirection: "column",
   alignItems: "center",
   gap: "12px",
   padding: "8px",
   borderRadius: "8px",
+  "@media (max-width: 1280px)": {
+    gridColumn: "1 / 11",
+    gridRow: "7/ 8",
+    flexDirection: "row",
+  },
 };
 
 const SiderBarButton = ({
@@ -58,7 +64,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   isInList,
   tasksInList,
 }) => {
-  const [isSharing, setIsSharing] = React.useState<boolean>(false);
   const router = useRouter();
 
   return (
@@ -72,20 +77,6 @@ const Sidebar: React.FC<SidebarProps> = ({
       <SiderBarButton>
         <SaveAsIcon style={{ color: "Highlight" }} />
       </SiderBarButton>
-      {isInList && (
-        <>
-          <Divider sx={{ background: "#fff" }} flexItem />
-          <span className="text-white text-[10px]">Tarefas</span>
-          {tasksInList?.map((task, index) => (
-            <SiderBarButton
-              key={task.taskId}
-              onClick={() => router.push(`/tasks/${task.taskId}`)}
-            >
-              <span className="text-white">{index + 1}</span>
-            </SiderBarButton>
-          ))}
-        </>
-      )}
     </Box>
   );
 };
