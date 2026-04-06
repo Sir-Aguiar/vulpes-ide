@@ -1,11 +1,17 @@
 "use client";
 
-import styles from "./Sidebar.module.css";
-
 import { useRouter } from "next/navigation";
 import React from "react";
 
-import { Box, Button, Divider, SxProps } from "@mui/material";
+import {
+  Box,
+  Button,
+  Divider,
+  Step,
+  StepLabel,
+  Stepper,
+  SxProps,
+} from "@mui/material";
 
 import StopIcon from "@mui/icons-material/Stop";
 import { PlayIcon, SaveAsIcon } from "../Icons";
@@ -20,6 +26,7 @@ interface SidebarProps {
   handleRegisterSubmissionChange?: () => void;
   isInList?: boolean;
   tasksInList?: ITask[];
+  activeTaskIndex?: number;
 }
 
 const BoxStyle: SxProps = {
@@ -37,6 +44,7 @@ const BoxStyle: SxProps = {
     gridColumn: "1 / 11",
     gridRow: "7/ 8",
     flexDirection: "row",
+    maxWidth: "100%",
   },
 };
 
@@ -63,8 +71,20 @@ const Sidebar: React.FC<SidebarProps> = ({
   handleRegisterSubmissionChange,
   isInList,
   tasksInList,
+  activeTaskIndex,
 }) => {
   const router = useRouter();
+  const isSmallScreen = window.innerWidth < 1280;
+
+  const handleAdvance = () => {
+    if (isInList && tasksInList && tasksInList.length > 0) {
+      const nextIndex =
+        (activeTaskIndex !== undefined ? activeTaskIndex + 1 : 0) %
+        tasksInList.length;
+      const nextTask = tasksInList[nextIndex];
+      router.push(`/task/${nextTask.taskId}?list=${nextTask.listId}`); // Navega para a próxima tarefa
+    }
+  };
 
   return (
     <Box sx={BoxStyle}>
@@ -77,6 +97,35 @@ const Sidebar: React.FC<SidebarProps> = ({
       <SiderBarButton>
         <SaveAsIcon style={{ color: "Highlight" }} />
       </SiderBarButton>
+
+      {isInList && (
+        <>
+          <Stepper
+            activeStep={activeTaskIndex || 0}
+            orientation={isSmallScreen ? "horizontal" : "vertical"}
+            sx={{
+              background: "transparent",
+              "& .MuiStepLabel-root .Mui-active": {
+                color: COLORS.dark.primary[500], // Cor do ícone ativo
+              },
+              "& .MuiStepLabel-label.Mui-active": {
+                color: "white", // Cor do texto ativo
+              },
+              ...(isSmallScreen ? { mx: "auto" } : { my: "auto" }),
+            }}
+          >
+            {tasksInList?.map((task, index) => (
+              <Step key={task.taskId}>
+                <StepLabel></StepLabel>
+              </Step>
+            ))}
+          </Stepper>
+
+          <Button size="small" onClick={handleAdvance}>
+            Avançar
+          </Button>
+        </>
+      )}
     </Box>
   );
 };

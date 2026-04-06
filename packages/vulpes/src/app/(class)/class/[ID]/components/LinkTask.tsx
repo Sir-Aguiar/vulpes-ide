@@ -20,6 +20,7 @@ import {
 } from "@mui/material";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 interface IProps {
@@ -28,13 +29,17 @@ interface IProps {
 }
 
 export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
+  const { classId } = useParams();
+
   const [searchField, setSearchField] = useState("");
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [tasks, setTasks] = useState<ITask[]>([]);
 
   const fetchTasks = async () => {
     try {
-      const response = await API.get(`/task`);
+      const response = await API.get(`task/linkable-to-class`, {
+        params: { classId },
+      });
       setTasks(response.data.tasks);
       console.log(response.data);
     } catch (error) {
@@ -61,6 +66,8 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
           width: { xs: "90%", sm: "70%", md: "50%" },
           bgcolor: "background.paper",
           boxShadow: 24,
+          maxHeight: "80vh",
+          overflowY: "auto",
           p: 4,
         }}
       >

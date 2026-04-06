@@ -11,7 +11,7 @@ import { executeWithTestInputs, ITestCaseResult } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
 import { Box } from "@mui/material";
 import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import { Editor } from "@monaco-editor/react";
@@ -289,11 +289,13 @@ function TaskContent() {
       setListId(currentListId);
       sessionStorage.setItem(storageKey, currentListId);
       getList(currentListId);
+      getTasksInList(currentListId);
       window.history.replaceState(null, "", window.location.pathname);
     }
   }, [searchParams, ID]);
 
   const [task, setTask] = useState<ITask | null>(null);
+  const [tasksInList, setTasksInList] = useState<ITask[]>([]);
   const [code, setCode] = useState<string>(baseCode);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
@@ -320,6 +322,33 @@ function TaskContent() {
       const taskData = { ...response.data, taskTests: formattedTestCases };
       setTask(taskData);
       setCode(appendFunctionToCode(baseCode, taskData.functionDef));
+    } catch (e) {
+      console.error("Failed to load task", e);
+    }
+  };
+
+  const getTasksInList = async (pListId: string) => {
+    console.log("Loading tasks for list", pListId);
+
+    try {
+      const response = await API.get(`/class-task-list/task/${pListId}`);
+      console.log(response);
+      const formatedTasks = response.data.tasks.map((task: ITask) => {
+        // Converter os inputs dos testCases de string para array, se necessário
+        const taskTestCases = task.taskTests;
+        const formattedTestCases = taskTestCases?.map((testCase: any) => ({
+          ...testCase,
+          input:
+            typeof testCase.input === "string"
+              ? JSON.parse(testCase.input)
+              : testCase.input,
+        }));
+
+        return { ...task, taskTests: formattedTestCases };
+      });
+
+      setTasksInList(formatedTasks);
+      setCode(appendFunctionToCode(baseCode, formatedTasks[0].functionDef));
     } catch (e) {
       console.error("Failed to load task", e);
     }
@@ -388,7 +417,9 @@ function TaskContent() {
       isCorrect,
     });
 
-    if (listId) await getList(listId);
+    if (listId) {
+      await getList(listId);
+    }
 
     return result;
   };
@@ -423,10 +454,10 @@ function TaskContent() {
     }
   };
 
-  function handleEditorDidMount(editorInstance: any, monacoInstance: any) {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  }
+  const activeTaskIndex = useMemo(() => {
+    if (!list || !tasksInList.length) return 0;
+    return tasksInList.findIndex((t) => t.taskId === task?.taskId) || 0;
+  }, [list, tasksInList, task]);
 
   return (
     <LayoutBox>
@@ -437,6 +468,9 @@ function TaskContent() {
         handleRegisterSubmissionChange={() => {
           setCanRegisterSubmission((prev) => !prev);
         }}
+        isInList={!!list}
+        tasksInList={tasksInList}
+        activeTaskIndex={activeTaskIndex}
       />
       <CodeSection
         code={code}
