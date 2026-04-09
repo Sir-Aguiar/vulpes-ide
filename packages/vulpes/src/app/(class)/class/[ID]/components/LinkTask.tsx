@@ -2,7 +2,9 @@ import { ITask } from "@/@types/Task";
 import API from "@/services/API";
 import {
   Box,
+  Button,
   Checkbox,
+  CircularProgress,
   MenuItem,
   Modal,
   Paper,
@@ -21,19 +23,34 @@ import {
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { ChangeEvent, useEffect, useState } from "react";
 
 interface IProps {
   handleCloseModal: () => void;
   isModalOpen: boolean;
 }
 
+const modalStyle = {
+  position: "absolute" as "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: { xs: "90%", sm: "70%", md: "50%" },
+  bgcolor: "background.paper",
+  boxShadow: 24,
+  maxHeight: "80vh",
+  overflowY: "auto",
+  p: 4,
+};
+
 export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
-  const { classId } = useParams();
+  const { ID: classId } = useParams();
 
   const [searchField, setSearchField] = useState("");
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
   const [tasks, setTasks] = useState<ITask[]>([]);
+
+  const [linkLoading, setLinkLoading] = useState(false);
 
   const fetchTasks = async () => {
     try {
@@ -47,6 +64,30 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
     }
   };
 
+  const selectTask = (e: ChangeEvent<HTMLInputElement>, task: ITask) => {
+    if (e.target.checked) {
+      setSelectedTasks([...selectedTasks, task.taskId]);
+    } else {
+      setSelectedTasks(selectedTasks.filter((id) => id !== task.taskId));
+    }
+  };
+
+  const linkSelectedTasks = async () => {
+    setLinkLoading(true);
+    try {
+      for (const taskId of selectedTasks) {
+        const response = await API.post(`/class-task`, { classId, taskId });
+        console.log(`Linked Task ${taskId}:`, response.data);
+      }
+
+      handleCloseModal();
+    } catch (error) {
+      console.error("Failed to link tasks:", error);
+    } finally {
+      setLinkLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (isModalOpen) {
       fetchTasks();
@@ -57,20 +98,7 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
 
   return (
     <Modal open={isModalOpen} onClose={handleCloseModal}>
-      <Box
-        sx={{
-          position: "absolute" as "absolute",
-          top: "50%",
-          left: "50%",
-          transform: "translate(-50%, -50%)",
-          width: { xs: "90%", sm: "70%", md: "50%" },
-          bgcolor: "background.paper",
-          boxShadow: 24,
-          maxHeight: "80vh",
-          overflowY: "auto",
-          p: 4,
-        }}
-      >
+      <Box sx={modalStyle}>
         <Stack spacing={2}>
           <Stack spacing={2} direction="row">
             <TextField
@@ -102,15 +130,7 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
                     <TableCell>
                       <Checkbox
                         checked={selectedTasks.includes(task.taskId)}
-                        onChange={(e) => {
-                          if (e.target.checked) {
-                            setSelectedTasks([...selectedTasks, task.taskId]);
-                          } else {
-                            setSelectedTasks(
-                              selectedTasks.filter((id) => id !== task.taskId),
-                            );
-                          }
-                        }}
+                        onChange={(e) => selectTask(e, task)}
                       />
                     </TableCell>
                     <TableCell>
@@ -135,6 +155,12 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
               </TableBody>
             </Table>
           </TableContainer>
+          <Stack direction="row" justifyContent="flex-end" spacing={2}>
+            <Button fullWidth>Cancelar</Button>
+            <Button fullWidth onClick={linkSelectedTasks} variant="contained">
+              {linkLoading ? <CircularProgress size={20} /> : "Linkar Tarefas"}
+            </Button>
+          </Stack>
         </Stack>
       </Box>
     </Modal>
