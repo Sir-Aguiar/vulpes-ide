@@ -25,6 +25,7 @@ interface SidebarProps {
   registerSubmission?: boolean;
   handleRegisterSubmissionChange?: () => void;
   isInList?: boolean;
+  listId?: string;
   tasksInList?: ITask[];
   activeTaskIndex?: number;
 }
@@ -72,6 +73,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   isInList,
   tasksInList,
   activeTaskIndex,
+  listId,
 }) => {
   const router = useRouter();
   const isSmallScreen = window.innerWidth < 1280;
@@ -82,7 +84,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         (activeTaskIndex !== undefined ? activeTaskIndex + 1 : 0) %
         tasksInList.length;
       const nextTask = tasksInList[nextIndex];
-      router.push(`/task/${nextTask.taskId}?list=${nextTask.listId}`); // Navega para a próxima tarefa
+      router.push(`/task/${nextTask.taskId}?listId=${listId}`); // Navega para a próxima tarefa
     }
   };
 

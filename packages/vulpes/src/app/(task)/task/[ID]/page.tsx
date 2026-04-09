@@ -471,6 +471,7 @@ function TaskContent() {
         isInList={!!list}
         tasksInList={tasksInList}
         activeTaskIndex={activeTaskIndex}
+        listId={listId || undefined}
       />
       <CodeSection
         code={code}
