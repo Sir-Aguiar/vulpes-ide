@@ -1,21 +1,28 @@
 "use client";
 
-import { IList } from "@/@types/List";
 import { ITask } from "@/@types/Task";
 import AppNavBar from "@/components/AppNavBar";
 import AuthGuard from "@/components/AuthGuard";
 import Sidebar from "@/components/Sidebar/Sidebar";
 import API from "@/services/API";
 import { appendFunctionToCode } from "@/utils/code-formatter";
-import { executeWithTestInputs, ITestCaseResult } from "@/utils/code-tester";
+import {
+  executeWithTestInputs,
+  ICompileError,
+  ITestCaseResult,
+} from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
-import { Box } from "@mui/material";
-import { useParams, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
-import { toast } from "react-toastify";
-import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
+import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import CodeIcon from "@mui/icons-material/Code";
+import TerminalIcon from "@mui/icons-material/Terminal";
+import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
+import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
+import { COLORS } from "@/utils/colors";
 
 const CheckIcon = ({ className }: { className?: string }) => (
   <svg
@@ -62,26 +69,88 @@ function LayoutBox({ children }: { children: React.ReactNode }) {
   return (
     <Box
       sx={{
-        display: "grid",
+        display: "flex",
         width: "100%",
-        gap: 4,
+        gap: 2,
         padding: 2,
         bgcolor: "#263238",
-        // Telas > 1280px
         "@media (min-width: 1281px)": {
-          gridTemplateColumns: "repeat(12, 1fr)",
-          gridTemplateRows: "repeat(12, 1fr)",
+          flexDirection: "row",
           height: "calc(100vh - 64px)",
         },
-        // Telas <= 1280px
         "@media (max-width: 1280px)": {
-          gridTemplateColumns: "repeat(10, 1fr)",
-          gridTemplateRows: "repeat(16, 1fr)",
-          height: "calc(200vh - 64px)",
+          flexDirection: "column",
+          minHeight: "calc(100vh - 64px)",
         },
       }}
     >
       {children}
+    </Box>
+  );
+}
+
+interface ICollapsibleHeaderProps {
+  icon: React.ReactNode;
+  title: string;
+  collapsed: boolean;
+  onToggle: () => void;
+  trailing?: React.ReactNode;
+}
+
+function CollapsibleHeader({
+  icon,
+  title,
+  collapsed,
+  onToggle,
+  trailing,
+}: ICollapsibleHeaderProps) {
+  return (
+    <Box
+      onClick={onToggle}
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "space-between",
+        px: 2,
+        py: 1,
+        bgcolor: "#252526",
+        borderBottom: collapsed ? "none" : "1px solid",
+        borderColor: "rgba(255,255,255,0.08)",
+        cursor: "pointer",
+        userSelect: "none",
+        borderRadius: collapsed ? "8px" : "8px 8px 0 0",
+        transition: "background-color 0.15s ease",
+        "&:hover": { bgcolor: "#2d2d30" },
+      }}
+    >
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        <Box sx={{ color: COLORS.dark.primary[500], display: "flex" }}>
+          {icon}
+        </Box>
+        <Typography
+          variant="body2"
+          sx={{ color: "#d4d4d4", fontWeight: 600, letterSpacing: 0.2 }}
+        >
+          {title}
+        </Typography>
+      </Box>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+        {trailing}
+        <IconButton
+          size="small"
+          sx={{ color: "#9e9e9e", p: 0.25 }}
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggle();
+          }}
+        >
+          {collapsed ? (
+            <ExpandMoreIcon fontSize="small" />
+          ) : (
+            <ExpandLessIcon fontSize="small" />
+          )}
+        </IconButton>
+      </Box>
     </Box>
   );
 }
@@ -91,6 +160,7 @@ interface ICodeSection {
   setCode: (code: string) => void;
   submissionStatus: "success" | "error" | null;
   lastResults: ITestCaseResult[];
+  compileErrors: ICompileError[];
   isRunning: boolean;
 }
 
@@ -99,146 +169,206 @@ function CodeSection({
   setCode,
   submissionStatus,
   lastResults,
+  compileErrors,
   isRunning,
 }: ICodeSection) {
-  const editorBoxStyle = {
-    gridColumn: "2 / 8",
-    gridRow: "1 / 10",
-    "@media (max-width: 1280px)": {
-      gridColumn: "1 / 11",
-      gridRow: "8 / 14",
-    },
-  };
+  const [editorCollapsed, setEditorCollapsed] = useState(false);
+  const [outputCollapsed, setOutputCollapsed] = useState(false);
 
-  const outputBoxStyle = {
-    gridColumn: "2 / 8",
-    gridRow: "10 / 13",
-    display: "flex",
-    flexDirection: "column",
-    "@media (max-width: 1280px)": {
-      gridColumn: "1 / 11",
-      gridRow: "14 / 17",
-    },
-  };
-
-  function handleEditorDidMount(editorInstance: any, monacoInstance: any) {
+  function handleEditorDidMount(_editor: any, monacoInstance: any) {
     registerPortugolLanguage(monacoInstance);
     monacoInstance.editor.setTheme("vs-dark");
   }
 
+  const statusBadge =
+    submissionStatus === "success" ? (
+      <span className="flex items-center text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
+        <CheckIcon className="w-3.5 h-3.5 mr-1" /> SUCESSO
+      </span>
+    ) : submissionStatus === "error" ? (
+      <span className="flex items-center text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+        <XIcon className="w-3.5 h-3.5 mr-1" /> FALHA
+      </span>
+    ) : null;
+
   return (
-    <>
-      <Box sx={editorBoxStyle}>
-        <Editor
-          height="100%"
-          theme="vs-dark"
-          language="portugol"
-          value={code}
-          onChange={(value) => setCode(value || "")}
-          onMount={handleEditorDidMount}
-          options={{
-            fontSize: 14,
-            tabSize: 2,
-            wordWrap: "on",
-            minimap: { enabled: true },
-            lineNumbers: "on",
-            renderWhitespace: "selection",
-            automaticLayout: true,
-            tabCompletion: "on",
-            cursorStyle: "line",
-            scrollBeyondLastLine: false,
-          }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        minHeight: 0,
+        height: "100%",
+        gap: 1,
+      }}
+    >
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: editorCollapsed ? "0 0 auto" : "1 1 70%",
+          minHeight: 0,
+          borderRadius: "8px",
+          overflow: "hidden",
+          bgcolor: "#1e1e1e",
+          border: "1px solid rgba(255,255,255,0.05)",
+        }}
+      >
+        <CollapsibleHeader
+          icon={<CodeIcon fontSize="small" />}
+          title="Editor"
+          collapsed={editorCollapsed}
+          onToggle={() => setEditorCollapsed((v) => !v)}
         />
+        {!editorCollapsed && (
+          <Box sx={{ flex: 1, minHeight: 240 }}>
+            <Editor
+              height="100%"
+              theme="vs-dark"
+              language="portugol"
+              value={code}
+              onChange={(value) => setCode(value || "")}
+              onMount={handleEditorDidMount}
+              options={{
+                fontSize: 14,
+                tabSize: 2,
+                wordWrap: "on",
+                minimap: { enabled: true },
+                lineNumbers: "on",
+                renderWhitespace: "selection",
+                automaticLayout: true,
+                tabCompletion: "on",
+                cursorStyle: "line",
+                scrollBeyondLastLine: false,
+              }}
+            />
+          </Box>
+        )}
       </Box>
-      <Box sx={outputBoxStyle}>
-        <div className="flex items-center justify-between px-4 py-2 bg-[#252526] border-b border-gray-700">
-          <span className="text-sm font-semibold text-gray-300">
-            Terminal / Resultados
-          </span>
-          <div className="flex items-center gap-2">
-            {submissionStatus === "success" && (
-              <span className="flex items-center text-xs font-bold text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full border border-green-500/20">
-                <CheckIcon className="w-3.5 h-3.5 mr-1" /> SUCESSO
-              </span>
-            )}
-            {submissionStatus === "error" && (
-              <span className="flex items-center text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
-                <XIcon className="w-3.5 h-3.5 mr-1" /> FALHA
-              </span>
-            )}
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-2">
-          {lastResults.length === 0 && !isRunning && (
-            <div className="flex h-full items-center justify-center text-gray-500 text-sm">
-              Execute o código para ver os resultados.
-            </div>
-          )}
-          {isRunning && (
-            <div className="flex h-full items-center justify-center text-gray-400 text-sm animate-pulse">
-              Executando testes...
-            </div>
-          )}
-
-          {lastResults.map((result, index) => (
-            <div
-              key={index}
-              className="flex flex-col bg-[#2d2d2d] rounded bg-opacity-40 overflow-hidden"
-            >
-              <div
-                className={`flex items-center px-3 py-2 border-l-4 ${
-                  result.passed
-                    ? "border-green-500 bg-green-500/5"
-                    : "border-red-500 bg-red-500/5"
-                }`}
-              >
-                <span className="mr-3">
-                  {result.passed ? (
-                    <CheckIcon className="w-5 h-5 text-green-500" />
-                  ) : (
-                    <XIcon className="w-5 h-5 text-red-500" />
-                  )}
-                </span>
-                <span
-                  className={`text-sm font-medium ${
-                    result.passed ? "text-green-400" : "text-red-400"
-                  }`}
-                >
-                  Teste {index + 1}
-                </span>
-                <span className="ml-auto text-xs text-gray-500">
-                  {result.passed ? "Passou" : "Falhou"}
-                </span>
-              </div>
-
-              {!result.passed && (
-                <div className="px-4 py-2 bg-[#1e1e1e] bg-opacity-50 text-xs font-mono border-t border-gray-700 text-gray-300">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <span className="block text-gray-500 mb-0.5">
-                        Esperado:
-                      </span>
-                      <div className="bg-gray-800 p-1 rounded text-green-300">
-                        {result.expectedOutput}
-                      </div>
-                    </div>
-                    <div>
-                      <span className="block text-gray-500 mb-0.5">
-                        Obtido:
-                      </span>
-                      <div className="bg-gray-800 p-1 rounded text-red-300">
-                        {result.actualOutput}
-                      </div>
-                    </div>
-                  </div>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          flex: outputCollapsed ? "0 0 auto" : "1 1 30%",
+          minHeight: 0,
+          borderRadius: "8px",
+          overflow: "hidden",
+          bgcolor: "#1e1e1e",
+          border: "1px solid rgba(255,255,255,0.05)",
+        }}
+      >
+        <CollapsibleHeader
+          icon={<TerminalIcon fontSize="small" />}
+          title="Terminal / Resultados"
+          collapsed={outputCollapsed}
+          onToggle={() => setOutputCollapsed((v) => !v)}
+          trailing={statusBadge}
+        />
+        {!outputCollapsed && (
+          <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#1e1e1e] min-h-[160px]">
+            {compileErrors.length === 0 &&
+              lastResults.length === 0 &&
+              !isRunning && (
+                <div className="flex h-full items-center justify-center text-gray-500 text-sm">
+                  Execute o código para ver os resultados.
                 </div>
               )}
-            </div>
-          ))}
-        </div>
+            {isRunning && (
+              <div className="flex h-full items-center justify-center text-gray-400 text-sm animate-pulse">
+                Executando testes...
+              </div>
+            )}
+
+            {!isRunning && compileErrors.length > 0 && (
+              <div className="bg-[#1e1e1e] rounded border border-red-500/30 overflow-hidden">
+                <div className="flex items-center px-3 py-2 bg-red-500/10 border-b border-red-500/20">
+                  <XIcon className="w-4 h-4 text-red-500 mr-2" />
+                  <span className="text-sm font-semibold text-red-400">
+                    {compileErrors.length === 1
+                      ? "1 erro de compilação"
+                      : `${compileErrors.length} erros de compilação`}
+                  </span>
+                </div>
+                <ul className="px-4 py-2 space-y-1 text-xs font-mono text-red-300">
+                  {compileErrors.map((err, idx) => (
+                    <li key={idx} className="leading-relaxed">
+                      <span className="text-gray-500 mr-2">
+                        [{err.kind === "parse" ? "sintaxe" : "semântico"}]
+                      </span>
+                      <span className="text-gray-400 mr-2">
+                        linha {err.line}, coluna {err.column}:
+                      </span>
+                      <span>{err.message}</span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="px-4 py-2 text-[11px] text-gray-500 border-t border-gray-700">
+                  Corrija os erros acima para que os testes sejam executados.
+                </div>
+              </div>
+            )}
+
+            {!isRunning &&
+              compileErrors.length === 0 &&
+              lastResults.map((result, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col bg-[#2d2d2d] rounded bg-opacity-40 overflow-hidden"
+                >
+                  <div
+                    className={`flex items-center px-3 py-2 border-l-4 ${
+                      result.passed
+                        ? "border-green-500 bg-green-500/5"
+                        : "border-red-500 bg-red-500/5"
+                    }`}
+                  >
+                    <span className="mr-3">
+                      {result.passed ? (
+                        <CheckIcon className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <XIcon className="w-5 h-5 text-red-500" />
+                      )}
+                    </span>
+                    <span
+                      className={`text-sm font-medium ${
+                        result.passed ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      Teste {index + 1}
+                    </span>
+                    <span className="ml-auto text-xs text-gray-500">
+                      {result.passed ? "Passou" : "Falhou"}
+                    </span>
+                  </div>
+
+                  {!result.passed && (
+                    <div className="px-4 py-2 bg-[#1e1e1e] bg-opacity-50 text-xs font-mono border-t border-gray-700 text-gray-300">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="block text-gray-500 mb-0.5">
+                            Esperado:
+                          </span>
+                          <div className="bg-gray-800 p-1 rounded text-green-300">
+                            {result.expectedOutput}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="block text-gray-500 mb-0.5">
+                            Obtido:
+                          </span>
+                          <div className="bg-gray-800 p-1 rounded text-red-300">
+                            {result.actualOutput}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ))}
+          </div>
+        )}
       </Box>
-    </>
+    </Box>
   );
 }
 
@@ -247,26 +377,78 @@ interface IDetailsSection {
 }
 
 function DetailsSection({ task }: IDetailsSection) {
-  const boxStyle = {
-    gridColumn: "8 / 13",
-    gridRow: "1 / 13",
-    "@media (max-width: 1280px)": {
-      gridColumn: "1 / 11",
-      gridRow: "1 / 7",
-    },
-    overflowY: "auto",
-  };
-
   return (
-    <Box sx={boxStyle}>
-      <MDEditor.Markdown
-        source={task?.description || ""}
-        style={{
-          padding: "8px 16px",
-          overflowY: "auto",
-          backgroundColor: "#263238",
-        }}
+    <Box
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        height: "100%",
+        minHeight: 0,
+        borderRadius: "8px",
+        overflow: "hidden",
+        backgroundColor: "transparent",
+        color: "white",
+      }}
+    >
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
+        <MDEditor.Markdown
+          source={task?.description || ""}
+          style={{
+            padding: "8px 16px",
+            backgroundColor: "transparent",
+            color: "white",
+          }}
+        />
+      </Box>
+    </Box>
+  );
+}
+
+interface ITaskViewProps {
+  task: ITask;
+  code: string;
+  setCode: (code: string) => void;
+  submissionStatus: "success" | "error" | null;
+  lastResults: ITestCaseResult[];
+  compileErrors: ICompileError[];
+  isRunning: boolean;
+}
+
+function TaskView({
+  task,
+  code,
+  setCode,
+  submissionStatus,
+  lastResults,
+  compileErrors,
+  isRunning,
+}: ITaskViewProps) {
+  return (
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "grid",
+        gap: 2,
+        "@media (min-width: 1281px)": {
+          gridTemplateColumns: "minmax(0, 3fr) minmax(0, 2fr)",
+          gridTemplateRows: "1fr",
+        },
+        "@media (max-width: 1280px)": {
+          gridTemplateColumns: "1fr",
+          gridTemplateRows: "auto 1fr",
+        },
+      }}
+    >
+      <CodeSection
+        code={code}
+        setCode={setCode}
+        submissionStatus={submissionStatus}
+        lastResults={lastResults}
+        compileErrors={compileErrors}
+        isRunning={isRunning}
       />
+      <DetailsSection task={task} />
     </Box>
   );
 }
@@ -274,44 +456,24 @@ function DetailsSection({ task }: IDetailsSection) {
 function TaskContent() {
   const { ID } = useParams();
 
-  // Pega o parâmetro de lista (caso seja redirecionado) e apaga da URL
-  const searchParams = useSearchParams();
-  const [listId, setListId] = useState<string | null>(null);
-
-  useEffect(() => {
-    const storageKey = `task_context_list_${ID}`;
-
-    const listIdFromParams = searchParams.get("listId");
-    const storedListId = sessionStorage.getItem(storageKey);
-
-    const currentListId = listIdFromParams || storedListId;
-
-    if (currentListId) {
-      setListId(currentListId);
-      sessionStorage.setItem(storageKey, currentListId);
-      getList(currentListId);
-      getTasksInList(currentListId);
-      window.history.replaceState(null, "", window.location.pathname);
-    }
-  }, [searchParams, ID]);
-
   const [task, setTask] = useState<ITask | null>(null);
-  const [tasksInList, setTasksInList] = useState<ITask[]>([]);
   const [code, setCode] = useState<string>(baseCode);
+  const [loadingTask, setLoadingTask] = useState<boolean>(true);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
-  const [isForbiddenToSubmit, setIsForbiddenToSubmit] = useState(false);
+  const [compileErrors, setCompileErrors] = useState<ICompileError[]>([]);
   const [submissionStatus, setSubmissionStatus] = useState<
     "success" | "error" | null
   >(null);
   const [canRegisterSubmission, setCanRegisterSubmission] = useState(false);
 
   const getTask = async () => {
+    setLoadingTask(true);
     try {
       const response = await API.get(`/task/${ID}`);
 
       // Converter os inputs dos testCases de string para array, se necessário
-      const taskTestCases = response.data.data;
+      const taskTestCases = response.data.taskTests;
       const formattedTestCases = taskTestCases?.map((testCase: any) => ({
         ...testCase,
         input:
@@ -325,78 +487,15 @@ function TaskContent() {
       setCode(appendFunctionToCode(baseCode, taskData.functionDef));
     } catch (e) {
       console.error("Failed to load task", e);
+    } finally {
+      setLoadingTask(false);
     }
-  };
-
-  const getTasksInList = async (pListId: string) => {
-    console.log("Loading tasks for list", pListId);
-
-    try {
-      const response = await API.get(`/class-task-list/task/${pListId}`);
-      console.log(response);
-      const formatedTasks = response.data.data.map((task: ITask) => {
-        // Converter os inputs dos testCases de string para array, se necessário
-        const taskTestCases = task.taskTests;
-        const formattedTestCases = taskTestCases?.map((testCase: any) => ({
-          ...testCase,
-          input:
-            typeof testCase.input === "string"
-              ? JSON.parse(testCase.input)
-              : testCase.input,
-        }));
-
-        return { ...task, taskTests: formattedTestCases };
-      });
-
-      setTasksInList(formatedTasks);
-      setCode(appendFunctionToCode(baseCode, formatedTasks[0].functionDef));
-    } catch (e) {
-      console.error("Failed to load task", e);
-    }
-  };
-
-  const [list, setList] = useState<IList | null>(null);
-
-  const getList = async (pListId: string) => {
-    if (!pListId) return;
-
-    try {
-      const response = await API.get(`/list/${pListId}/${ID}`);
-      const resposeList = response.data;
-
-      const isListValid = checkIfListIsValid(resposeList);
-
-      if (!isListValid) blockSubmissions();
-
-      setList(resposeList);
-    } catch (e) {
-      console.error("Failed to load list", e);
-    }
-  };
-
-  const blockSubmissions = () => {
-    setCanRegisterSubmission(false);
-    setIsForbiddenToSubmit(true);
-    toast.info(
-      "O limite de envios para esta tarefa foi atingido, você pode executar o código, mas não enviar para avaliação",
-    );
-  };
-
-  const checkIfListIsValid = (list: IList) => {
-    const submissionLimit = list.submissionLimit;
-    const currentSubmissions = list.submissions;
-
-    if (submissionLimit) {
-      return currentSubmissions.length < submissionLimit;
-    }
-
-    return true;
   };
 
   useEffect(() => {
     if (ID) getTask();
 
-    if (window.innerWidth > 1280) {
+    if (typeof window !== "undefined" && window.innerWidth > 1280) {
       document.body.style.overflow = "hidden";
     }
 
@@ -406,59 +505,66 @@ function TaskContent() {
   }, [ID]);
 
   const registerSubmission = async (results: ITestCaseResult[]) => {
-    const isListValid = !!list && checkIfListIsValid(list);
-
-    if (!isListValid) return;
-
     const isCorrect = results.every((res) => res.passed);
     const result = await API.post("/submission", {
       taskId: ID,
-      listId: listId || undefined,
       code,
       isCorrect,
     });
-
-    if (listId) {
-      await getList(listId);
-    }
 
     return result;
   };
 
   const handleRunCode = async () => {
-    if (code && task) {
-      setIsRunning(true);
-      setSubmissionStatus(null);
-      setLastResults([]);
+    if (!code || !task) return;
 
-      try {
-        const results = await executeWithTestInputs(code, task);
-        const resultsArray: ITestCaseResult[] = [];
+    setIsRunning(true);
+    setSubmissionStatus(null);
+    setLastResults([]);
+    setCompileErrors([]);
 
-        results.keys().forEach((key) => {
-          const result = results.get(key);
-          resultsArray.push(result!);
-        });
+    try {
+      const { compileErrors: newCompileErrors, results } =
+        await executeWithTestInputs(code, task);
 
-        setLastResults(resultsArray);
-
-        if (canRegisterSubmission) await registerSubmission(resultsArray);
-
-        const allPassed = resultsArray.every((r) => r.passed);
-        setSubmissionStatus(allPassed ? "success" : "error");
-      } catch (error) {
-        console.error("Erro ao executar testes:", error);
+      // Se o compilador acusou erros, exibe apenas o log do compilador
+      // no terminal e não prossegue para os testes.
+      if (newCompileErrors.length > 0) {
+        setCompileErrors(newCompileErrors);
         setSubmissionStatus("error");
-      } finally {
-        setIsRunning(false);
+        return;
       }
+
+      const resultsArray: ITestCaseResult[] = [];
+
+      for (const key of results.keys()) {
+        const result = results.get(key);
+        resultsArray.push(result!);
+      }
+
+      setLastResults(resultsArray);
+
+      if (canRegisterSubmission) await registerSubmission(resultsArray);
+
+      const allPassed = resultsArray.every((r) => r.passed);
+      setSubmissionStatus(allPassed ? "success" : "error");
+    } catch (error) {
+      console.error("Erro ao executar testes:", error);
+      setCompileErrors([
+        {
+          message:
+            (error as Error)?.message ??
+            "Falha inesperada ao executar o código.",
+          line: 0,
+          column: 0,
+          kind: "parse",
+        },
+      ]);
+      setSubmissionStatus("error");
+    } finally {
+      setIsRunning(false);
     }
   };
-
-  const activeTaskIndex = useMemo(() => {
-    if (!list || !tasksInList.length) return 0;
-    return tasksInList.findIndex((t) => t.taskId === task?.taskId) || 0;
-  }, [list, tasksInList, task]);
 
   return (
     <LayoutBox>
@@ -469,19 +575,41 @@ function TaskContent() {
         handleRegisterSubmissionChange={() => {
           setCanRegisterSubmission((prev) => !prev);
         }}
-        isInList={!!list}
-        tasksInList={tasksInList}
-        activeTaskIndex={activeTaskIndex}
-        listId={listId || undefined}
+        isInList={false}
       />
-      <CodeSection
-        code={code}
-        setCode={setCode}
-        submissionStatus={submissionStatus}
-        lastResults={lastResults}
-        isRunning={isRunning}
-      />
-      <DetailsSection task={task} />
+
+      <Box
+        sx={{
+          flex: 1,
+          position: "relative",
+          overflow: "hidden",
+          minHeight: 0,
+        }}
+      >
+        {loadingTask ? (
+          <Box
+            sx={{
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            <CircularProgress />
+          </Box>
+        ) : task ? (
+          <TaskView
+            task={task}
+            code={code}
+            setCode={setCode}
+            submissionStatus={submissionStatus}
+            lastResults={lastResults}
+            compileErrors={compileErrors}
+            isRunning={isRunning}
+          />
+        ) : null}
+      </Box>
     </LayoutBox>
   );
 }

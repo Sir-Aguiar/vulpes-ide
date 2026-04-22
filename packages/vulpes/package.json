@@ -16,6 +16,8 @@
     "@mui/icons-material": "^7.3.2",
     "@mui/material": "^7.3.2",
     "@mui/x-date-pickers": "^8.19.0",
+    "@portugol-webstudio/antlr": "*",
+    "@portugol-webstudio/parser": "*",
     "@portugol-webstudio/runner": "*",
     "@portugol-webstudio/worker": "*",
     "@uiw/react-md-editor": "^4.0.8",

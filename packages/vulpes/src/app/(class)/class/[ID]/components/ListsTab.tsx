@@ -22,6 +22,7 @@ import { ITask } from "@/@types/Task";
 import Link from "next/link";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
 import { useAuth } from "@/providers/AuthProvider";
+import { useRouter } from "next/navigation";
 
 interface IListItem {
   listId: string;
@@ -90,13 +91,17 @@ export default function ListsTab({ classId }: { classId: string }) {
 
   function ListContent() {
     const { user } = useAuth();
+    const router = useRouter();
     const [tasksInList, setTasksInList] = useState<ITask[]>([]);
+    const [loading, setLoading] = useState(false);
 
     const fetchTasks = async () => {
+      setLoading(true);
       const result = await API.get(
         `/class-task-list/task/${selectedList?.listId}`,
       );
       setTasksInList(result.data.data);
+      setLoading(false);
     };
 
     useEffect(() => {
@@ -117,6 +122,14 @@ export default function ListsTab({ classId }: { classId: string }) {
         >
           Voltar
         </Button>
+        <Button
+          variant="outlined"
+          fullWidth
+          sx={{ maxWidth: 328, marginX: "auto" }}
+          onClick={() => router.push(`/list/${selectedList?.listId}`)}
+        >
+          Executar Lista
+        </Button>
         <AnimatePresence mode="wait" initial={false}>
           {selectedList && (
             <motion.div
@@ -126,49 +139,53 @@ export default function ListsTab({ classId }: { classId: string }) {
               exit={{ x: -100, opacity: 0 }}
               transition={{ duration: 0.3 }}
             >
-              <TableContainer component={Paper}>
-                <Table sx={{ minWidth: 650 }}>
-                  <TableHead>
-                    <TableRow>
-                      {user?.role === "STUDENT" ? (
-                        <TableCell width={120}>Link</TableCell>
-                      ) : (
-                        <TableCell width={120}>Ver Envios</TableCell>
-                      )}
-                      <TableCell>Título</TableCell>
-                      <TableCell align="center" width={100}>
-                        Dificuldade
-                      </TableCell>
-                      <TableCell align="center" width={150}>
-                        Data de Criação
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {tasksInList.map((task) => (
-                      <TableRow key={task.taskId}>
-                        <TableCell>
-                          <Link
-                            href={`/task/${task.taskId}?listId=${selectedList.listId}`}
-                            style={{ textDecoration: "none" }}
-                          >
-                            <Typography variant="body2" color="primary">
-                              <InsertLinkIcon />
-                            </Typography>
-                          </Link>
+              {loading ? (
+                <CircularProgress sx={{ marginX: "auto" }} size={20} />
+              ) : (
+                <TableContainer component={Paper}>
+                  <Table sx={{ minWidth: 650 }}>
+                    <TableHead>
+                      <TableRow>
+                        {user?.role === "STUDENT" ? (
+                          <TableCell width={120}>Link</TableCell>
+                        ) : (
+                          <TableCell width={120}>Ver Envios</TableCell>
+                        )}
+                        <TableCell>Título</TableCell>
+                        <TableCell align="center" width={100}>
+                          Dificuldade
                         </TableCell>
-                        <TableCell component="th" scope="row">
-                          {task.title}
-                        </TableCell>
-                        <TableCell align="center">Fácil</TableCell>
-                        <TableCell align="center">
-                          {new Date(task.createdAt).toLocaleDateString()}
+                        <TableCell align="center" width={150}>
+                          Data de Criação
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
+                    </TableHead>
+                    <TableBody>
+                      {tasksInList.map((task) => (
+                        <TableRow key={task.taskId}>
+                          <TableCell>
+                            <Link
+                              href={`/task/${task.taskId}?listId=${selectedList.listId}`}
+                              style={{ textDecoration: "none" }}
+                            >
+                              <Typography variant="body2" color="primary">
+                                <InsertLinkIcon />
+                              </Typography>
+                            </Link>
+                          </TableCell>
+                          <TableCell component="th" scope="row">
+                            {task.title}
+                          </TableCell>
+                          <TableCell align="center">Fácil</TableCell>
+                          <TableCell align="center">
+                            {new Date(task.createdAt).toLocaleDateString()}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </motion.div>
           )}
         </AnimatePresence>

@@ -8,6 +8,7 @@ import {
   Button,
   Divider,
   Step,
+  StepButton,
   StepLabel,
   Stepper,
   SxProps,
@@ -28,6 +29,10 @@ interface SidebarProps {
   listId?: string;
   tasksInList?: ITask[];
   activeTaskIndex?: number;
+  onAdvance?: () => void;
+  advanceLabel?: string;
+  disableAdvance?: boolean;
+  onStepClick?: (index: number) => void;
 }
 
 const BoxStyle: SxProps = {
@@ -74,17 +79,26 @@ const Sidebar: React.FC<SidebarProps> = ({
   tasksInList,
   activeTaskIndex,
   listId,
+  onAdvance,
+  advanceLabel = "Avançar",
+  disableAdvance = false,
+  onStepClick,
 }) => {
   const router = useRouter();
   const isSmallScreen = window.innerWidth < 1280;
 
   const handleAdvance = () => {
+    if (onAdvance) {
+      onAdvance();
+      return;
+    }
+
     if (isInList && tasksInList && tasksInList.length > 0) {
       const nextIndex =
         (activeTaskIndex !== undefined ? activeTaskIndex + 1 : 0) %
         tasksInList.length;
       const nextTask = tasksInList[nextIndex];
-      router.push(`/task/${nextTask.taskId}?listId=${listId}`); // Navega para a próxima tarefa
+      router.push(`/task/${nextTask.taskId}?listId=${listId}`);
     }
   };
 
@@ -103,28 +117,46 @@ const Sidebar: React.FC<SidebarProps> = ({
       {isInList && (
         <>
           <Stepper
+            nonLinear
             activeStep={activeTaskIndex || 0}
             orientation={isSmallScreen ? "horizontal" : "vertical"}
             sx={{
               background: "transparent",
-              "& .MuiStepLabel-root .Mui-active": {
-                color: COLORS.dark.primary[500], // Cor do ícone ativo
-              },
-              "& .MuiStepLabel-label.Mui-active": {
-                color: "white", // Cor do texto ativo
+
+              "& .MuiStepButton-root": {
+                padding: "8px",
+                margin: 0,
+                borderRadius: "8px",
+                "&:hover": {
+                  backgroundColor: "rgba(255,255,255,0.05)",
+                },
               },
               ...(isSmallScreen ? { mx: "auto" } : { my: "auto" }),
             }}
           >
             {tasksInList?.map((task, index) => (
               <Step key={task.taskId}>
-                <StepLabel></StepLabel>
+                {onStepClick ? (
+                  <StepButton
+                    onClick={() => onStepClick(index)}
+                    disableRipple={false}
+                    sx={{ cursor: "pointer" }}
+                  >
+                    <StepLabel />
+                  </StepButton>
+                ) : (
+                  <StepLabel />
+                )}
               </Step>
             ))}
           </Stepper>
 
-          <Button size="small" onClick={handleAdvance}>
-            Avançar
+          <Button
+            size="small"
+            onClick={handleAdvance}
+            disabled={disableAdvance}
+          >
+            {advanceLabel}
           </Button>
         </>
       )}
