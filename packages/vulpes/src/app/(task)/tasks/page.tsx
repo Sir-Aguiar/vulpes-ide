@@ -67,7 +67,7 @@ function TasksListContent() {
         }
 
         const response = await API.get<IGetTasksResponse>("/task", { params });
-        setTasks(response.data.tasks);
+        setTasks(response.data.data);
         setTotalPages(response.data.totalPages);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);

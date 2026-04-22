@@ -76,7 +76,7 @@ function TaskContent() {
     try {
       const response = await API.get(`/class-task-list/task/${listId}`);
 
-      const formatedTasks = response.data.tasks.map((task: ITask) => {
+      const formatedTasks = response.data.data.map((task: ITask) => {
         // Converter os inputs dos testCases de string para array, se necessário
         const taskTestCases = task.taskTests;
         const formattedTestCases = taskTestCases?.map((testCase: any) => ({

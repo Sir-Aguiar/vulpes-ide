@@ -23,7 +23,7 @@ interface IClassRequest {
 }
 
 interface IGetClassRequestsResponse {
-  requests: IClassRequest[];
+  data: IClassRequest[];
   total: number;
   page: number;
   limit: number;
@@ -41,7 +41,7 @@ export default function RequestsTab({ classId }: { classId: string }) {
         `/student-class-permission-request/class/${classId}`,
         { params: { page: 1, limit: 50 } },
       );
-      setRequests(response.data.requests);
+      setRequests(response.data.data);
     } catch (error) {
       console.error("Failed to fetch requests:", error);
       toast.error("Erro ao carregar solicitações.");

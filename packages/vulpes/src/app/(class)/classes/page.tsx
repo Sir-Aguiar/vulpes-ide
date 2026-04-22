@@ -118,7 +118,7 @@ function MyClassesList() {
       setLoading(true);
       try {
         const response = await API.get<IMyClassesResponse>("/class/my-classes");
-        setClasses(response.data.classes);
+        setClasses(response.data.data);
       } catch (error) {
         console.error("Failed to fetch my classes:", error);
       } finally {
@@ -192,7 +192,7 @@ function AllClassesList() {
         const response = await API.get<IGetClassesResponse>("/class", {
           params,
         });
-        setClasses(response.data.classes);
+        setClasses(response.data.data);
         setTotalPages(response.data.totalPages);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
@@ -306,7 +306,7 @@ function StudentMyClassesList() {
       setLoading(true);
       try {
         const response = await API.get<IMyClassesResponse>("/class/my-classes");
-        setClasses(response.data.classes);
+        setClasses(response.data.data);
       } catch (error) {
         console.error("Failed to fetch my classes:", error);
       } finally {

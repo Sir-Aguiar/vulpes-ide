@@ -50,7 +50,7 @@ export interface ITaskListItem {
 }
 
 export interface IGetTasksResponse {
-  tasks: ITaskListItem[];
+  data: ITaskListItem[];
   total: number;
   page: number;
   limit: number;

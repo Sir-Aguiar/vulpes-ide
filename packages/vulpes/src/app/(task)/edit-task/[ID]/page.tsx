@@ -177,7 +177,7 @@ function EditTaskContent() {
       setLoadingClasses(true);
       try {
         const response = await API.get<IMyClassesResponse>("/class/my-classes");
-        setClasses(response.data.classes);
+        setClasses(response.data.data);
       } catch (error) {
         console.error("Failed to fetch classes:", error);
         toast.error("Erro ao carregar turmas.");

@@ -33,7 +33,7 @@ interface ITaskItem {
 }
 
 interface IGetTasksResponse {
-  tasks: ITaskItem[];
+  data: ITaskItem[];
   total: number;
   page: number;
   limit: number;
@@ -69,7 +69,7 @@ export default function CreateListTab({ classId, onCreated }: IProps) {
         const response = await API.get<IGetTasksResponse>("/task", {
           params: { page: 1, limit: 100 },
         });
-        setTasks(response.data.tasks);
+        setTasks(response.data.data);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         toast.error("Erro ao carregar tarefas disponíveis.");

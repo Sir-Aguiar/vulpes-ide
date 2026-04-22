@@ -32,7 +32,7 @@ interface IListItem {
 }
 
 interface IGetListsResponse {
-  lists: IListItem[];
+  data: IListItem[];
   total: number;
   page: number;
   limit: number;
@@ -52,7 +52,7 @@ export default function ListsTab({ classId }: { classId: string }) {
         `/list/class/${classId}`,
         { params: { page: 1, limit: 50 } },
       );
-      setLists(response.data.lists);
+      setLists(response.data.data);
     } catch (error) {
       console.error("Failed to fetch lists:", error);
       toast.error("Erro ao carregar listas.");
@@ -96,7 +96,7 @@ export default function ListsTab({ classId }: { classId: string }) {
       const result = await API.get(
         `/class-task-list/task/${selectedList?.listId}`,
       );
-      setTasksInList(result.data.tasks);
+      setTasksInList(result.data.data);
     };
 
     useEffect(() => {

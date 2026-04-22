@@ -24,7 +24,7 @@ export interface IClassListItem {
 }
 
 export interface IGetClassesResponse {
-  classes: IClassListItem[];
+  data: IClassListItem[];
   total: number;
   page: number;
   limit: number;
@@ -32,7 +32,7 @@ export interface IGetClassesResponse {
 }
 
 export interface IMyClassesResponse {
-  classes: IClassListItem[];
+  data: IClassListItem[];
   total: number;
 }
 
