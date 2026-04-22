@@ -32,7 +32,7 @@ export interface IGetClassesResponse {
 }
 
 export interface IMyClassesResponse {
-  data: IClassListItem[];
+  classes: IClassListItem[];
   total: number;
 }
 

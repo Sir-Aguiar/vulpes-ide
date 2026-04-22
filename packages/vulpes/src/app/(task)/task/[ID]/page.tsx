@@ -254,6 +254,7 @@ function DetailsSection({ task }: IDetailsSection) {
       gridColumn: "1 / 11",
       gridRow: "1 / 7",
     },
+    overflowY: "auto",
   };
 
   return (
