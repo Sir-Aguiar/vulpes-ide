@@ -1,15 +1,16 @@
-import { ITask } from "@/@types/Task";
+import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
 import {
   Box,
   Button,
   Checkbox,
+  Chip,
   CircularProgress,
   MenuItem,
   Modal,
+  Pagination,
   Paper,
   Select,
-  Slide,
   Stack,
   Table,
   TableBody,
@@ -20,7 +21,6 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import { motion } from "framer-motion";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { ChangeEvent, useEffect, useState } from "react";
@@ -43,28 +43,73 @@ const modalStyle = {
   p: 4,
 };
 
+interface ITaskResponse {
+  taskId: string;
+  creatorId: string;
+  title: string;
+  description: string;
+  updatedAt: Date;
+  createdAt: Date;
+  isPublic: boolean;
+  isVisible: boolean;
+}
+
+interface IResponse {
+  data: ITaskResponse[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+}
+
 export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
   const { ID: classId } = useParams();
+  const { user } = useAuth();
 
   const [searchField, setSearchField] = useState("");
+  const [order, setOrder] = useState<"asc" | "desc">("desc");
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [selectedTasks, setSelectedTasks] = useState<string[]>([]);
-  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [tasks, setTasks] = useState<ITaskResponse[]>([]);
 
   const [linkLoading, setLinkLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const fetchTasks = async () => {
+    setIsLoading(true);
     try {
-      const response = await API.get(`task/linkable-to-class`, {
-        params: { classId },
+      const response = await API.get<IResponse>(`task/linkable-to-class`, {
+        params: {
+          classId,
+          page,
+          limit: 10,
+          search: searchField || undefined,
+          order,
+        },
       });
-      setTasks(response.data.tasks);
+      setTasks(response.data.data);
+      setTotalPages(response.data.totalPages || 1);
       console.log(response.data);
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  const selectTask = (e: ChangeEvent<HTMLInputElement>, task: ITask) => {
+  const handleFilter = () => {
+    if (page === 1) {
+      fetchTasks();
+    } else {
+      setPage(1);
+    }
+  };
+
+  const selectTask = (
+    e: ChangeEvent<HTMLInputElement>,
+    task: ITaskResponse,
+  ) => {
     if (e.target.checked) {
       setSelectedTasks([...selectedTasks, task.taskId]);
     } else {
@@ -90,11 +135,19 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
 
   useEffect(() => {
     if (isModalOpen) {
+      if (page === 1) {
+        fetchTasks();
+      } else {
+        setPage(1);
+      }
+    }
+  }, [isModalOpen, order]);
+
+  useEffect(() => {
+    if (isModalOpen) {
       fetchTasks();
     }
-
-    return () => setTasks([]);
-  }, [isModalOpen]);
+  }, [page]);
 
   return (
     <Modal open={isModalOpen} onClose={handleCloseModal}>
@@ -105,60 +158,126 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
               fullWidth
               label="Buscar Tarefa"
               variant="outlined"
+              size="small"
               value={searchField}
               onChange={(e) => setSearchField(e.target.value)}
             />
-            <Select defaultValue={0} size="small">
-              <MenuItem value={0}>Mais recente</MenuItem>
-              <MenuItem value={1}>Mais antigo</MenuItem>
+            <Button
+              variant="contained"
+              sx={{ minWidth: 100 }}
+              onClick={handleFilter}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Filtrar"
+              )}
+            </Button>
+            <Select
+              value={order}
+              onChange={(e) => setOrder(e.target.value as "asc" | "desc")}
+              size="small"
+              disabled={isLoading}
+            >
+              <MenuItem value="desc">Mais recente</MenuItem>
+              <MenuItem value="asc">Mais antigo</MenuItem>
             </Select>
           </Stack>
-          <TableContainer component={Paper}>
-            <Table sx={{ minWidth: 650 }} aria-label="simple table">
-              <TableHead>
-                <TableRow>
-                  <TableCell width={10}></TableCell>
-                  <TableCell width={120}></TableCell>
-                  <TableCell>Título</TableCell>
-                  <TableCell align="center">Dificuldade</TableCell>
-                  <TableCell align="right">Data de Criação</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {tasks.map((task) => (
-                  <TableRow key={task.taskId}>
-                    <TableCell>
-                      <Checkbox
-                        checked={selectedTasks.includes(task.taskId)}
-                        onChange={(e) => selectTask(e, task)}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Link
-                        href={`/task/${task.taskId}`}
-                        style={{ textDecoration: "none" }}
-                      >
-                        <Typography variant="body2" color="primary">
-                          Ver Detalhes
-                        </Typography>
-                      </Link>
-                    </TableCell>
-                    <TableCell component="th" scope="row">
-                      {task.title}
-                    </TableCell>
-                    <TableCell align="right">Fácil</TableCell>
-                    <TableCell align="right">
-                      {new Date(task.createdAt).toLocaleDateString()}
-                    </TableCell>
+          {isLoading ? (
+            <Stack
+              alignItems="center"
+              justifyContent="center"
+              minHeight={200}
+              component={Paper}
+            >
+              <CircularProgress />
+            </Stack>
+          ) : (
+            <TableContainer component={Paper}>
+              <Table sx={{ minWidth: 650 }} aria-label="simple table">
+                <TableHead>
+                  <TableRow>
+                    <TableCell width={10}></TableCell>
+                    <TableCell width={120}></TableCell>
+                    <TableCell>Título</TableCell>
+                    <TableCell align="center">Dificuldade</TableCell>
+                    <TableCell align="right">Data de Criação</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {tasks.map((task) => (
+                    <TableRow key={task.taskId}>
+                      <TableCell>
+                        <Checkbox
+                          checked={selectedTasks.includes(task.taskId)}
+                          onChange={(e) => selectTask(e, task)}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Link
+                          href={`/task/${task.taskId}`}
+                          style={{ textDecoration: "none" }}
+                        >
+                          <Typography variant="body2" color="primary">
+                            Ver Detalhes
+                          </Typography>
+                        </Link>
+                      </TableCell>
+                      <TableCell component="th" scope="row">
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <Typography>{task.title}</Typography>
+                          {task.creatorId === user?.userId ? (
+                            <Chip
+                              label="Minha tarefa"
+                              size="small"
+                              color="primary"
+                            />
+                          ) : (
+                            <Chip
+                              label="Pública"
+                              size="small"
+                              color="secondary"
+                            />
+                          )}
+                        </Stack>
+                      </TableCell>
+                      <TableCell align="right">Fácil</TableCell>
+                      <TableCell align="right">
+                        {new Date(task.createdAt).toLocaleDateString()}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+          {totalPages > 1 && (
+            <Stack direction="row" justifyContent="center">
+              <Pagination
+                count={totalPages}
+                page={page}
+                onChange={(_, value) => setPage(value)}
+                color="primary"
+                disabled={isLoading}
+              />
+            </Stack>
+          )}
           <Stack direction="row" justifyContent="flex-end" spacing={2}>
-            <Button fullWidth>Cancelar</Button>
-            <Button fullWidth onClick={linkSelectedTasks} variant="contained">
-              {linkLoading ? <CircularProgress size={20} /> : "Linkar Tarefas"}
+            <Button fullWidth onClick={handleCloseModal} disabled={linkLoading}>
+              Cancelar
+            </Button>
+            <Button
+              fullWidth
+              onClick={linkSelectedTasks}
+              variant="contained"
+              disabled={linkLoading || isLoading}
+            >
+              {linkLoading ? (
+                <CircularProgress size={20} color="inherit" />
+              ) : (
+                "Linkar Tarefas"
+              )}
             </Button>
           </Stack>
         </Stack>

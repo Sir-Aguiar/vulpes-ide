@@ -49,13 +49,14 @@ export default function TasksTab({
 
   const handleCloseModal = () => {
     setIsModalOpen(false);
+    fetchTasks();
   };
 
   const fetchTasks = async () => {
     setLoading(true);
     try {
       const response = await API.get(`/class-task/class/${classId}`);
-      const filteredTasks = response.data.classTasks.map(
+      const filteredTasks = response.data.data.map(
         ({ task }: { task: ITask }) => task,
       );
 

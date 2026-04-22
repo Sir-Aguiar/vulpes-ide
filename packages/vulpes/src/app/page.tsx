@@ -6,14 +6,14 @@ import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
-    Paper,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
@@ -30,7 +30,7 @@ export default function Home() {
 
   useEffect(() => {
     API.get("/task").then((response) => {
-      setTasks(response.data.tasks);
+      setTasks(response.data.data);
     });
   }, []);
 
