@@ -1,5 +1,6 @@
 import { IParam } from "@/@schemas/Task.schema";
 import { IFunctionData } from "./code-extractor";
+import { devLog } from "./dev-logger";
 
 export function formatValue(input: string, type: string): string {
   // É array
@@ -40,6 +41,11 @@ export function generateArrayVariable(
 
   const name = getUniqueName();
   const declaration = `${param.type} ${name}[] = {${cleanValue.join(", ")}}`;
+
+  devLog.info(
+    `[code-formatter] Variável de array gerada para param '${param.name}' (${param.type}[])`,
+    { declaration, values: cleanValue },
+  );
 
   return {
     declaration,

@@ -10,6 +10,7 @@ import {
   executeWithTestInputs,
   ICompileError,
   ITestCaseResult,
+  normalizeTestCaseInput,
 } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
 import { Box, CircularProgress, IconButton, Typography } from "@mui/material";
@@ -480,10 +481,9 @@ function TaskContent() {
       const taskTestCases = response.data.taskTests;
       const formattedTestCases = taskTestCases?.map((testCase: any) => ({
         ...testCase,
-        input:
-          typeof testCase.input === "string"
-            ? JSON.parse(testCase.input)
-            : testCase.input,
+        // Normalização robusta contra double-encoding do backend — garante
+        // sempre um array plano de strings, um item por parâmetro.
+        input: normalizeTestCaseInput(testCase.input),
       }));
 
       const taskData = { ...response.data, taskTests: formattedTestCases };

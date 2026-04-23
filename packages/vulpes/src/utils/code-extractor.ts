@@ -1,5 +1,6 @@
 import { IParam } from "@/@schemas/Task.schema";
 import { v4 as uuidv4 } from "uuid";
+import { devLog } from "./dev-logger";
 
 export interface IFunctionData {
   returnType: string;
@@ -18,6 +19,10 @@ export const extractFunctionTypeAndParams = (
   const match = cleanCode.match(regex);
 
   if (!match) {
+    devLog.warn(
+      "[code-extractor] Não foi possível extrair assinatura de função em functionDef",
+      { sample: cleanCode.slice(0, 200) },
+    );
     return null;
   }
 
@@ -62,8 +67,8 @@ export const extractFunctionTypeAndParams = (
         return { paramId, name, type, isArray };
       }
 
-      console.warn(
-        `[code-extractor] Malformed parameter detected: "${trimmedParam}". Returning with type "desconhecido".`,
+      devLog.warn(
+        `[code-extractor] Parâmetro malformado detectado: "${trimmedParam}" — usando type "desconhecido".`,
       );
 
       return {

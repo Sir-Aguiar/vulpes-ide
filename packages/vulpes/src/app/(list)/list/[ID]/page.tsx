@@ -11,6 +11,7 @@ import {
   executeWithTestInputs,
   ICompileError,
   ITestCaseResult,
+  normalizeTestCaseInput,
 } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
 import { Editor } from "@monaco-editor/react";
@@ -21,6 +22,7 @@ import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import {
   Box,
+  Button,
   Card,
   CardContent,
   Chip,
@@ -36,6 +38,8 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CodeIcon from "@mui/icons-material/Code";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import DescriptionIcon from "@mui/icons-material/Description";
+import ErrorIcon from "@mui/icons-material/Error";
+import SendIcon from "@mui/icons-material/Send";
 import { AnimatePresence, motion } from "framer-motion";
 import { COLORS } from "@/utils/colors";
 
@@ -468,17 +472,117 @@ function TaskView({
   );
 }
 
+type TaskSubmissionStatus = "idle" | "sending" | "success" | "error";
+
 interface ITaskSummaryCardProps {
   task: ITask;
   index: number;
   code: string;
+  hasResults: boolean;
+  isCorrect: boolean;
+  submissionStatus: TaskSubmissionStatus;
   onReview: () => void;
+}
+
+function TaskStatusChip({
+  hasResults,
+  isCorrect,
+}: {
+  hasResults: boolean;
+  isCorrect: boolean;
+}) {
+  if (!hasResults) {
+    return (
+      <Chip
+        label="Não executada"
+        size="small"
+        sx={{
+          bgcolor: "rgba(255,255,255,0.06)",
+          color: "#cfd8dc",
+          border: "1px solid rgba(255,255,255,0.12)",
+          fontWeight: 600,
+        }}
+      />
+    );
+  }
+
+  if (isCorrect) {
+    return (
+      <Chip
+        icon={<CheckCircleIcon sx={{ color: "#66bb6a !important" }} />}
+        label="Correta"
+        size="small"
+        sx={{
+          bgcolor: "rgba(102,187,106,0.12)",
+          color: "#a5d6a7",
+          border: "1px solid rgba(102,187,106,0.25)",
+          fontWeight: 600,
+        }}
+      />
+    );
+  }
+
+  return (
+    <Chip
+      icon={<ErrorIcon sx={{ color: "#ef5350 !important" }} />}
+      label="Incorreta"
+      size="small"
+      sx={{
+        bgcolor: "rgba(239,83,80,0.12)",
+        color: "#ef9a9a",
+        border: "1px solid rgba(239,83,80,0.25)",
+        fontWeight: 600,
+      }}
+    />
+  );
+}
+
+function SubmissionIndicator({
+  status,
+}: {
+  status: TaskSubmissionStatus;
+}) {
+  if (status === "idle") return null;
+
+  if (status === "sending") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+        <CircularProgress size={14} sx={{ color: COLORS.dark.primary[500] }} />
+        <Typography variant="caption" sx={{ color: "#cfd8dc" }}>
+          Enviando...
+        </Typography>
+      </Box>
+    );
+  }
+
+  if (status === "success") {
+    return (
+      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+        <CheckCircleIcon sx={{ color: "#66bb6a", fontSize: 18 }} />
+        <Typography variant="caption" sx={{ color: "#a5d6a7" }}>
+          Enviada
+        </Typography>
+      </Box>
+    );
+  }
+
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+      <ErrorIcon sx={{ color: "#ef5350", fontSize: 18 }} />
+      <Typography variant="caption" sx={{ color: "#ef9a9a" }}>
+        Falhou
+      </Typography>
+    </Box>
+  );
 }
 
 function TaskSummaryCard({
   task,
   index,
   code,
+  hasResults,
+  isCorrect,
+  submissionStatus,
   onReview,
 }: ITaskSummaryCardProps) {
   const [codeCollapsed, setCodeCollapsed] = useState(true);
@@ -538,17 +642,8 @@ function TaskSummaryCard({
               código
             </Typography>
           </Box>
-          <Chip
-            icon={<CheckCircleIcon sx={{ color: "#66bb6a !important" }} />}
-            label="Concluída"
-            size="small"
-            sx={{
-              bgcolor: "rgba(102,187,106,0.12)",
-              color: "#a5d6a7",
-              border: "1px solid rgba(102,187,106,0.25)",
-              fontWeight: 600,
-            }}
-          />
+          <SubmissionIndicator status={submissionStatus} />
+          <TaskStatusChip hasResults={hasResults} isCorrect={isCorrect} />
           <Tooltip title="Revisar tarefa">
             <IconButton
               size="small"
@@ -603,16 +698,43 @@ function TaskSummaryCard({
 interface IFinishedScreenProps {
   tasks: ITask[];
   codesByTaskId: Record<string, string>;
+  resultsByTaskId: Record<string, ITestCaseResult[]>;
+  submissionStatusByTaskId: Record<string, TaskSubmissionStatus>;
+  isSubmittingList: boolean;
+  hasSubmittedList: boolean;
   onReviewTask: (index: number) => void;
+  onSubmitList: () => void;
 }
 
 function FinishedScreen({
   tasks,
   codesByTaskId,
+  resultsByTaskId,
+  submissionStatusByTaskId,
+  isSubmittingList,
+  hasSubmittedList,
   onReviewTask,
+  onSubmitList,
 }: IFinishedScreenProps) {
   const totalLines = tasks.reduce(
     (acc, t) => acc + (codesByTaskId[t.taskId]?.split("\n").length ?? 0),
+    0,
+  );
+
+  const correctCount = tasks.reduce((acc, t) => {
+    const results = resultsByTaskId[t.taskId];
+    if (!results || results.length === 0) return acc;
+    return acc + (results.every((r) => r.passed) ? 1 : 0);
+  }, 0);
+
+  const sentCount = tasks.reduce(
+    (acc, t) =>
+      acc + (submissionStatusByTaskId[t.taskId] === "success" ? 1 : 0),
+    0,
+  );
+  const failedCount = tasks.reduce(
+    (acc, t) =>
+      acc + (submissionStatusByTaskId[t.taskId] === "error" ? 1 : 0),
     0,
   );
 
@@ -631,20 +753,58 @@ function FinishedScreen({
           sx={{
             display: "flex",
             alignItems: "center",
+            justifyContent: "space-between",
             gap: 2,
             mb: 1,
-            color: COLORS.dark.primary[500],
+            flexWrap: "wrap",
           }}
         >
-          <CheckCircleIcon sx={{ fontSize: 40 }} />
-          <Typography variant="h4" sx={{ fontWeight: 700, color: "#fff" }}>
-            Lista finalizada!
-          </Typography>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              gap: 2,
+              color: COLORS.dark.primary[500],
+            }}
+          >
+            <CheckCircleIcon sx={{ fontSize: 40 }} />
+            <Typography variant="h4" sx={{ fontWeight: 700, color: "#fff" }}>
+              Lista finalizada!
+            </Typography>
+          </Box>
+
+          <Button
+            variant="contained"
+            size="large"
+            onClick={onSubmitList}
+            disabled={isSubmittingList || tasks.length === 0}
+            startIcon={
+              isSubmittingList ? (
+                <CircularProgress size={18} sx={{ color: "#fff" }} />
+              ) : (
+                <SendIcon />
+              )
+            }
+            sx={{
+              bgcolor: COLORS.dark.primary[500],
+              "&:hover": { bgcolor: COLORS.dark.primary[600] },
+              fontWeight: 600,
+              textTransform: "none",
+              px: 3,
+            }}
+          >
+            {isSubmittingList
+              ? "Enviando lista..."
+              : hasSubmittedList
+                ? "Reenviar lista"
+                : "Enviar lista"}
+          </Button>
         </Box>
+
         <Typography variant="body1" sx={{ color: "#cfd8dc", mb: 3 }}>
-          Você concluiu todas as tarefas desta lista. Abaixo está um resumo
-          ilustrativo do seu progresso — em breve esta tela apresentará métricas
-          detalhadas de desempenho.
+          Você concluiu todas as tarefas desta lista. Revise suas soluções
+          abaixo e clique em <b>Enviar lista</b> para submeter cada tarefa
+          individualmente.
         </Typography>
 
         <Box
@@ -653,7 +813,8 @@ function FinishedScreen({
             gap: 2,
             gridTemplateColumns: {
               xs: "1fr",
-              sm: "repeat(3, 1fr)",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(4, 1fr)",
             },
             mb: 3,
           }}
@@ -661,10 +822,30 @@ function FinishedScreen({
           <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
             <CardContent>
               <Typography variant="caption" sx={{ color: "#90a4ae" }}>
-                Tarefas concluídas
+                Tarefas
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
                 {tasks.length}
+              </Typography>
+            </CardContent>
+          </Card>
+          <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
+            <CardContent>
+              <Typography variant="caption" sx={{ color: "#90a4ae" }}>
+                Corretas
+              </Typography>
+              <Typography
+                variant="h4"
+                sx={{ fontWeight: 700, color: "#a5d6a7" }}
+              >
+                {correctCount}
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{ color: "#90a4ae", ml: 0.5 }}
+                >
+                  / {tasks.length}
+                </Typography>
               </Typography>
             </CardContent>
           </Card>
@@ -681,14 +862,32 @@ function FinishedScreen({
           <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
             <CardContent>
               <Typography variant="caption" sx={{ color: "#90a4ae" }}>
-                Progresso
+                Enviadas
               </Typography>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 700, color: COLORS.dark.primary[500] }}
+                sx={{
+                  fontWeight: 700,
+                  color: failedCount > 0 ? "#ef9a9a" : "#a5d6a7",
+                }}
               >
-                100%
+                {sentCount}
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{ color: "#90a4ae", ml: 0.5 }}
+                >
+                  / {tasks.length}
+                </Typography>
               </Typography>
+              {failedCount > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{ color: "#ef9a9a", display: "block" }}
+                >
+                  {failedCount} falha{failedCount === 1 ? "" : "s"}
+                </Typography>
+              )}
             </CardContent>
           </Card>
         </Box>
@@ -700,15 +899,26 @@ function FinishedScreen({
           Suas soluções
         </Typography>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          {tasks.map((task, index) => (
-            <TaskSummaryCard
-              key={task.taskId}
-              task={task}
-              index={index}
-              code={codesByTaskId[task.taskId] ?? ""}
-              onReview={() => onReviewTask(index)}
-            />
-          ))}
+          {tasks.map((task, index) => {
+            const results = resultsByTaskId[task.taskId] ?? [];
+            const hasResults = results.length > 0;
+            const isCorrect = hasResults && results.every((r) => r.passed);
+
+            return (
+              <TaskSummaryCard
+                key={task.taskId}
+                task={task}
+                index={index}
+                code={codesByTaskId[task.taskId] ?? ""}
+                hasResults={hasResults}
+                isCorrect={isCorrect}
+                submissionStatus={
+                  submissionStatusByTaskId[task.taskId] ?? "idle"
+                }
+                onReview={() => onReviewTask(index)}
+              />
+            );
+          })}
         </Box>
       </Box>
     </Box>
@@ -728,6 +938,14 @@ function ListRunner() {
   const [codesByTaskId, setCodesByTaskId] = useState<Record<string, string>>(
     {},
   );
+  const [resultsByTaskId, setResultsByTaskId] = useState<
+    Record<string, ITestCaseResult[]>
+  >({});
+  const [submissionStatusByTaskId, setSubmissionStatusByTaskId] = useState<
+    Record<string, TaskSubmissionStatus>
+  >({});
+  const [isSubmittingList, setIsSubmittingList] = useState(false);
+  const [hasSubmittedList, setHasSubmittedList] = useState(false);
 
   const [isRunning, setIsRunning] = useState(false);
   const [lastResults, setLastResults] = useState<ITestCaseResult[]>([]);
@@ -790,10 +1008,10 @@ function ListRunner() {
         const taskTestCases = task.taskTests;
         const formattedTestCases = taskTestCases?.map((testCase: any) => ({
           ...testCase,
-          input:
-            typeof testCase.input === "string"
-              ? JSON.parse(testCase.input)
-              : testCase.input,
+          // Aplica normalização robusta contra double-encoding / envelopamentos
+          // do backend. Garante que `input` sempre seja um array plano de strings
+          // com um item por parâmetro esperado pela função.
+          input: normalizeTestCaseInput(testCase.input),
         }));
 
         return { ...task, taskTests: formattedTestCases };
@@ -848,6 +1066,8 @@ function ListRunner() {
     setCompileErrors([]);
     setSubmissionStatus(null);
 
+    const runningTaskId = currentTask.taskId;
+
     try {
       const { compileErrors: newCompileErrors, results } =
         await executeWithTestInputs(currentCode, currentTask);
@@ -855,6 +1075,7 @@ function ListRunner() {
       if (newCompileErrors.length > 0) {
         setCompileErrors(newCompileErrors);
         setSubmissionStatus("error");
+        setResultsByTaskId((prev) => ({ ...prev, [runningTaskId]: [] }));
         return;
       }
 
@@ -866,6 +1087,10 @@ function ListRunner() {
       }
 
       setLastResults(resultsArray);
+      setResultsByTaskId((prev) => ({
+        ...prev,
+        [runningTaskId]: resultsArray,
+      }));
 
       const allPassed = resultsArray.every((r) => r.passed);
       setSubmissionStatus(allPassed ? "success" : "error");
@@ -882,6 +1107,7 @@ function ListRunner() {
         },
       ]);
       setSubmissionStatus("error");
+      setResultsByTaskId((prev) => ({ ...prev, [runningTaskId]: [] }));
     } finally {
       setIsRunning(false);
     }
@@ -899,10 +1125,72 @@ function ListRunner() {
   };
 
   const handleStepClick = (index: number) => {
+    if (isSubmittingList) return;
     if (index < 0 || index >= tasksInList.length) return;
     if (finished) setFinished(false);
     if (index === currentIndex) return;
     setCurrentIndex(index);
+  };
+
+  const handleSubmitList = async () => {
+    if (isSubmittingList || !listId || tasksInList.length === 0) return;
+
+    setIsSubmittingList(true);
+
+    const initialStatus: Record<string, TaskSubmissionStatus> = {};
+    tasksInList.forEach((t) => {
+      initialStatus[t.taskId] = "idle";
+    });
+    setSubmissionStatusByTaskId(initialStatus);
+
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const task of tasksInList) {
+      setSubmissionStatusByTaskId((prev) => ({
+        ...prev,
+        [task.taskId]: "sending",
+      }));
+
+      try {
+        const taskResults = resultsByTaskId[task.taskId] ?? [];
+        const isCorrect =
+          taskResults.length > 0 && taskResults.every((r) => r.passed);
+
+        await API.post("/submission", {
+          taskId: task.taskId,
+          listId: listId as string,
+          code: codesByTaskId[task.taskId] ?? "",
+          isCorrect,
+        });
+
+        successCount += 1;
+        setSubmissionStatusByTaskId((prev) => ({
+          ...prev,
+          [task.taskId]: "success",
+        }));
+      } catch (e) {
+        console.error(`Falha ao enviar submissão da tarefa ${task.taskId}`, e);
+        errorCount += 1;
+        setSubmissionStatusByTaskId((prev) => ({
+          ...prev,
+          [task.taskId]: "error",
+        }));
+      }
+    }
+
+    setIsSubmittingList(false);
+    setHasSubmittedList(true);
+
+    if (errorCount === 0) {
+      toast.success(
+        `Lista enviada com sucesso! ${successCount} tarefa${successCount === 1 ? "" : "s"} submetida${successCount === 1 ? "" : "s"}.`,
+      );
+    } else {
+      toast.warning(
+        `Envio concluído com ${errorCount} falha${errorCount === 1 ? "" : "s"}. Você pode reenviar a lista.`,
+      );
+    }
   };
 
   const isLastTask =
@@ -923,7 +1211,12 @@ function ListRunner() {
         listId={(listId as string) || undefined}
         onAdvance={handleAdvance}
         advanceLabel={isLastTask ? "Finalizar" : "Avançar"}
-        disableAdvance={finished || loadingTasks || tasksInList.length === 0}
+        disableAdvance={
+          finished ||
+          loadingTasks ||
+          tasksInList.length === 0 ||
+          isSubmittingList
+        }
         onStepClick={handleStepClick}
       />
 
@@ -965,7 +1258,12 @@ function ListRunner() {
                 <FinishedScreen
                   tasks={tasksInList}
                   codesByTaskId={codesByTaskId}
+                  resultsByTaskId={resultsByTaskId}
+                  submissionStatusByTaskId={submissionStatusByTaskId}
+                  isSubmittingList={isSubmittingList}
+                  hasSubmittedList={hasSubmittedList}
                   onReviewTask={handleStepClick}
+                  onSubmitList={handleSubmitList}
                 />
               </motion.div>
             ) : currentTask ? (
