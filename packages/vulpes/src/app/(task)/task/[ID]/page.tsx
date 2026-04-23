@@ -17,10 +17,11 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import CodeIcon from "@mui/icons-material/Code";
 import TerminalIcon from "@mui/icons-material/Terminal";
-import { useParams } from "next/navigation";
+import { useParams, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
+import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import { COLORS } from "@/utils/colors";
 
@@ -455,6 +456,8 @@ function TaskView({
 
 function TaskContent() {
   const { ID } = useParams();
+  const searchParams = useSearchParams();
+  const listId = searchParams?.get("listId") || undefined;
 
   const [task, setTask] = useState<ITask | null>(null);
   const [code, setCode] = useState<string>(baseCode);
@@ -465,7 +468,8 @@ function TaskContent() {
   const [submissionStatus, setSubmissionStatus] = useState<
     "success" | "error" | null
   >(null);
-  const [canRegisterSubmission, setCanRegisterSubmission] = useState(false);
+  const [hasRun, setHasRun] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const getTask = async () => {
     setLoadingTask(true);
@@ -504,17 +508,6 @@ function TaskContent() {
     };
   }, [ID]);
 
-  const registerSubmission = async (results: ITestCaseResult[]) => {
-    const isCorrect = results.every((res) => res.passed);
-    const result = await API.post("/submission", {
-      taskId: ID,
-      code,
-      isCorrect,
-    });
-
-    return result;
-  };
-
   const handleRunCode = async () => {
     if (!code || !task) return;
 
@@ -544,8 +537,6 @@ function TaskContent() {
 
       setLastResults(resultsArray);
 
-      if (canRegisterSubmission) await registerSubmission(resultsArray);
-
       const allPassed = resultsArray.every((r) => r.passed);
       setSubmissionStatus(allPassed ? "success" : "error");
     } catch (error) {
@@ -563,6 +554,33 @@ function TaskContent() {
       setSubmissionStatus("error");
     } finally {
       setIsRunning(false);
+      setHasRun(true);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!task || !ID || isSubmitting || !hasRun) return;
+
+    const isCorrect =
+      compileErrors.length === 0 &&
+      lastResults.length > 0 &&
+      lastResults.every((r) => r.passed);
+
+    setIsSubmitting(true);
+    try {
+      await API.post("/submission", {
+        taskId: ID,
+        ...(listId ? { listId } : {}),
+        code,
+        isCorrect,
+      });
+
+      toast.success("Tarefa enviada com sucesso!");
+    } catch (error) {
+      console.error("Erro ao enviar tarefa:", error);
+      toast.error("Falha ao enviar tarefa. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -571,11 +589,12 @@ function TaskContent() {
       <Sidebar
         isRunning={isRunning}
         onRunCode={handleRunCode}
-        registerSubmission={canRegisterSubmission}
-        handleRegisterSubmissionChange={() => {
-          setCanRegisterSubmission((prev) => !prev);
-        }}
         isInList={false}
+        listId={listId}
+        onSubmit={handleSubmit}
+        isSubmitting={isSubmitting}
+        canSubmit={hasRun && !isRunning}
+        submitDisabledReason="Execute o código ao menos uma vez para habilitar o envio."
       />
 
       <Box

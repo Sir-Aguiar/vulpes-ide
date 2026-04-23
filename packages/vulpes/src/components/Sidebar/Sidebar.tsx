@@ -6,15 +6,18 @@ import React from "react";
 import {
   Box,
   Button,
+  CircularProgress,
   Divider,
   Step,
   StepButton,
   StepLabel,
   Stepper,
   SxProps,
+  Tooltip,
 } from "@mui/material";
 
 import StopIcon from "@mui/icons-material/Stop";
+import SendIcon from "@mui/icons-material/Send";
 import { PlayIcon, SaveAsIcon } from "../Icons";
 
 import { COLORS } from "@/utils/colors";
@@ -33,6 +36,10 @@ interface SidebarProps {
   advanceLabel?: string;
   disableAdvance?: boolean;
   onStepClick?: (index: number) => void;
+  onSubmit?: () => void;
+  isSubmitting?: boolean;
+  canSubmit?: boolean;
+  submitDisabledReason?: string;
 }
 
 const BoxStyle: SxProps = {
@@ -83,6 +90,10 @@ const Sidebar: React.FC<SidebarProps> = ({
   advanceLabel = "Avançar",
   disableAdvance = false,
   onStepClick,
+  onSubmit,
+  isSubmitting = false,
+  canSubmit = false,
+  submitDisabledReason,
 }) => {
   const router = useRouter();
   const isSmallScreen = window.innerWidth < 1280;
@@ -159,6 +170,65 @@ const Sidebar: React.FC<SidebarProps> = ({
             {advanceLabel}
           </Button>
         </>
+      )}
+
+      {!isInList && onSubmit && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            "@media (min-width: 1281px)": {
+              mt: "auto",
+              width: "100%",
+            },
+            "@media (max-width: 1280px)": {
+              ml: "auto",
+            },
+          }}
+        >
+          <Tooltip
+            title={
+              !canSubmit && !isSubmitting
+                ? submitDisabledReason ||
+                  "Execute o código ao menos uma vez para poder enviar."
+                : ""
+            }
+            placement={isSmallScreen ? "top" : "right"}
+            arrow
+          >
+            <span>
+              <Button
+                size="small"
+                onClick={onSubmit}
+                disabled={!canSubmit || isSubmitting}
+                endIcon={
+                  isSubmitting ? (
+                    <CircularProgress size={14} color="inherit" />
+                  ) : (
+                    <SendIcon fontSize="small" />
+                  )
+                }
+                sx={{
+                  minWidth: 0,
+                  px: 1,
+                  fontSize: "0.7rem",
+                  lineHeight: 1.1,
+                  textAlign: "center",
+                  "& .MuiButton-startIcon": {
+                    mr: 0.5,
+                  },
+                  color: "primary",
+                  ":disabled": {
+                    color: "primary.500",
+                  },
+                }}
+              >
+                {isSubmitting ? "Enviando" : "Enviar"}
+              </Button>
+            </span>
+          </Tooltip>
+        </Box>
       )}
     </Box>
   );
