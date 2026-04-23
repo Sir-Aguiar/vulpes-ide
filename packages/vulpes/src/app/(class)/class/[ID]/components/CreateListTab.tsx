@@ -33,7 +33,7 @@ interface ITaskItem {
 }
 
 interface IGetTasksResponse {
-  data: ITaskItem[];
+  data: { classId: string; taskId: string; task: ITaskItem }[];
   total: number;
   page: number;
   limit: number;
@@ -44,7 +44,6 @@ const checkboxIcon = <CheckBoxOutlineBlankIcon fontSize="small" />;
 const checkboxCheckedIcon = <CheckBoxIcon fontSize="small" />;
 
 export default function CreateListTab({ classId, onCreated }: IProps) {
-  const { user } = useAuth();
   const [title, setTitle] = useState("");
   const [deadline, setDeadline] = useState("");
   const [submissionLimit, setSubmissionLimit] = useState(1);
@@ -53,23 +52,15 @@ export default function CreateListTab({ classId, onCreated }: IProps) {
   const [selectedTasks, setSelectedTasks] = useState<ITaskItem[]>([]);
   const [loadingTasks, setLoadingTasks] = useState(true);
 
-  // Filter tasks: only show tasks that are (visible AND public) OR owned by the user
-  const availableTasks = useMemo(() => {
-    return tasks.filter((task) => {
-      const isVisibleAndPublic = task.isVisible && task.isPublic;
-      const isOwner = task.creatorId === user?.userId;
-      return isVisibleAndPublic || isOwner;
-    });
-  }, [tasks, user?.userId]);
-
   useEffect(() => {
     const fetchTasks = async () => {
       setLoadingTasks(true);
       try {
-        const response = await API.get<IGetTasksResponse>("/task", {
-          params: { page: 1, limit: 100 },
-        });
-        setTasks(response.data.data);
+        const response = await API.get<IGetTasksResponse>(
+          `/class-task/class/${classId}`,
+        );
+        const formattedTasks = response.data.data.map(({ task }) => task);
+        setTasks(formattedTasks);
       } catch (error) {
         console.error("Failed to fetch tasks:", error);
         toast.error("Erro ao carregar tarefas disponíveis.");
@@ -168,7 +159,7 @@ export default function CreateListTab({ classId, onCreated }: IProps) {
       />
       <Autocomplete
         multiple
-        options={availableTasks}
+        options={tasks}
         disableCloseOnSelect
         loading={loadingTasks}
         value={selectedTasks}
