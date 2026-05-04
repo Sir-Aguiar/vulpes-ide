@@ -1,7 +1,7 @@
 import { ArquivoContext, PortugolVisitor } from "@portugol-webstudio/antlr";
-import { ParseTree, AbstractParseTreeVisitor } from "antlr4ng";
+import { AbstractParseTreeVisitor, ParseTree } from "antlr4ng";
 
-import { Node, Arquivo, ContextNodeObj, UnhandledNode, Bypass } from "./nodes/index.js";
+import { Arquivo, Bypass, ContextNodeMap, Node, UnhandledNode } from "./nodes/index.js";
 
 export interface Empty {}
 
@@ -27,7 +27,7 @@ export class PortugolNode extends AbstractParseTreeVisitor<Empty> implements Por
   }
 
   visitFromParent(ctx: ParseTree, parent: Node) {
-    const ctor = ContextNodeObj[ctx.constructor.name];
+    const ctor = ContextNodeMap.get(ctx.constructor as any);
     let obj;
 
     if (ctor) {
@@ -45,11 +45,11 @@ export class PortugolNode extends AbstractParseTreeVisitor<Empty> implements Por
   }
 
   visit(ctx: ParseTree) {
-    if (ctx.constructor.name !== "ArquivoContext") {
-      throw new Error("O algoritmo Portugol deve-se iniciar com um contexto de arquivo (palavra-chave 'programa')");
+    if (!(ctx instanceof ArquivoContext)) {
+      throw new TypeError("O algoritmo Portugol deve-se iniciar com um contexto de arquivo (palavra-chave 'programa')");
     }
 
-    const arquivo = new Arquivo(ctx as ArquivoContext);
+    const arquivo = new Arquivo(ctx);
 
     this.visitChildrenFromParent(ctx, arquivo);
 
