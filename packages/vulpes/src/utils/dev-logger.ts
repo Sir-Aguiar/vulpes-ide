@@ -9,8 +9,7 @@
  * Em produção, todas as chamadas se tornam no-ops.
  */
 
-export const IS_DEV_LOG_ENABLED =
-  typeof process !== "undefined" && process.env.NODE_ENV === "development";
+export const IS_DEV_LOG_ENABLED = true;
 
 const STYLES = {
   header:
