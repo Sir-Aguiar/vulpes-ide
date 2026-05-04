@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-base-to-string */
-import { PortugolExecutor } from "@portugol-webstudio/runner";
-import { PortugolErrorChecker } from "@portugol-webstudio/parser";
 import { PortugolCodeError } from "@portugol-webstudio/antlr";
+import { PortugolErrorChecker } from "@portugol-webstudio/parser";
+import { PortugolExecutor } from "@portugol-webstudio/runner";
 import { IExecutableTestCase, ITask } from "../@types/Task";
 import {
   extractFunctionTypeAndParams,
@@ -15,8 +15,8 @@ import {
   generateArrayVariable,
   generatePrintStatement,
 } from "./code-formatter";
-import { CustomWebWorkersRunner } from "./WebWorkerRunner";
 import { devLog } from "./dev-logger";
+import { CustomWebWorkersRunner } from "./WebWorkerRunner";
 
 export interface ITestCaseResult {
   input: any[];
@@ -129,6 +129,9 @@ export const executeWithTestInputs = async (
   code: string,
   task: ITask,
 ): Promise<IExecuteWithTestInputsResult> => {
+  // Remove BOM and trim the code to prevent ANTLR errors missing the 'programa' keyword at line 1 column 0
+  code = code.replace(/^\uFEFF/, "").trim();
+
   devLog.group(`Execução de Tarefa — ${task.title ?? task.taskId}`);
   devLog.time("execução total");
 
