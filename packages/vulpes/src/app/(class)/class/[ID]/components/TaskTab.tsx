@@ -1,5 +1,9 @@
+import { ISubmission } from "@/@types/Submission";
 import { ITask } from "@/@types/Task";
+import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
+import { Editor } from "@monaco-editor/react";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import {
   Box,
   Button,
@@ -15,16 +19,12 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
+import MDEditor from "@uiw/react-md-editor";
+import { AnimatePresence, motion } from "framer-motion";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { AnimatePresence, motion } from "framer-motion";
-import MDEditor from "@uiw/react-md-editor";
-import { Editor } from "@monaco-editor/react";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
-import { ISubmission } from "@/@types/Submission";
-import Link from "next/link";
-import { useAuth } from "@/providers/AuthProvider";
 import LinkTask from "./LinkTask";
 
 interface ITaskTabProps {
@@ -83,25 +83,23 @@ export default function TasksTab({
     const [submissions, setSubmissions] = useState<ISubmission[]>([]);
     const [selectedSubmission, setSelectedSubmission] =
       useState<ISubmission | null>(null);
+    const [professorComments, setProfessorComments] = useState<string>("");
+    const [feedbackLoading, setFeedbackLoading] = useState(false);
+
+    const fetchSubmissions = async () => {
+      try {
+        const response = await API.get(`/submission/task/${taskId}`);
+        setSubmissions(response.data);
+      } catch (error) {
+        console.error("Failed to fetch submissions:", error);
+        toast.error("Erro ao carregar submissões.");
+      }
+    };
 
     useEffect(() => {
-      let isMounted = true;
-
-      const fetchSubmissions = async () => {
-        try {
-          const response = await API.get(`/submission/task/${taskId}`);
-          if (!isMounted) return;
-          setSubmissions(response.data);
-        } catch (error) {
-          console.error("Failed to fetch submissions:", error);
-          toast.error("Erro ao carregar submissões.");
-        }
-      };
-
       fetchSubmissions();
 
       return () => {
-        isMounted = false;
         setSubmissions([]);
       };
     }, [taskId]);
@@ -109,6 +107,34 @@ export default function TasksTab({
     const handleEditorDidMount = (editorInstance: any, monacoInstance: any) => {
       registerPortugolLanguage(monacoInstance);
       monacoInstance.editor.setTheme("vs-dark");
+    };
+
+    const sendFeedback = async () => {
+      if (!professorComments.trim()) {
+        toast.error("Defina o comentário do professor");
+        return;
+      }
+
+      setFeedbackLoading(true);
+      try {
+        await API.put(
+          `/submission/feedback/${selectedSubmission?.submissionId}`,
+          {
+            professorComments,
+          },
+        );
+        await fetchSubmissions();
+        toast.success("Feedback enviado com sucesso!");
+        setSelectedSubmission(null);
+        setProfessorComments("");
+      } catch (error: any) {
+        console.error("Failed to send feedback:", error);
+        toast.error(
+          error.response?.data?.message || "Erro ao enviar feedback.",
+        );
+      } finally {
+        setFeedbackLoading(false);
+      }
     };
 
     return (
@@ -139,7 +165,12 @@ export default function TasksTab({
                   onMount={handleEditorDidMount}
                   value={selectedSubmission ? selectedSubmission.code : ""}
                 />
-                <MDEditor height="100%" style={{ width: "100%" }} />
+                <MDEditor
+                  height="100%"
+                  style={{ width: "100%" }}
+                  value={professorComments}
+                  onChange={(val) => setProfessorComments(val || "")}
+                />
               </Stack>
               <Stack
                 direction="row"
@@ -148,10 +179,26 @@ export default function TasksTab({
                 justifyContent="flex-end"
                 sx={{ my: 2 }}
               >
-                <Button onClick={() => setSelectedSubmission(null)}>
+                <Button
+                  onClick={() => {
+                    setSelectedSubmission(null);
+                    setProfessorComments("");
+                  }}
+                  disabled={feedbackLoading}
+                >
                   Cancelar
                 </Button>
-                <Button variant="contained">Enviar Feedback</Button>
+                <Button
+                  variant="contained"
+                  onClick={sendFeedback}
+                  disabled={feedbackLoading}
+                >
+                  {feedbackLoading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    "Enviar Feedback"
+                  )}
+                </Button>
               </Stack>
               <Divider />
             </motion.div>
@@ -186,7 +233,10 @@ export default function TasksTab({
                     )}
                   </TableCell>
                   <TableCell align="center">
-                    <Button onClick={() => setSelectedSubmission(submission)}>
+                    <Button onClick={() => {
+                      setSelectedSubmission(submission);
+                      setProfessorComments(submission.professorComments || "");
+                    }}>
                       Analisar
                     </Button>
                   </TableCell>

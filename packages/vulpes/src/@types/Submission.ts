@@ -7,6 +7,7 @@ export interface ISubmission {
   listId?: string;
   code: string;
   isCorrect: boolean;
+  professorComments?: string;
   submittedAt: string;
   student: {
     name: string;
