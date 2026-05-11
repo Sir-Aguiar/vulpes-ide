@@ -774,9 +774,7 @@ function FinishedScreen({
             variant="contained"
             size="large"
             onClick={onSubmitList}
-            disabled={
-              isSubmittingList || tasks.length === 0 || !canRegisterSubmission
-            }
+            disabled={isSubmittingList || tasks.length === 0}
             startIcon={
               isSubmittingList ? (
                 <CircularProgress size={18} sx={{ color: "#fff" }} />
@@ -1145,6 +1143,8 @@ function ListRunner() {
     let successCount = 0;
     let errorCount = 0;
 
+    const submittedAt = new Date().toISOString();
+
     for (const task of tasksInList) {
       setSubmissionStatusByTaskId((prev) => ({
         ...prev,
@@ -1160,6 +1160,7 @@ function ListRunner() {
           taskId: task.taskId,
           listId: listId as string,
           code: codesByTaskId[task.taskId] ?? "",
+          submittedAt,
           isCorrect,
         });
 
