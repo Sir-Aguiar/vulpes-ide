@@ -330,60 +330,60 @@ function CodeSection({
             {!isRunning &&
               compileErrors.length === 0 &&
               lastResults.map((result, index) => (
-              <div
-                key={index}
-                className="flex flex-col bg-[#2d2d2d] rounded bg-opacity-40 overflow-hidden"
-              >
                 <div
-                  className={`flex items-center px-3 py-2 border-l-4 ${
-                    result.passed
-                      ? "border-green-500 bg-green-500/5"
-                      : "border-red-500 bg-red-500/5"
-                  }`}
+                  key={index}
+                  className="flex flex-col bg-[#2d2d2d] rounded bg-opacity-40 overflow-hidden"
                 >
-                  <span className="mr-3">
-                    {result.passed ? (
-                      <CheckIcon className="w-5 h-5 text-green-500" />
-                    ) : (
-                      <XIcon className="w-5 h-5 text-red-500" />
-                    )}
-                  </span>
-                  <span
-                    className={`text-sm font-medium ${
-                      result.passed ? "text-green-400" : "text-red-400"
+                  <div
+                    className={`flex items-center px-3 py-2 border-l-4 ${
+                      result.passed
+                        ? "border-green-500 bg-green-500/5"
+                        : "border-red-500 bg-red-500/5"
                     }`}
                   >
-                    Teste {index + 1}
-                  </span>
-                  <span className="ml-auto text-xs text-gray-500">
-                    {result.passed ? "Passou" : "Falhou"}
-                  </span>
-                </div>
+                    <span className="mr-3">
+                      {result.passed ? (
+                        <CheckIcon className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <XIcon className="w-5 h-5 text-red-500" />
+                      )}
+                    </span>
+                    <span
+                      className={`text-sm font-medium ${
+                        result.passed ? "text-green-400" : "text-red-400"
+                      }`}
+                    >
+                      Teste {index + 1}
+                    </span>
+                    <span className="ml-auto text-xs text-gray-500">
+                      {result.passed ? "Passou" : "Falhou"}
+                    </span>
+                  </div>
 
-                {!result.passed && (
-                  <div className="px-4 py-2 bg-[#1e1e1e] bg-opacity-50 text-xs font-mono border-t border-gray-700 text-gray-300">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <span className="block text-gray-500 mb-0.5">
-                          Esperado:
-                        </span>
-                        <div className="bg-gray-800 p-1 rounded text-green-300">
-                          {result.expectedOutput}
+                  {!result.passed && (
+                    <div className="px-4 py-2 bg-[#1e1e1e] bg-opacity-50 text-xs font-mono border-t border-gray-700 text-gray-300">
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <span className="block text-gray-500 mb-0.5">
+                            Esperado:
+                          </span>
+                          <div className="bg-gray-800 p-1 rounded text-green-300">
+                            {result.expectedOutput}
+                          </div>
                         </div>
-                      </div>
-                      <div>
-                        <span className="block text-gray-500 mb-0.5">
-                          Obtido:
-                        </span>
-                        <div className="bg-gray-800 p-1 rounded text-red-300">
-                          {result.actualOutput}
+                        <div>
+                          <span className="block text-gray-500 mb-0.5">
+                            Obtido:
+                          </span>
+                          <div className="bg-gray-800 p-1 rounded text-red-300">
+                            {result.actualOutput}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
+                  )}
+                </div>
+              ))}
           </div>
         )}
       </Box>
@@ -537,11 +537,7 @@ function TaskStatusChip({
   );
 }
 
-function SubmissionIndicator({
-  status,
-}: {
-  status: TaskSubmissionStatus;
-}) {
+function SubmissionIndicator({ status }: { status: TaskSubmissionStatus }) {
   if (status === "idle") return null;
 
   if (status === "sending") {
@@ -701,6 +697,7 @@ interface IFinishedScreenProps {
   resultsByTaskId: Record<string, ITestCaseResult[]>;
   submissionStatusByTaskId: Record<string, TaskSubmissionStatus>;
   isSubmittingList: boolean;
+  canRegisterSubmission: boolean;
   hasSubmittedList: boolean;
   onReviewTask: (index: number) => void;
   onSubmitList: () => void;
@@ -715,6 +712,7 @@ function FinishedScreen({
   hasSubmittedList,
   onReviewTask,
   onSubmitList,
+  canRegisterSubmission,
 }: IFinishedScreenProps) {
   const totalLines = tasks.reduce(
     (acc, t) => acc + (codesByTaskId[t.taskId]?.split("\n").length ?? 0),
@@ -733,8 +731,7 @@ function FinishedScreen({
     0,
   );
   const failedCount = tasks.reduce(
-    (acc, t) =>
-      acc + (submissionStatusByTaskId[t.taskId] === "error" ? 1 : 0),
+    (acc, t) => acc + (submissionStatusByTaskId[t.taskId] === "error" ? 1 : 0),
     0,
   );
 
@@ -777,7 +774,9 @@ function FinishedScreen({
             variant="contained"
             size="large"
             onClick={onSubmitList}
-            disabled={isSubmittingList || tasks.length === 0}
+            disabled={
+              isSubmittingList || tasks.length === 0 || !canRegisterSubmission
+            }
             startIcon={
               isSubmittingList ? (
                 <CircularProgress size={18} sx={{ color: "#fff" }} />
@@ -1264,6 +1263,7 @@ function ListRunner() {
                   hasSubmittedList={hasSubmittedList}
                   onReviewTask={handleStepClick}
                   onSubmitList={handleSubmitList}
+                  canRegisterSubmission={canRegisterSubmission}
                 />
               </motion.div>
             ) : currentTask ? (
