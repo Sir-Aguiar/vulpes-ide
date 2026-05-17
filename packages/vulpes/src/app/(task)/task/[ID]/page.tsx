@@ -25,38 +25,8 @@ import MDEditor from "@uiw/react-md-editor";
 import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 import { COLORS } from "@/utils/colors";
-
-const CheckIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M5 13l4 4L19 7"
-    />
-  </svg>
-);
-
-const XIcon = ({ className }: { className?: string }) => (
-  <svg
-    className={className}
-    fill="none"
-    viewBox="0 0 24 24"
-    stroke="currentColor"
-  >
-    <path
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      strokeWidth={2}
-      d="M6 18L18 6M6 6l12 12"
-    />
-  </svg>
-);
+import CheckIcon from "../../../../../public/icons/CheckIcon";
+import XIcon from "../../../../../public/icons/XIcon";
 
 export default function Page() {
   return (
