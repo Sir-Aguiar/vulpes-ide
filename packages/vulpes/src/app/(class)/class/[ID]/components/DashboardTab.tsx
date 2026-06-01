@@ -44,6 +44,7 @@ interface IDashboardStudent {
   studentId: string;
   name: string;
   lastSubmission: {
+    submissionId: string;
     isCorrect: boolean;
     submittedAt: string;
     code: string;
