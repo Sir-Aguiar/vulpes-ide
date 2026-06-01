@@ -5,21 +5,21 @@ import AppNavBar from "@/components/AppNavBar";
 import API from "@/services/API";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
-    Box,
-    Chip,
-    CircularProgress,
-    List,
-    ListItemButton,
-    ListItemText,
-    Paper,
-    Stack,
-    Table,
-    TableBody,
-    TableCell,
-    TableContainer,
-    TableHead,
-    TableRow,
-    Typography
+  Box,
+  Chip,
+  CircularProgress,
+  List,
+  ListItemButton,
+  ListItemText,
+  Paper,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Typography,
 } from "@mui/material";
 import MDEditor from "@uiw/react-md-editor";
 import { AnimatePresence, motion } from "framer-motion";
@@ -162,7 +162,12 @@ const FeedbackSection = () => {
             bgcolor: "rgba(0,0,0,0.2)",
           }}
         >
-          <Stack alignItems="center" spacing={2} textAlign="center" color="white">
+          <Stack
+            alignItems="center"
+            spacing={2}
+            textAlign="center"
+            color="white"
+          >
             <CircularProgress size={34} sx={{ color: "#ff6d00" }} />
             <Stack spacing={0.5}>
               <Typography variant="h6" className={montserrat.className}>
@@ -265,7 +270,9 @@ const FeedbackSection = () => {
                 Nenhum feedback disponível no momento.
               </Box>
             ) : (
-              <List sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
+              <List
+                sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}
+              >
                 {feedbackItems.map((feedback) => {
                   const isSelected = feedback.taskId === selectedTaskId;
 
@@ -301,13 +308,15 @@ const FeedbackSection = () => {
                           height: 10,
                           borderRadius: "50%",
                           flexShrink: 0,
-                          bgcolor: isSelected ? "#ff6d00" : "rgba(255, 255, 255, 0.6)",
+                          bgcolor: isSelected
+                            ? "#ff6d00"
+                            : "rgba(255, 255, 255, 0.6)",
                         }}
                       />
                       <ListItemText
                         primary={feedback.task?.title || "Atividade sem título"}
                         secondary={`Atualizado em ${formatFeedbackDate(
-                          feedback.updatedAt
+                          feedback.updatedAt,
                         )}`}
                         primaryTypographyProps={{
                           sx: {
@@ -320,7 +329,10 @@ const FeedbackSection = () => {
                           },
                         }}
                         secondaryTypographyProps={{
-                          sx: { color: "rgba(255, 255, 255, 0.55)", fontSize: "0.75rem" },
+                          sx: {
+                            color: "rgba(255, 255, 255, 0.55)",
+                            fontSize: "0.75rem",
+                          },
                         }}
                         sx={{ my: 0 }}
                       />
@@ -340,7 +352,6 @@ const FeedbackSection = () => {
             overflow: "hidden",
             borderRadius: 4,
             border: "1px solid rgba(255,255,255,0.1)",
-            bgcolor: "#f4f4f5", // zinc-100
             p: 2,
             boxShadow: "0 12px 32px rgba(0,0,0,0.28)",
           }}
@@ -412,7 +423,9 @@ const FeedbackSection = () => {
                     </Box>
 
                     <Chip
-                      label={selectedFeedback.isCorrect ? "Correta" : "Incorreta"}
+                      label={
+                        selectedFeedback.isCorrect ? "Correta" : "Incorreta"
+                      }
                       variant="outlined"
                       size="small"
                       sx={{

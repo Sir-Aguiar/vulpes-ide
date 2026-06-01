@@ -23,6 +23,7 @@ import RequestsTab from "./components/RequestTab";
 import CreateListTab from "./components/CreateListTab";
 import ListsTab from "./components/ListsTab";
 import TasksTab from "./components/TaskTab";
+import DashboardTab from "./components/DashboardTab";
 
 export default function ClassPage() {
   const { ID } = useParams();
@@ -47,6 +48,7 @@ export default function ClassPage() {
         { key: "requests", label: "Solicitações" },
         { key: "create", label: "Criar Lista" },
         { key: "lists", label: "Listas" },
+        { key: "dashboard", label: "Dashboard" },
       ];
     }
 
@@ -102,7 +104,10 @@ export default function ClassPage() {
   return (
     <AuthGuard requiredRoles={["STUDENT", "PROFESSOR", "ADMIN"]}>
       <AppNavBar />
-      <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Container
+        maxWidth={activeTab === "dashboard" ? false : "lg"}
+        sx={{ py: 2 }}
+      >
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" component="h1">
             {classData.name}
@@ -140,6 +145,9 @@ export default function ClassPage() {
           />
         )}
         {activeTab === "lists" && <ListsTab classId={classData.classId} />}
+        {activeTab === "dashboard" && (
+          <DashboardTab classId={classData.classId} />
+        )}
       </Container>
     </AuthGuard>
   );
