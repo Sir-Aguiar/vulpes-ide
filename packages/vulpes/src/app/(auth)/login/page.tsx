@@ -20,9 +20,11 @@ import { safeZodResolver } from "@/utils/safeZodResolver";
 import { LoginSchema, ILoginDTO } from "@/@schemas/Auth.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { useAuth } from "@/providers/AuthProvider";
+import ResetPasswordDialog from "./ResetPasswordDialog";
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
+  const [isResetOpen, setIsResetOpen] = useState(false);
   const router = useRouter();
   const { login } = useAuth();
 
@@ -129,6 +131,18 @@ export default function LoginPage() {
                   }}
                 />
 
+                <Box sx={{ textAlign: "right", mt: -1 }}>
+                  <Link
+                    component="button"
+                    type="button"
+                    onClick={() => setIsResetOpen(true)}
+                    underline="hover"
+                    sx={{ cursor: "pointer", fontWeight: 600 }}
+                  >
+                    Esqueceu sua senha? Redefinir senha
+                  </Link>
+                </Box>
+
                 <Button
                   type="submit"
                   variant="contained"
@@ -179,6 +193,11 @@ export default function LoginPage() {
           Vulpes IDE
         </Typography>
       </Box>
+
+      <ResetPasswordDialog
+        open={isResetOpen}
+        onClose={() => setIsResetOpen(false)}
+      />
     </Box>
   );
 }

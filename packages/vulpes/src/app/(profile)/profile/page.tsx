@@ -1,0 +1,213 @@
+"use client";
+
+import AppNavBar from "@/components/AppNavBar";
+import AuthGuard from "@/components/AuthGuard";
+import BugReportIcon from "@mui/icons-material/BugReport";
+import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import LockIcon from "@mui/icons-material/Lock";
+import PersonIcon from "@mui/icons-material/Person";
+import SchoolIcon from "@mui/icons-material/School";
+import {
+  Box,
+  Container,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Paper,
+  SxProps,
+} from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
+import React, { useState } from "react";
+
+import BugReportTab from "./components/BugReportTab";
+import ChangePasswordTab from "./components/ChangePasswordTab";
+import DeactivateAccountTab from "./components/DeactivateAccountTab";
+import InstitutionalDataTab from "./components/InstitutionalDataTab";
+import PersonalInfoTab from "./components/PersonalInfoTab";
+
+const TABS = [
+  {
+    key: "personal",
+    label: "Informações Pessoais",
+    icon: <PersonIcon />,
+    Component: PersonalInfoTab,
+  },
+  {
+    key: "password",
+    label: "Alterar senha",
+    icon: <LockIcon />,
+    Component: ChangePasswordTab,
+  },
+  {
+    key: "institutional",
+    label: "Dados institucionais",
+    icon: <SchoolIcon />,
+    Component: InstitutionalDataTab,
+  },
+  {
+    key: "bug",
+    label: "Bug report",
+    icon: <BugReportIcon />,
+    Component: BugReportTab,
+  },
+  {
+    key: "deactivate",
+    label: "Desativar conta",
+    icon: <DeleteForeverIcon />,
+    Component: DeactivateAccountTab,
+  },
+] as const;
+
+interface SideBarProps {
+  activeIndex: number;
+  onChange: (index: number) => void;
+}
+
+function SideBar({ activeIndex, onChange }: SideBarProps) {
+  const boxStyle: SxProps = {
+    width: "296px",
+    flexShrink: 0,
+    height: "100%",
+    borderRadius: "8px",
+    p: 1,
+  };
+
+  return (
+    <Box sx={boxStyle} component={Paper} elevation={2}>
+      <List
+        component="nav"
+        sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
+      >
+        {TABS.map((tab, index) => {
+          const isActive = index === activeIndex;
+          const isDanger = tab.key === "deactivate";
+
+          return (
+            <ListItemButton
+              key={tab.key}
+              selected={isActive}
+              onClick={() => onChange(index)}
+              sx={{
+                borderRadius: "8px",
+                color: isDanger ? "error.main" : "text.secondary",
+                transition: "background-color 0.2s ease, color 0.2s ease",
+                "& .MuiListItemIcon-root": {
+                  color: "inherit",
+                  minWidth: 40,
+                },
+                "&:hover": {
+                  backgroundColor: "rgba(255, 109, 0, 0.08)",
+                },
+                "&.Mui-selected": {
+                  backgroundColor: "rgba(255, 109, 0, 0.12)",
+                  color: isDanger ? "error.main" : "#FF6D00",
+                  "&:hover": {
+                    backgroundColor: "rgba(255, 109, 0, 0.18)",
+                  },
+                },
+              }}
+            >
+              <ListItemIcon>{tab.icon}</ListItemIcon>
+              <ListItemText
+                primary={tab.label}
+                primaryTypographyProps={{
+                  fontWeight: isActive ? 600 : 400,
+                }}
+              />
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Box>
+  );
+}
+
+const slideVariants = {
+  enter: (direction: number) => ({
+    x: direction > 0 ? "100%" : "-100%",
+    opacity: 0,
+  }),
+  center: {
+    x: 0,
+    opacity: 1,
+  },
+  exit: (direction: number) => ({
+    x: direction > 0 ? "-100%" : "100%",
+    opacity: 0,
+  }),
+};
+
+function ProfileContent({
+  activeIndex,
+  direction,
+}: {
+  activeIndex: number;
+  direction: number;
+}) {
+  const ActiveComponent = TABS[activeIndex].Component;
+
+  return (
+    <Box
+      component={Paper}
+      elevation={2}
+      sx={{
+        position: "relative",
+        flex: 1,
+        height: "100%",
+        borderRadius: "8px",
+        overflow: "hidden",
+      }}
+    >
+      <AnimatePresence mode="wait" custom={direction} initial={false}>
+        <motion.div
+          key={TABS[activeIndex].key}
+          custom={direction}
+          variants={slideVariants}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            width: "100%",
+            height: "100%",
+          }}
+        >
+          <ActiveComponent />
+        </motion.div>
+      </AnimatePresence>
+    </Box>
+  );
+}
+
+export default function Page() {
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [direction, setDirection] = useState(0);
+
+  const handleChange = (next: number) => {
+    setDirection(next > activeIndex ? 1 : -1);
+    setActiveIndex(next);
+  };
+
+  return (
+    <AuthGuard requiredRoles={["STUDENT", "PROFESSOR", "ADMIN"]}>
+      <AppNavBar />
+      <Container
+        sx={{
+          maxWidth: "lg",
+          display: "flex",
+          flexDirection: "row",
+          gap: 2,
+          py: 2,
+          width: "100%",
+          height: "calc(100vh - 65px)",
+        }}
+      >
+        <SideBar activeIndex={activeIndex} onChange={handleChange} />
+        <ProfileContent activeIndex={activeIndex} direction={direction} />
+      </Container>
+    </AuthGuard>
+  );
+}

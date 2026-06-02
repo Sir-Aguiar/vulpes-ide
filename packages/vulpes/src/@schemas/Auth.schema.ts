@@ -16,5 +16,10 @@ export const LoginSchema = Zod.object({
   password: Zod.string().min(1, "Senha é obrigatória"),
 });
 
+export const ResetPasswordSchema = Zod.object({
+  email: Zod.email("Email inválido"),
+});
+
 export type ISignupDTO = Zod.infer<typeof SignupSchema>;
 export type ILoginDTO = Zod.infer<typeof LoginSchema>;
+export type IResetPasswordDTO = Zod.infer<typeof ResetPasswordSchema>;
