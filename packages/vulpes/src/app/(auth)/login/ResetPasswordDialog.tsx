@@ -1,11 +1,11 @@
 "use client";
 
 import { IResetPasswordDTO, ResetPasswordSchema } from "@/@schemas/Auth.schema";
-import CodeInput from "@/components/CodeInput";
 import RHFTextField from "@/components/RHF/TextField";
+import { requestResetPasswordOrder } from "@/services/resetPassword";
 import { safeZodResolver } from "@/utils/safeZodResolver";
+import MarkEmailReadOutlinedIcon from "@mui/icons-material/MarkEmailReadOutlined";
 import {
-  Box,
   Button,
   CircularProgress,
   Dialog,
@@ -19,9 +19,7 @@ import React, { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 
-const CODE_LENGTH = 5;
-
-type Step = "email" | "code";
+type Step = "email" | "sent";
 
 interface ResetPasswordDialogProps {
   open: boolean;
@@ -33,10 +31,7 @@ export default function ResetPasswordDialog({
   onClose,
 }: ResetPasswordDialogProps) {
   const [step, setStep] = useState<Step>("email");
-  const [email, setEmail] = useState("");
-  const [code, setCode] = useState<string[]>(Array(CODE_LENGTH).fill(""));
-  const [codeError, setCodeError] = useState<string | null>(null);
-  const [isValidatingCode, setIsValidatingCode] = useState(false);
+  const [sentEmail, setSentEmail] = useState("");
 
   const {
     control,
@@ -53,10 +48,7 @@ export default function ResetPasswordDialog({
     if (!open) {
       const timeout = setTimeout(() => {
         setStep("email");
-        setEmail("");
-        setCode(Array(CODE_LENGTH).fill(""));
-        setCodeError(null);
-        setIsValidatingCode(false);
+        setSentEmail("");
         reset({ email: "" });
       }, 200);
 
@@ -65,43 +57,23 @@ export default function ResetPasswordDialog({
   }, [open, reset]);
 
   const handleClose = () => {
-    if (isSubmitting || isValidatingCode) return;
+    if (isSubmitting) return;
     onClose();
   };
 
   const onRequestReset = async (data: IResetPasswordDTO) => {
     try {
-      // TODO: integrar com a API de redefinição de senha. O backend cuida do
-      // envio do email com o código de redefinição.
-      // await API.post("/auth/reset-password", { email: data.email });
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await requestResetPasswordOrder(data);
 
-      setEmail(data.email);
-      setCode(Array(CODE_LENGTH).fill(""));
-      setCodeError(null);
-      setStep("code");
-      toast.info(`Enviamos um código de redefinição para ${data.email}.`);
-    } catch (error) {
-      toast.error("Não foi possível enviar o código de redefinição.");
-    }
-  };
+      setSentEmail(data.email);
+      setStep("sent");
+      toast.info(
+        `Se existir uma conta com esse email, enviaremos um link de redefinição para ${data.email}.`,
+      );
+    } catch (error: any) {
+      //Todo: Handle error message
 
-  const onValidateCode = async (fullCode: string) => {
-    setIsValidatingCode(true);
-    setCodeError(null);
-    try {
-      // TODO: integrar com a API para validar o código de redefinição.
-      // await API.post("/auth/reset-password/verify", { email, code: fullCode });
-      await new Promise((resolve) => setTimeout(resolve, 800));
-
-      toast.success("Código validado com sucesso!");
-      onClose();
-    } catch (error) {
-      setCodeError("Código inválido. Tente novamente.");
-      setCode(Array(CODE_LENGTH).fill(""));
-      toast.error("Código inválido. Tente novamente.");
-    } finally {
-      setIsValidatingCode(false);
+      toast.error("Não foi possível solicitar a redefinição de senha.");
     }
   };
 
@@ -127,8 +99,8 @@ export default function ResetPasswordDialog({
                     color="text.secondary"
                     sx={{ textAlign: "center" }}
                   >
-                    Informe o email da sua conta. Enviaremos um código para você
-                    redefinir sua senha.
+                    Informe o email da sua conta. Enviaremos um link para você
+                    definir uma nova senha.
                   </Typography>
 
                   <RHFTextField
@@ -150,54 +122,35 @@ export default function ResetPasswordDialog({
                       ) : undefined
                     }
                   >
-                    {isSubmitting ? "Enviando..." : "Enviar código"}
+                    {isSubmitting ? "Enviando..." : "Enviar link"}
                   </Button>
                 </Stack>
               </form>
             </motion.div>
           ) : (
             <motion.div
-              key="code"
+              key="sent"
               initial={{ opacity: 0, x: 30 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -30 }}
               transition={{ duration: 0.25 }}
             >
-              <Stack spacing={3} alignItems="center">
+              <Stack spacing={3} alignItems="center" sx={{ pt: 1 }}>
+                <MarkEmailReadOutlinedIcon
+                  sx={{ fontSize: 48, color: "primary.main" }}
+                />
                 <Typography
                   variant="body2"
                   color="text.secondary"
                   sx={{ textAlign: "center" }}
                 >
-                  Digite o código de {CODE_LENGTH} caracteres enviado para{" "}
-                  <strong>{email}</strong>.
+                  Enviamos um link de redefinição para{" "}
+                  <strong>{sentEmail}</strong>. O link expira em 30 minutos —
+                  abra o email e siga as instruções.
                 </Typography>
-
-                <CodeInput
-                  length={CODE_LENGTH}
-                  value={code}
-                  onChange={(next) => {
-                    setCode(next);
-                    if (codeError) setCodeError(null);
-                  }}
-                  onComplete={onValidateCode}
-                  disabled={isValidatingCode}
-                />
-
-                <Box sx={{ minHeight: 24 }}>
-                  {isValidatingCode ? (
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <CircularProgress size={16} />
-                      <Typography variant="body2" color="text.secondary">
-                        Validando código...
-                      </Typography>
-                    </Stack>
-                  ) : codeError ? (
-                    <Typography variant="body2" color="error">
-                      {codeError}
-                    </Typography>
-                  ) : null}
-                </Box>
+                <Button variant="outlined" onClick={handleClose} fullWidth>
+                  Fechar
+                </Button>
               </Stack>
             </motion.div>
           )}

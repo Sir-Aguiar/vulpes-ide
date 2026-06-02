@@ -28,11 +28,12 @@ API.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
 
-      if (
+      const publicPaths = ["/login", "/signup", "/validate-order"];
+      const isPublicPath =
         typeof window !== "undefined" &&
-        !window.location.pathname.includes("/login") &&
-        !window.location.pathname.includes("/signup")
-      ) {
+        publicPaths.some((path) => window.location.pathname.startsWith(path));
+
+      if (typeof window !== "undefined" && !isPublicPath) {
         window.location.href = "/login";
       }
     }

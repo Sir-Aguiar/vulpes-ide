@@ -20,6 +20,22 @@ export const ResetPasswordSchema = Zod.object({
   email: Zod.email("Email inválido"),
 });
 
+export const CompleteResetPasswordSchema = Zod.object({
+  password: Zod.string().min(6, "Senha deve ter ao menos 6 caracteres"),
+  passwordConfirm: Zod.string().min(1, "Confirmação de senha é obrigatória"),
+}).refine((data) => data.password === data.passwordConfirm, {
+  message: "As senhas não coincidem",
+  path: ["passwordConfirm"],
+});
+
 export type ISignupDTO = Zod.infer<typeof SignupSchema>;
 export type ILoginDTO = Zod.infer<typeof LoginSchema>;
 export type IResetPasswordDTO = Zod.infer<typeof ResetPasswordSchema>;
+export type ICompleteResetPasswordDTO = Zod.infer<
+  typeof CompleteResetPasswordSchema
+>;
+
+/** Resposta esperada de GET /auth/reset-password/validate-order */
+export type ValidateResetPasswordOrderResponse = {
+  orderId: string;
+};
