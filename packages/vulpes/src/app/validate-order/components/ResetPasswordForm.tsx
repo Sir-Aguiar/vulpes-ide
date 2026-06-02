@@ -1,8 +1,8 @@
 "use client";
 
 import {
-  CompleteResetPasswordSchema,
-  ICompleteResetPasswordDTO,
+    CompleteResetPasswordSchema,
+    ICompleteResetPasswordDTO,
 } from "@/@schemas/Auth.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import { completeResetPassword } from "@/services/resetPassword";
