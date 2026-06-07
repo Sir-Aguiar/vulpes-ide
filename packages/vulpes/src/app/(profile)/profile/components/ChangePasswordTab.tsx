@@ -3,6 +3,7 @@
 import { ChangePasswordDTO } from "@/@dtos/User";
 import { ChangePasswordSchema } from "@/@schemas/User";
 import RHFTextField from "@/components/RHF/TextField";
+import API from "@/services/API";
 import { safeZodResolver } from "@/utils/safeZodResolver";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -23,13 +24,13 @@ import { toast } from "react-toastify";
 type VisibilityField = "currentPassword" | "password" | "passwordConfirm";
 
 export default function ChangePasswordTab() {
-  const [visibility, setVisibility] = useState<Record<VisibilityField, boolean>>(
-    {
-      currentPassword: false,
-      password: false,
-      passwordConfirm: false,
-    },
-  );
+  const [visibility, setVisibility] = useState<
+    Record<VisibilityField, boolean>
+  >({
+    currentPassword: false,
+    password: false,
+    passwordConfirm: false,
+  });
 
   const {
     control,
@@ -63,12 +64,10 @@ export default function ChangePasswordTab() {
 
   const onChangePassword = async (data: ChangePasswordDTO) => {
     try {
-      // TODO: integrar com a API para validar a senha atual e atualizar a senha.
-      // await API.patch("/user/password", {
-      //   currentPassword: data.currentPassword,
-      //   password: data.password,
-      // });
-      await new Promise((resolve) => setTimeout(resolve, 800));
+      await API.patch("/user/change-password", {
+        currentPassword: data.currentPassword,
+        newPassword: data.password,
+      });
 
       toast.success("Senha alterada com sucesso!");
       reset({ currentPassword: "", password: "", passwordConfirm: "" });
@@ -78,11 +77,7 @@ export default function ChangePasswordTab() {
         passwordConfirm: false,
       });
     } catch (error: any) {
-      if (error?.response?.status === 401) {
-        toast.error("Senha atual incorreta.");
-      } else {
-        toast.error("Não foi possível alterar sua senha.");
-      }
+      toast.error("Não foi possível alterar sua senha.");
     }
   };
 
