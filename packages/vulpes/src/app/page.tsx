@@ -6,6 +6,7 @@ import API from "@/services/API";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import {
   Box,
+  Button,
   Chip,
   CircularProgress,
   List,
@@ -25,6 +26,7 @@ import MDEditor from "@uiw/react-md-editor";
 import { AnimatePresence, motion } from "framer-motion";
 import { Montserrat } from "next/font/google";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -88,6 +90,8 @@ function groupFeedbacksByTask(feedbacks: IFeedbackResponse[]) {
 }
 
 const FeedbackSection = () => {
+  const router = useRouter();
+
   const [feedbacks, setFeedbacks] = useState<IFeedbackResponse[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
   const [loadingFeedbacks, setLoadingFeedbacks] = useState(true);
@@ -98,7 +102,9 @@ const FeedbackSection = () => {
     setFeedbackError(null);
 
     try {
-      const response = await API.get("/submission/feedbacks");
+      const response = await API.get("/submission/feedbacks", {
+        params: { isWidget: true },
+      });
       const normalizedFeedbacks = normalizeFeedbackResponse(response.data);
       setFeedbacks(normalizedFeedbacks);
     } catch (error) {
@@ -342,6 +348,27 @@ const FeedbackSection = () => {
               </List>
             )}
           </Box>
+          <Button
+            fullWidth
+            variant="outlined"
+            className={montserrat.className}
+            onClick={() => {
+              router.push("/feedbacks");
+            }}
+            sx={{
+              mt: 1.5,
+              textTransform: "none",
+              fontWeight: 600,
+              color: "#ff6d00",
+              borderColor: "rgba(255,109,0,0.5)",
+              "&:hover": {
+                borderColor: "#ff6d00",
+                bgcolor: "rgba(255,109,0,0.08)",
+              },
+            }}
+          >
+            Ver todos os feedbacks
+          </Button>
         </Paper>
 
         <Paper
