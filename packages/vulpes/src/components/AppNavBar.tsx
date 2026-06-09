@@ -2,6 +2,8 @@
 
 import { useAppTheme, useColorMode } from "@/providers/ColorModeProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import { useBugReport } from "@/providers/BugReportProvider";
+import BugReportIcon from "@mui/icons-material/BugReport";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import Logout from "@mui/icons-material/Logout";
@@ -36,6 +38,7 @@ export default function AppNavBar(props?: IProps) {
   const { user, logout } = useAuth();
   const theme = useAppTheme();
   const { isDark, toggleMode } = useColorMode();
+  const { openBugReport } = useBugReport();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -137,7 +140,28 @@ export default function AppNavBar(props?: IProps) {
           ))}
         </Box>
 
-        <Button sx={{ color: theme.text }}>
+        <Button
+          variant="outlined"
+          size="small"
+          startIcon={<BugReportIcon fontSize="small" />}
+          onClick={openBugReport}
+          sx={{
+            ml: 1,
+            textTransform: "none",
+            fontWeight: 600,
+            color: theme.text,
+            borderColor: theme.borderStrong,
+            "&:hover": {
+              borderColor: theme.brand,
+              bgcolor: "rgba(255,109,0,0.06)",
+              color: theme.brand,
+            },
+          }}
+        >
+          Reportar bug
+        </Button>
+
+        <Button sx={{ color: theme.text, ml: 1 }}>
           <Link href="/new-task" style={{ color: "inherit", textDecoration: "none" }}>
             Criar Tarefa
           </Link>
