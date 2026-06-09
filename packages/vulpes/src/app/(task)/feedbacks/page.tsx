@@ -25,6 +25,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { Montserrat } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import { registerPortugolLanguage } from "../../../../libs/monaco-config";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
@@ -55,17 +56,6 @@ interface IFeedbackStatus {
   surface: string;
   icon: React.ReactNode;
 }
-
-const SURFACE = {
-  page: "#18181b",
-  card: "rgba(255,255,255,0.03)",
-  border: "rgba(255,255,255,0.08)",
-  borderStrong: "rgba(255,255,255,0.16)",
-  textPrimary: "rgba(255,255,255,0.92)",
-  textSecondary: "rgba(255,255,255,0.55)",
-  textMuted: "rgba(255,255,255,0.4)",
-  brand: "#FF6D00",
-} as const;
 
 const STATUS_COLORS = {
   success: "#22c55e",
@@ -137,6 +127,7 @@ function groupFeedbacksByTask(feedbacks: IFeedbackResponse[]) {
 }
 
 function FiltersDropdown() {
+  const theme = useAppTheme();
   const [open, setOpen] = useState(false);
 
   return (
@@ -144,8 +135,8 @@ function FiltersDropdown() {
       sx={{
         borderRadius: 3,
         border: "1px solid",
-        borderColor: SURFACE.border,
-        bgcolor: SURFACE.card,
+        borderColor: theme.border,
+        bgcolor: theme.bgCard,
         overflow: "hidden",
       }}
     >
@@ -165,13 +156,13 @@ function FiltersDropdown() {
           px: 2,
           py: 1.5,
           cursor: "pointer",
-          color: SURFACE.textPrimary,
+          color: theme.text,
           transition: "background-color 0.2s ease",
-          "&:hover": { bgcolor: "rgba(255,255,255,0.04)" },
+          "&:hover": { bgcolor: theme.hover },
         }}
       >
         <Stack direction="row" alignItems="center" spacing={1}>
-          <TuneIcon fontSize="small" sx={{ color: SURFACE.brand }} />
+          <TuneIcon fontSize="small" sx={{ color: theme.brand }} />
           <Typography
             variant="subtitle2"
             className={montserrat.className}
@@ -183,7 +174,7 @@ function FiltersDropdown() {
         <ExpandMoreIcon
           fontSize="small"
           sx={{
-            color: SURFACE.textSecondary,
+            color: theme.textSecondary,
             transition: "transform 0.2s ease",
             transform: open ? "rotate(180deg)" : "rotate(0deg)",
           }}
@@ -197,12 +188,12 @@ function FiltersDropdown() {
             pb: 2,
             pt: 0.5,
             borderTop: "1px solid",
-            borderColor: SURFACE.border,
+            borderColor: theme.border,
           }}
         >
           <Typography
             variant="caption"
-            sx={{ color: SURFACE.textMuted, display: "block", py: 1 }}
+            sx={{ color: theme.textMuted, display: "block", py: 1 }}
           >
             Em breve: filtrar por status, disciplina e data.
           </Typography>
@@ -223,6 +214,7 @@ function FeedbackSidebar({
   selectedTaskId,
   onSelect,
 }: IFeedbackSidebarProps) {
+  const theme = useAppTheme();
   return (
     <Box
       sx={{
@@ -241,8 +233,8 @@ function FeedbackSidebar({
           minHeight: 0,
           borderRadius: 3,
           border: "1px solid",
-          borderColor: SURFACE.border,
-          bgcolor: SURFACE.card,
+          borderColor: theme.border,
+          bgcolor: theme.bgCard,
           display: "flex",
           flexDirection: "column",
           overflow: "hidden",
@@ -256,17 +248,17 @@ function FeedbackSidebar({
             px: 2,
             py: 1.5,
             borderBottom: "1px solid",
-            borderColor: SURFACE.border,
+            borderColor: theme.border,
           }}
         >
           <Typography
             variant="subtitle2"
             className={montserrat.className}
-            sx={{ color: SURFACE.textPrimary, fontWeight: 700 }}
+            sx={{ color: theme.text, fontWeight: 700 }}
           >
             Feedbacks
           </Typography>
-          <Typography variant="caption" sx={{ color: SURFACE.textMuted }}>
+          <Typography variant="caption" sx={{ color: theme.textMuted }}>
             {feedbacks.length} registro{feedbacks.length === 1 ? "" : "s"}
           </Typography>
         </Stack>
@@ -297,8 +289,8 @@ function FeedbackSidebar({
                 px: 2,
                 borderRadius: 2,
                 border: "1px dashed",
-                borderColor: SURFACE.border,
-                color: SURFACE.textSecondary,
+                borderColor: theme.border,
+                color: theme.textSecondary,
                 typography: "body2",
               }}
             >
@@ -331,7 +323,7 @@ function FeedbackSidebar({
                       cursor: "pointer",
                       borderRadius: 2,
                       border: "1px solid",
-                      borderColor: isSelected ? SURFACE.brand : SURFACE.border,
+                      borderColor: isSelected ? theme.brand : theme.border,
                       bgcolor: isSelected
                         ? "rgba(255,109,0,0.08)"
                         : "transparent",
@@ -343,11 +335,11 @@ function FeedbackSidebar({
                         "border-color 0.2s ease, background-color 0.2s ease",
                       "&:hover": {
                         borderColor: isSelected
-                          ? SURFACE.brand
-                          : SURFACE.borderStrong,
+                          ? theme.brand
+                          : theme.borderStrong,
                         bgcolor: isSelected
                           ? "rgba(255,109,0,0.1)"
-                          : "rgba(255,255,255,0.04)",
+                          : theme.hover,
                       },
                     }}
                   >
@@ -363,7 +355,7 @@ function FeedbackSidebar({
                       <Typography
                         variant="body2"
                         sx={{
-                          color: SURFACE.textPrimary,
+                          color: theme.text,
                           fontWeight: 600,
                           overflow: "hidden",
                           textOverflow: "ellipsis",
@@ -375,7 +367,7 @@ function FeedbackSidebar({
                     </Stack>
                     <Typography
                       variant="caption"
-                      sx={{ color: SURFACE.textMuted, pl: 3.5 }}
+                      sx={{ color: theme.textMuted, pl: 3.5 }}
                     >
                       {formatFeedbackDate(feedback.updatedAt)}
                     </Typography>
@@ -396,6 +388,7 @@ interface IInfoCardProps {
 }
 
 function InfoCard({ feedback, onRetry }: IInfoCardProps) {
+  const theme = useAppTheme();
   const status = getFeedbackStatus(feedback);
 
   return (
@@ -403,8 +396,8 @@ function InfoCard({ feedback, onRetry }: IInfoCardProps) {
       sx={{
         borderRadius: 3,
         border: "1px solid",
-        borderColor: SURFACE.border,
-        bgcolor: SURFACE.card,
+        borderColor: theme.border,
+        bgcolor: theme.bgCard,
         p: { xs: 2, md: 3 },
         display: "flex",
         flexDirection: { xs: "column", md: "row" },
@@ -418,7 +411,7 @@ function InfoCard({ feedback, onRetry }: IInfoCardProps) {
           <Typography
             variant="h6"
             className={montserrat.className}
-            sx={{ color: SURFACE.textPrimary, fontWeight: 700 }}
+            sx={{ color: theme.text, fontWeight: 700 }}
           >
             {feedback.task?.title || "Atividade sem título"}
           </Typography>
@@ -446,7 +439,7 @@ function InfoCard({ feedback, onRetry }: IInfoCardProps) {
         <Stack
           direction={{ xs: "column", sm: "row" }}
           spacing={{ xs: 0.5, sm: 3 }}
-          sx={{ color: SURFACE.textSecondary }}
+          sx={{ color: theme.textSecondary }}
         >
           <Typography variant="body2">
             Enviado em {formatFeedbackDate(feedback.submittedAt)}
@@ -463,14 +456,14 @@ function InfoCard({ feedback, onRetry }: IInfoCardProps) {
         startIcon={status.key === "approved" ? <RefreshIcon /> : <CodeIcon />}
         sx={{
           flexShrink: 0,
-          bgcolor: SURFACE.brand,
+          bgcolor: theme.brand,
           color: "#fff",
           fontWeight: 700,
           textTransform: "none",
           px: 3,
           py: 1.25,
           borderRadius: 2,
-          "&:hover": { bgcolor: "#e36c1c" },
+          "&:hover": { bgcolor: theme.brandDark },
         }}
       >
         {status.cta}
@@ -486,6 +479,7 @@ function PanelHeader({
   icon: React.ReactNode;
   title: string;
 }) {
+  const theme = useAppTheme();
   return (
     <Stack
       direction="row"
@@ -495,14 +489,14 @@ function PanelHeader({
         px: 2,
         py: 1.25,
         borderBottom: "1px solid",
-        borderColor: SURFACE.border,
+        borderColor: theme.border,
       }}
     >
-      <Box sx={{ color: SURFACE.brand, display: "flex" }}>{icon}</Box>
+      <Box sx={{ color: theme.brand, display: "flex" }}>{icon}</Box>
       <Typography
         variant="body2"
         className={montserrat.className}
-        sx={{ color: SURFACE.textPrimary, fontWeight: 600 }}
+        sx={{ color: theme.text, fontWeight: 600 }}
       >
         {title}
       </Typography>
@@ -517,6 +511,7 @@ function FeedbackDetail({
   feedback: IFeedbackResponse;
   onRetry: () => void;
 }) {
+  const theme = useAppTheme();
   const handleEditorDidMount = (_editor: unknown, monacoInstance: any) => {
     registerPortugolLanguage(monacoInstance);
     monacoInstance.editor.setTheme("vs-dark");
@@ -556,8 +551,8 @@ function FeedbackDetail({
             flexDirection: "column",
             borderRadius: 3,
             border: "1px solid",
-            borderColor: SURFACE.border,
-            bgcolor: SURFACE.card,
+            borderColor: theme.border,
+            bgcolor: theme.bgCard,
             overflow: "hidden",
           }}
         >
@@ -566,7 +561,7 @@ function FeedbackDetail({
             title="Feedback do professor"
           />
           <Box
-            data-color-mode="dark"
+            data-color-mode={theme.mode}
             sx={{
               flex: 1,
               minHeight: 0,
@@ -576,6 +571,7 @@ function FeedbackDetail({
                 backgroundColor: "transparent",
                 fontSize: "0.95rem",
                 lineHeight: 1.6,
+                color: theme.text,
               },
               "& .wmde-markdown p, & .wmde-markdown li": { lineHeight: 1.6 },
             }}
@@ -597,8 +593,8 @@ function FeedbackDetail({
             flexDirection: "column",
             borderRadius: 3,
             border: "1px solid",
-            borderColor: SURFACE.border,
-            bgcolor: SURFACE.card,
+            borderColor: theme.border,
+            bgcolor: theme.bgCard,
             overflow: "hidden",
           }}
         >
@@ -606,7 +602,7 @@ function FeedbackDetail({
             icon={<CodeIcon fontSize="small" />}
             title="Código enviado"
           />
-          <Box sx={{ flex: 1, minHeight: 0, bgcolor: "#1e1e1e" }}>
+          <Box sx={{ flex: 1, minHeight: 0, bgcolor: theme.codeBg }}>
             <Editor
               height="100%"
               theme="vs-dark"
@@ -630,6 +626,7 @@ function FeedbackDetail({
 }
 
 function EmptyDetail() {
+  const theme = useAppTheme();
   return (
     <Box
       component={motion.div}
@@ -645,8 +642,8 @@ function EmptyDetail() {
         textAlign: "center",
         borderRadius: 3,
         border: "1px dashed",
-        borderColor: SURFACE.border,
-        bgcolor: SURFACE.card,
+        borderColor: theme.border,
+        bgcolor: theme.bgCard,
         px: 4,
       }}
     >
@@ -654,11 +651,11 @@ function EmptyDetail() {
         <Typography
           variant="h6"
           className={montserrat.className}
-          sx={{ color: SURFACE.textPrimary, fontWeight: 700 }}
+          sx={{ color: theme.text, fontWeight: 700 }}
         >
           Selecione um feedback
         </Typography>
-        <Typography variant="body2" sx={{ color: SURFACE.textSecondary }}>
+        <Typography variant="body2" sx={{ color: theme.textSecondary }}>
           Escolha uma atividade na lista à esquerda para ver o comentário do
           professor e o código enviado.
         </Typography>
@@ -669,6 +666,7 @@ function EmptyDetail() {
 
 function FeedbacksContent() {
   const router = useRouter();
+  const theme = useAppTheme();
 
   const [feedbacks, setFeedbacks] = useState<IFeedbackResponse[]>([]);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -721,7 +719,8 @@ function FeedbacksContent() {
       sx={{
         width: "100%",
         height: "calc(100vh - var(--appbar-height))",
-        bgcolor: SURFACE.page,
+        bgcolor: theme.bg,
+        transition: "background-color 0.2s ease",
         px: { xs: 2, md: 4 },
         py: { xs: 2, md: 3 },
       }}
@@ -746,7 +745,7 @@ function FeedbacksContent() {
               justifyContent: "center",
             }}
           >
-            <CircularProgress sx={{ color: SURFACE.brand }} />
+            <CircularProgress sx={{ color: theme.brand }} />
           </Box>
         ) : (
           <>
@@ -773,14 +772,14 @@ function FeedbacksContent() {
                     textAlign: "center",
                     borderRadius: 3,
                     border: "1px dashed",
-                    borderColor: SURFACE.border,
-                    bgcolor: SURFACE.card,
+                    borderColor: theme.border,
+                    bgcolor: theme.bgCard,
                     px: 4,
                   }}
                 >
                   <Typography
                     variant="body1"
-                    sx={{ color: SURFACE.textSecondary }}
+                    sx={{ color: theme.textSecondary }}
                   >
                     {error}
                   </Typography>

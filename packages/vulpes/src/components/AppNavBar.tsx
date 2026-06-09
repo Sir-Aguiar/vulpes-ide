@@ -1,6 +1,9 @@
 "use client";
 
+import { useAppTheme, useColorMode } from "@/providers/ColorModeProvider";
 import { useAuth } from "@/providers/AuthProvider";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
 import Logout from "@mui/icons-material/Logout";
 import Person from "@mui/icons-material/Person";
 import {
@@ -12,8 +15,10 @@ import {
   Divider,
   IconButton,
   ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
+  Switch,
   Toolbar,
   Tooltip,
   Typography,
@@ -29,6 +34,8 @@ export default function AppNavBar(props?: IProps) {
   const router = useRouter();
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const theme = useAppTheme();
+  const { isDark, toggleMode } = useColorMode();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
@@ -73,16 +80,28 @@ export default function AppNavBar(props?: IProps) {
     (item) => !user?.role || item.roles.includes(user.role),
   );
 
+  const navButtonSx = (active: boolean) => ({
+    color: active ? theme.brand : theme.navbarText,
+    fontWeight: active ? 600 : 400,
+    textTransform: "none" as const,
+    fontSize: "0.95rem",
+    "&:hover": {
+      backgroundColor: theme.hover,
+      color: theme.brand,
+    },
+  });
+
   return (
     <AppBar
       position="sticky"
       elevation={0}
       sx={{
-        backgroundColor: "rgba(10, 10, 10, 0.9)",
+        backgroundColor: theme.navbar,
         backdropFilter: "blur(12px)",
         borderBottom: "1px solid",
-        borderColor: "rgba(255, 255, 255, 0.08)",
-        color: "#fff",
+        borderColor: theme.border,
+        color: theme.text,
+        transition: "background-color 0.2s ease, border-color 0.2s ease",
       }}
       {...props}
     >
@@ -96,7 +115,7 @@ export default function AppNavBar(props?: IProps) {
             cursor: "pointer",
             fontWeight: 700,
             letterSpacing: "-0.5px",
-            color: "#FF6D00",
+            color: theme.brand,
           }}
           onClick={() => router.push("/")}
         >
@@ -104,46 +123,24 @@ export default function AppNavBar(props?: IProps) {
         </Typography>
 
         <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 1 }}>
-          <Button
-            onClick={() => router.push("/")}
-            sx={{
-              color: pathname === "/" ? "#FF6D00" : "rgba(255, 255, 255, 0.7)",
-              fontWeight: pathname === "/" ? 600 : 400,
-              textTransform: "none",
-              fontSize: "0.95rem",
-              "&:hover": {
-                backgroundColor: "rgba(255, 255, 255, 0.05)",
-                color: "#FF6D00",
-              },
-            }}
-          >
+          <Button onClick={() => router.push("/")} sx={navButtonSx(pathname === "/")}>
             Início
           </Button>
           {visibleNavItems.map((item) => (
             <Button
               key={item.path}
               onClick={() => router.push(item.path)}
-              sx={{
-                color:
-                  pathname === item.path
-                    ? "#FF6D00"
-                    : "rgba(255, 255, 255, 0.7)",
-                fontWeight: pathname === item.path ? 600 : 400,
-                textTransform: "none",
-                fontSize: "0.95rem",
-                "&:hover": {
-                  backgroundColor: "rgba(255, 255, 255, 0.05)",
-                  color: "#FF6D00",
-                },
-              }}
+              sx={navButtonSx(pathname === item.path)}
             >
               {item.label}
             </Button>
           ))}
         </Box>
 
-        <Button>
-          <Link href="/new-task">Criar Tarefa</Link>
+        <Button sx={{ color: theme.text }}>
+          <Link href="/new-task" style={{ color: "inherit", textDecoration: "none" }}>
+            Criar Tarefa
+          </Link>
         </Button>
 
         {user && (
@@ -161,7 +158,7 @@ export default function AppNavBar(props?: IProps) {
                   sx={{
                     width: 32,
                     height: 32,
-                    bgcolor: "#FF6D00",
+                    bgcolor: theme.brand,
                     color: "#fff",
                     fontWeight: "bold",
                   }}
@@ -173,33 +170,22 @@ export default function AppNavBar(props?: IProps) {
             <Menu
               id="menu-appbar"
               anchorEl={anchorEl}
-              anchorOrigin={{
-                vertical: "bottom",
-                horizontal: "right",
-              }}
+              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
               keepMounted
-              transformOrigin={{
-                vertical: "top",
-                horizontal: "right",
-              }}
+              transformOrigin={{ vertical: "top", horizontal: "right" }}
               open={Boolean(anchorEl)}
               onClose={handleClose}
               PaperProps={{
                 elevation: 0,
                 sx: {
                   overflow: "visible",
-                  filter: "drop-shadow(0px 4px 20px rgba(0,0,0,0.5))",
+                  filter: "drop-shadow(0px 4px 20px rgba(0,0,0,0.15))",
                   mt: 1.5,
-                  minWidth: 200,
-                  bgcolor: "#1E1E1E",
-                  color: "#fff",
-                  border: "1px solid rgba(255, 255, 255, 0.08)",
-                  "& .MuiAvatar-root": {
-                    width: 32,
-                    height: 32,
-                    ml: -0.5,
-                    mr: 1,
-                  },
+                  minWidth: 240,
+                  bgcolor: theme.menuBg,
+                  color: theme.text,
+                  border: "1px solid",
+                  borderColor: theme.menuBorder,
                 },
               }}
             >
@@ -207,47 +193,56 @@ export default function AppNavBar(props?: IProps) {
                 <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
                   {user.name || "Usuário"}
                 </Typography>
-                <Typography
-                  variant="body2"
-                  sx={{ color: "rgba(255, 255, 255, 0.6)" }}
-                  noWrap
-                >
+                <Typography variant="body2" sx={{ color: theme.menuTextMuted }} noWrap>
                   {user.email}
                 </Typography>
                 <Typography
                   variant="caption"
-                  sx={{
-                    mt: 0.5,
-                    display: "block",
-                    color: "#FF6D00",
-                    fontWeight: 500,
-                  }}
+                  sx={{ mt: 0.5, display: "block", color: theme.brand, fontWeight: 500 }}
                 >
                   {user.role}
                 </Typography>
               </Box>
-              <Divider sx={{ borderColor: "rgba(255, 255, 255, 0.08)" }} />
+              <Divider sx={{ borderColor: theme.menuBorder }} />
+
               <MenuItem
-                onClick={handleProfile}
-                sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}
+                onClick={(event) => event.stopPropagation()}
+                sx={{ "&:hover": { bgcolor: theme.hover }, py: 1 }}
               >
                 <ListItemIcon>
-                  <Person
-                    fontSize="small"
-                    sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-                  />
+                  {isDark ? (
+                    <DarkModeIcon fontSize="small" sx={{ color: theme.menuTextMuted }} />
+                  ) : (
+                    <LightModeIcon fontSize="small" sx={{ color: theme.menuTextMuted }} />
+                  )}
+                </ListItemIcon>
+                <ListItemText
+                  primary="Tema escuro"
+                  primaryTypographyProps={{ fontSize: "0.875rem" }}
+                />
+                <Switch
+                  checked={isDark}
+                  onChange={toggleMode}
+                  size="small"
+                  inputProps={{ "aria-label": "Alternar tema escuro" }}
+                  sx={{
+                    "& .MuiSwitch-switchBase.Mui-checked": { color: theme.brand },
+                    "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
+                      bgcolor: theme.brand,
+                    },
+                  }}
+                />
+              </MenuItem>
+
+              <MenuItem onClick={handleProfile} sx={{ "&:hover": { bgcolor: theme.hover } }}>
+                <ListItemIcon>
+                  <Person fontSize="small" sx={{ color: theme.menuTextMuted }} />
                 </ListItemIcon>
                 Perfil
               </MenuItem>
-              <MenuItem
-                onClick={handleLogout}
-                sx={{ "&:hover": { bgcolor: "rgba(255, 255, 255, 0.05)" } }}
-              >
+              <MenuItem onClick={handleLogout} sx={{ "&:hover": { bgcolor: theme.hover } }}>
                 <ListItemIcon>
-                  <Logout
-                    fontSize="small"
-                    sx={{ color: "rgba(255, 255, 255, 0.7)" }}
-                  />
+                  <Logout fontSize="small" sx={{ color: theme.menuTextMuted }} />
                 </ListItemIcon>
                 Sair
               </MenuItem>
