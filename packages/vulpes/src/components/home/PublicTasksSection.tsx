@@ -67,10 +67,14 @@ export default function PublicTasksSection() {
             </Typography>
             <Typography
               variant="body1"
-              sx={{ color: theme.textSecondary, maxWidth: 480, lineHeight: 1.6 }}
+              sx={{
+                color: theme.textSecondary,
+                maxWidth: 480,
+                lineHeight: 1.6,
+              }}
             >
-              Pratique com atividades abertas à comunidade — resolva no editor
-              e teste seu código agora mesmo.
+              Pratique com atividades abertas à comunidade — resolva e teste seu
+              código agora mesmo.
             </Typography>
           </Stack>
           <Button
