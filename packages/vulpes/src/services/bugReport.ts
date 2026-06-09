@@ -24,7 +24,5 @@ export async function submitBugReport(data: IBugReportForm) {
     formData.append("screenshots", file);
   }
 
-  const response = await API.post("/bug-report", formData);
-
-  return response.data;
+  await API.post("/bug-report", formData);
 }

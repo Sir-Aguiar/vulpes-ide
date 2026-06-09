@@ -16,13 +16,12 @@ export function detectOS(): string {
   if (typeof navigator === "undefined") return "Desconhecido";
 
   const ua = navigator.userAgent;
-  const platform = navigator.platform ?? "";
 
-  if (/Win/i.test(platform) || ua.includes("Windows")) return "Windows";
-  if (/Mac/i.test(platform) || ua.includes("Macintosh")) return "macOS";
-  if (/Linux/i.test(platform) || ua.includes("Linux")) return "Linux";
-  if (/Android/i.test(ua)) return "Android";
-  if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if (ua.includes("Windows")) return "Windows";
+  if (/android/i.test(ua)) return "Android";
+  if (/iphone|ipad|ipod/i.test(ua)) return "iOS";
+  if (ua.includes("Macintosh")) return "macOS";
+  if (/linux|x11/i.test(ua)) return "Linux";
 
   return "Desconhecido";
 }
