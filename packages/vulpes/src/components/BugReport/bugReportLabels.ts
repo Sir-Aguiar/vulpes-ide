@@ -1,7 +1,4 @@
-import {
-  BugReportSeverity,
-  BugReportStatus,
-} from "@/@types/BugReport";
+import { BugReportSeverity, BugReportStatus } from "@/@types/BugReport";
 
 export const BUG_REPORT_STATUS_LABELS: Record<BugReportStatus, string> = {
   OPEN: "Aberto",

@@ -28,9 +28,7 @@ export type IBugReportForm = z.infer<typeof BugReportSchema>;
 
 export const UpdateBugReportSchema = z
   .object({
-    status: z
-      .enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"])
-      .optional(),
+    status: z.enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"]).optional(),
     severity: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
   })
   .refine((data) => data.status !== undefined || data.severity !== undefined, {
