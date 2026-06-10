@@ -2,7 +2,6 @@
 
 import AppNavBar from "@/components/AppNavBar";
 import AuthGuard from "@/components/AuthGuard";
-import BugReportIcon from "@mui/icons-material/BugReport";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
 import PersonIcon from "@mui/icons-material/Person";
@@ -20,7 +19,6 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import React, { useState } from "react";
 
-import BugReportTab from "./components/BugReportTab";
 import ChangePasswordTab from "./components/ChangePasswordTab";
 import DeactivateAccountTab from "./components/DeactivateAccountTab";
 import InstitutionalDataTab from "./components/InstitutionalDataTab";
@@ -44,12 +42,6 @@ const TABS = [
     label: "Dados institucionais",
     icon: <SchoolIcon />,
     Component: InstitutionalDataTab,
-  },
-  {
-    key: "bug",
-    label: "Bug report",
-    icon: <BugReportIcon />,
-    Component: BugReportTab,
   },
   {
     key: "deactivate",

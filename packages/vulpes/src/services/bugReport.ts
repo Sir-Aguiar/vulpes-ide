@@ -1,6 +1,25 @@
-import { IBugReportForm } from "@/@schemas/BugReport.schema";
+import {
+  IBugReportForm,
+  IUpdateBugReportDTO,
+} from "@/@schemas/BugReport.schema";
+import { IBugReport } from "@/@types/BugReport";
 import API from "@/services/API";
 import { detectBrowser, detectOS } from "@/utils/detect-environment";
+
+export async function getBugReports() {
+  const response = await API.get<IBugReport[]>("/bug-report");
+  return response.data;
+}
+
+export async function getBugReportById(id: number) {
+  const response = await API.get<IBugReport>(`/bug-report/${id}`);
+  return response.data;
+}
+
+export async function updateBugReport(id: number, data: IUpdateBugReportDTO) {
+  const response = await API.patch<IBugReport>(`/bug-report/${id}`, data);
+  return response.data;
+}
 
 export async function submitBugReport(data: IBugReportForm) {
   const formData = new FormData();
@@ -24,5 +43,9 @@ export async function submitBugReport(data: IBugReportForm) {
     formData.append("screenshots", file);
   }
 
-  await API.post("/bug-report", formData);
+  await API.post("/bug-report", formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+    },
+  });
 }

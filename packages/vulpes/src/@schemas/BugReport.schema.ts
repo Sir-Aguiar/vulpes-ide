@@ -25,3 +25,16 @@ export const BugReportSchema = z.object({
 });
 
 export type IBugReportForm = z.infer<typeof BugReportSchema>;
+
+export const UpdateBugReportSchema = z
+  .object({
+    status: z
+      .enum(["OPEN", "IN_PROGRESS", "RESOLVED", "CLOSED"])
+      .optional(),
+    severity: z.enum(["LOW", "MEDIUM", "HIGH", "CRITICAL"]).optional(),
+  })
+  .refine((data) => data.status !== undefined || data.severity !== undefined, {
+    message: "Informe ao menos status ou prioridade para atualizar",
+  });
+
+export type IUpdateBugReportDTO = z.infer<typeof UpdateBugReportSchema>;

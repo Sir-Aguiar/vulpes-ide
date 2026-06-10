@@ -62,6 +62,11 @@ export default function AppNavBar(props?: IProps) {
     router.push("/profile");
   };
 
+  const handleBugReports = () => {
+    handleClose();
+    router.push("/bug-reports");
+  };
+
   const navItems = [
     {
       label: "Turmas",
@@ -305,6 +310,20 @@ export default function AppNavBar(props?: IProps) {
                 </ListItemIcon>
                 Perfil
               </MenuItem>
+              {user.role === "ADMIN" && (
+                <MenuItem
+                  onClick={handleBugReports}
+                  sx={{ "&:hover": { bgcolor: theme.hover } }}
+                >
+                  <ListItemIcon>
+                    <BugReportIcon
+                      fontSize="small"
+                      sx={{ color: theme.menuTextMuted }}
+                    />
+                  </ListItemIcon>
+                  Reports de bug
+                </MenuItem>
+              )}
               <MenuItem
                 onClick={handleLogout}
                 sx={{ "&:hover": { bgcolor: theme.hover } }}
