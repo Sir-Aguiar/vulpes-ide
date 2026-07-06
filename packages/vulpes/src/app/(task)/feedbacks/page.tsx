@@ -709,8 +709,7 @@ function FeedbacksContent() {
   }, [feedbackItems, selectedTaskId]);
 
   const handleRetry = (feedback: IFeedbackResponse) => {
-    const query = feedback.listId ? `?listId=${feedback.listId}` : "";
-    router.push(`/task/${feedback.taskId}${query}`);
+    router.push(`/task?taskId=${feedback.taskId}`);
   };
 
   return (

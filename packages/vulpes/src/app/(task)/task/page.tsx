@@ -87,11 +87,7 @@ function TaskContent({ access }: ITaskContentProps) {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const accessKey =
-    access.mode === "task"
-      ? access.taskId
-      : access.mode === "classTask"
-        ? access.classTaskId
-        : access.classTaskListId;
+    access.mode === "task" ? access.taskId : access.classTaskId;
 
   const fetchTask = async () => {
     setLoadingTask(true);

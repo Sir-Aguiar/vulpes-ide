@@ -216,7 +216,7 @@ export default function LinkTask({ handleCloseModal, isModalOpen }: IProps) {
                       </TableCell>
                       <TableCell>
                         <Link
-                          href={`/task/${task.taskId}`}
+                          href={`/task?taskId=${task.taskId}`}
                           style={{ textDecoration: "none" }}
                         >
                           <Typography variant="body2" color="primary">

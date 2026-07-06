@@ -49,7 +49,7 @@ export default function TaskCard({
   onEdit,
 }: ITaskCardProps) {
   const theme = useAppTheme();
-  const resolveHref = href ?? `/task/${task.taskId}`;
+  const resolveHref = href ?? `/task?taskId=${task.taskId}`;
 
   const cardContent = (
     <Box

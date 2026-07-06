@@ -230,7 +230,7 @@ function TasksListContent() {
                   task={task}
                   index={index}
                   animate
-                  onResolve={(taskId) => router.push(`/task/${taskId}`)}
+                  onResolve={(taskId) => router.push(`/task?taskId=${taskId}`)}
                   showEdit={canEditTask(task)}
                   onEdit={(event, taskId) => {
                     event.stopPropagation();

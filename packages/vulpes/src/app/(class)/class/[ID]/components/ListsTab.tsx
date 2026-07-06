@@ -438,7 +438,7 @@ export default function ListsTab({ classId }: { classId: string }) {
                         <TableRow key={task.taskId}>
                           <TableCell>
                             <Link
-                              href={`/task/${task.taskId}?listId=${selectedList.listId}`}
+                              href={`/task?taskId=${task.taskId}`}
                               style={{ textDecoration: "none" }}
                             >
                               <Typography variant="body2" color="primary">

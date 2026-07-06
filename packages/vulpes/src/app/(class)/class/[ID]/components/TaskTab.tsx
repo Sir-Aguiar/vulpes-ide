@@ -32,12 +32,17 @@ interface ITaskTabProps {
   isProfessorOrAdmin: boolean;
 }
 
+interface IClassTaskItem {
+  classTaskId: string;
+  task: ITask;
+}
+
 export default function TasksTab({
   classId,
   isProfessorOrAdmin,
 }: ITaskTabProps) {
   const { user } = useAuth();
-  const [tasks, setTasks] = useState<ITask[]>([]);
+  const [classTasks, setClassTasks] = useState<IClassTaskItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [showSubmissions, setShowSubmissions] = useState(false);
   const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
@@ -56,11 +61,14 @@ export default function TasksTab({
     setLoading(true);
     try {
       const response = await API.get(`/class-task/class/${classId}`);
-      const filteredTasks = response.data.data.map(
-        ({ task }: { task: ITask }) => task,
+      const items: IClassTaskItem[] = response.data.data.map(
+        ({ classTaskId, task }: { classTaskId: string; task: ITask }) => ({
+          classTaskId,
+          task,
+        }),
       );
 
-      setTasks(filteredTasks);
+      setClassTasks(items);
     } catch (error) {
       console.error("Failed to fetch tasks:", error);
       toast.error("Erro ao carregar tarefas.");
@@ -292,11 +300,11 @@ export default function TasksTab({
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {tasks.map((task) => (
-                        <TableRow key={task.taskId}>
+                      {classTasks.map(({ classTaskId, task }) => (
+                        <TableRow key={classTaskId}>
                           <TableCell>
                             <Link
-                              href={`/task/${task.taskId}`}
+                              href={`/task?classTaskId=${classTaskId}`}
                               style={{ textDecoration: "none" }}
                             >
                               <Typography variant="body2" color="primary">
