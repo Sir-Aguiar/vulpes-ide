@@ -33,6 +33,9 @@ interface SidebarProps {
   tasksInList?: ITask[];
   activeTaskIndex?: number;
   onAdvance?: () => void;
+  /** Chamado ao navegar para outra tarefa da lista. Quando fornecido, substitui
+   *  a navegação padrão via `router.push`. Recebe o índice da tarefa destino. */
+  onNavigateToTask?: (index: number) => void;
   advanceLabel?: string;
   disableAdvance?: boolean;
   onStepClick?: (index: number) => void;
@@ -87,6 +90,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   activeTaskIndex,
   listId,
   onAdvance,
+  onNavigateToTask,
   advanceLabel = "Avançar",
   disableAdvance = false,
   onStepClick,
@@ -108,6 +112,12 @@ const Sidebar: React.FC<SidebarProps> = ({
       const nextIndex =
         (activeTaskIndex !== undefined ? activeTaskIndex + 1 : 0) %
         tasksInList.length;
+
+      if (onNavigateToTask) {
+        onNavigateToTask(nextIndex);
+        return;
+      }
+
       const nextTask = tasksInList[nextIndex];
       router.push(`/task/${nextTask.taskId}?listId=${listId}`);
     }
