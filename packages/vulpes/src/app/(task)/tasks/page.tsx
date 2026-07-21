@@ -15,6 +15,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
 import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
+import MyTasksContent from "@/components/tasks/MyTasksContent";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 import TaskCard from "@/components/tasks/TaskCard";
 import API from "@/services/API";
@@ -28,12 +29,22 @@ export default function TasksPage() {
   return (
     <AuthGuard requiredRoles={["STUDENT", "PROFESSOR", "ADMIN"]}>
       <AppNavBar />
-      <TasksListContent />
+      <TasksPageContent />
     </AuthGuard>
   );
 }
 
-function TasksListContent() {
+function TasksPageContent() {
+  const { user } = useAuth();
+
+  if (user?.role === "STUDENT") {
+    return <MyTasksContent />;
+  }
+
+  return <ProfessorTasksListContent />;
+}
+
+function ProfessorTasksListContent() {
   const router = useRouter();
   const { user } = useAuth();
   const theme = useAppTheme();
@@ -199,13 +210,22 @@ function TasksListContent() {
               textAlign: "center",
             }}
           >
-            <AssignmentOutlinedIcon sx={{ fontSize: 48, color: theme.textMuted }} />
-            <Typography variant="h6" className={montserrat.className} sx={{ color: theme.text, fontWeight: 700 }}>
+            <AssignmentOutlinedIcon
+              sx={{ fontSize: 48, color: theme.textMuted }}
+            />
+            <Typography
+              variant="h6"
+              className={montserrat.className}
+              sx={{ color: theme.text, fontWeight: 700 }}
+            >
               {searchDebounce
                 ? "Nenhuma tarefa encontrada"
                 : "Nenhuma tarefa disponível"}
             </Typography>
-            <Typography variant="body2" sx={{ color: theme.textSecondary, maxWidth: 400 }}>
+            <Typography
+              variant="body2"
+              sx={{ color: theme.textSecondary, maxWidth: 400 }}
+            >
               {searchDebounce
                 ? "Tente ajustar os termos da busca ou limpe o filtro."
                 : "Novas tarefas aparecerão aqui quando forem publicadas."}
