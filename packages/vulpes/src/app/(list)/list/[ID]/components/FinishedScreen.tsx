@@ -8,6 +8,7 @@ import {
   Card,
   CardContent,
   CircularProgress,
+  Tooltip,
   Typography,
 } from "@mui/material";
 import { COLORS } from "@/utils/colors";
@@ -93,34 +94,48 @@ export default function FinishedScreen({
             </Typography>
           </Box>
 
-          <Button
-            variant="contained"
-            size="large"
-            onClick={onSubmitList}
-            disabled={
-              isSubmittingList || tasks.length === 0 || !canRegisterSubmission
+          <Tooltip
+            title={
+              !canRegisterSubmission
+                ? "Limite de envios desta lista atingido"
+                : tasks.length === 0
+                  ? "Nenhuma tarefa para enviar"
+                  : ""
             }
-            startIcon={
-              isSubmittingList ? (
-                <CircularProgress size={18} sx={{ color: "#fff" }} />
-              ) : (
-                <SendIcon />
-              )
-            }
-            sx={{
-              bgcolor: COLORS.dark.primary[500],
-              "&:hover": { bgcolor: COLORS.dark.primary[600] },
-              fontWeight: 600,
-              textTransform: "none",
-              px: 3,
-            }}
           >
-            {isSubmittingList
-              ? "Enviando lista..."
-              : hasSubmittedList
-                ? "Reenviar lista"
-                : "Enviar lista"}
-          </Button>
+            <span>
+              <Button
+                variant="contained"
+                size="large"
+                onClick={onSubmitList}
+                disabled={
+                  isSubmittingList ||
+                  tasks.length === 0 ||
+                  !canRegisterSubmission
+                }
+                startIcon={
+                  isSubmittingList ? (
+                    <CircularProgress size={18} sx={{ color: "#fff" }} />
+                  ) : (
+                    <SendIcon />
+                  )
+                }
+                sx={{
+                  bgcolor: COLORS.dark.primary[500],
+                  "&:hover": { bgcolor: COLORS.dark.primary[600] },
+                  fontWeight: 600,
+                  textTransform: "none",
+                  px: 3,
+                }}
+              >
+                {isSubmittingList
+                  ? "Enviando lista..."
+                  : hasSubmittedList
+                    ? "Reenviar lista"
+                    : "Enviar lista"}
+              </Button>
+            </span>
+          </Tooltip>
         </Box>
 
         <Typography variant="body1" sx={{ color: "#cfd8dc", mb: 3 }}>

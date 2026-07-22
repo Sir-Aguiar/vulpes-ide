@@ -37,6 +37,9 @@ export interface ITask {
   taskTests: ITestCase[];
   createdAt: string;
   updatedAt: string;
+  /** Presente quando a tarefa vem de uma lista (GET /class-task-list/task/:listId) */
+  classTaskListId?: string;
+  weight?: number;
 }
 
 export interface ITaskListItem {

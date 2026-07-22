@@ -14,39 +14,16 @@ import {
   normalizeTestCaseInput,
 } from "@/utils/code-tester";
 import { baseCode } from "@/utils/mocks";
-import { Editor } from "@monaco-editor/react";
-import MDEditor from "@uiw/react-md-editor";
+import {
+  Box,
+  CircularProgress
+} from "@mui/material";
+import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Collapse,
-  IconButton,
-  Tooltip,
-  Typography,
-} from "@mui/material";
-import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CodeIcon from "@mui/icons-material/Code";
-import TerminalIcon from "@mui/icons-material/Terminal";
-import DescriptionIcon from "@mui/icons-material/Description";
-import ErrorIcon from "@mui/icons-material/Error";
-import SendIcon from "@mui/icons-material/Send";
-import { AnimatePresence, motion } from "framer-motion";
-import { COLORS } from "@/utils/colors";
-import CodeSection from "./components/CodeSection";
-import DetailsSection from "./components/DetailsSection";
-import TaskView from "./components/TaskView";
-import TaskSummaryCard from "./components/TaskSummaryCard";
 import FinishedScreen from "./components/FinishedScreen";
+import TaskView from "./components/TaskView";
 
 export type TaskSubmissionStatus = "idle" | "sending" | "success" | "error";
 
@@ -141,7 +118,8 @@ function ListRunner() {
   const checkIfListIsValid = (pList: IList) => {
     const submissionLimit = pList.submissionLimit;
     // currentSubmissions deve ser o agrupamento de submissões feitas com diferentes submittedAt
-    const submissionsTime = pList.submissions.map(
+    const submissions = pList.submissions ?? [];
+    const submissionsTime = submissions.map(
       (submission) => new Date(submission.submittedAt),
     );
     const uniqueSubmissionTimes = new Set(
@@ -173,6 +151,9 @@ function ListRunner() {
       setList(responseList);
     } catch (e) {
       console.error("Failed to load list", e);
+      toast.error(
+        "Erro ao carregar dados da lista. Recarregue a página e tente novamente.",
+      );
     }
   };
 
@@ -337,13 +318,19 @@ function ListRunner() {
       }));
 
       try {
+        if (!task.classTaskListId) {
+          throw new Error(
+            `Tarefa ${task.taskId} sem classTaskListId — não é possível enviar como item de lista.`,
+          );
+        }
+
         const taskResults = resultsByTaskId[task.taskId] ?? [];
         const isCorrect =
           taskResults.length > 0 && taskResults.every((r) => r.passed);
 
+        // Exatamente um vínculo: em lista só classTaskListId
         await API.post("/submission", {
-          taskId: task.taskId,
-          listId: listId as string,
+          classTaskListId: task.classTaskListId,
           code: codesByTaskId[task.taskId] ?? "",
           submittedAt,
           isCorrect,
