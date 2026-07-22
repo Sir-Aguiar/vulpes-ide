@@ -1,7 +1,4 @@
-import {
-  IGetUsersParams,
-  IGetUsersResponse,
-} from "@/@types/UserManagement";
+import { IGetUsersParams, IGetUsersResponse } from "@/@types/UserManagement";
 import API from "@/services/API";
 
 export async function getUsers(
