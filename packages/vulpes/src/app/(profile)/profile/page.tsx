@@ -2,8 +2,10 @@
 
 import AppNavBar from "@/components/AppNavBar";
 import AuthGuard from "@/components/AuthGuard";
+import { useAuth } from "@/providers/AuthProvider";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
+import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import SchoolIcon from "@mui/icons-material/School";
 import {
@@ -17,46 +19,61 @@ import {
   SxProps,
 } from "@mui/material";
 import { AnimatePresence, motion } from "framer-motion";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 
 import ChangePasswordTab from "./components/ChangePasswordTab";
 import DeactivateAccountTab from "./components/DeactivateAccountTab";
 import InstitutionalDataTab from "./components/InstitutionalDataTab";
+import ManageUsersTab from "./components/ManageUsersTab";
 import PersonalInfoTab from "./components/PersonalInfoTab";
 
-const TABS = [
+const ALL_TABS = [
   {
     key: "personal",
     label: "Informações Pessoais",
     icon: <PersonIcon />,
     Component: PersonalInfoTab,
+    adminOnly: false,
   },
   {
     key: "password",
     label: "Alterar senha",
     icon: <LockIcon />,
     Component: ChangePasswordTab,
+    adminOnly: false,
   },
   {
     key: "institutional",
     label: "Dados institucionais",
     icon: <SchoolIcon />,
     Component: InstitutionalDataTab,
+    adminOnly: false,
+  },
+  {
+    key: "manage-users",
+    label: "Gerenciar Usuários",
+    icon: <PeopleIcon />,
+    Component: ManageUsersTab,
+    adminOnly: true,
   },
   {
     key: "deactivate",
     label: "Desativar conta",
     icon: <DeleteForeverIcon />,
     Component: DeactivateAccountTab,
+    adminOnly: false,
   },
 ] as const;
 
+type ProfileTab = (typeof ALL_TABS)[number];
+
 interface SideBarProps {
+  tabs: readonly ProfileTab[];
   activeIndex: number;
   onChange: (index: number) => void;
 }
 
-function SideBar({ activeIndex, onChange }: SideBarProps) {
+function SideBar({ tabs, activeIndex, onChange }: SideBarProps) {
   const boxStyle: SxProps = {
     width: "296px",
     flexShrink: 0,
@@ -71,7 +88,7 @@ function SideBar({ activeIndex, onChange }: SideBarProps) {
         component="nav"
         sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}
       >
-        {TABS.map((tab, index) => {
+        {tabs.map((tab, index) => {
           const isActive = index === activeIndex;
           const isDanger = tab.key === "deactivate";
 
@@ -131,13 +148,15 @@ const slideVariants = {
 };
 
 function ProfileContent({
+  tabs,
   activeIndex,
   direction,
 }: {
+  tabs: readonly ProfileTab[];
   activeIndex: number;
   direction: number;
 }) {
-  const ActiveComponent = TABS[activeIndex].Component;
+  const ActiveComponent = tabs[activeIndex].Component;
 
   return (
     <Box
@@ -153,7 +172,7 @@ function ProfileContent({
     >
       <AnimatePresence mode="wait" custom={direction} initial={false}>
         <motion.div
-          key={TABS[activeIndex].key}
+          key={tabs[activeIndex].key}
           custom={direction}
           variants={slideVariants}
           initial="enter"
@@ -175,11 +194,19 @@ function ProfileContent({
 }
 
 export default function Page() {
+  const { user } = useAuth();
   const [activeIndex, setActiveIndex] = useState(0);
   const [direction, setDirection] = useState(0);
 
+  const tabs = useMemo(() => {
+    const isAdmin = user?.role === "ADMIN";
+    return ALL_TABS.filter((tab) => !tab.adminOnly || isAdmin);
+  }, [user?.role]);
+
+  const safeActiveIndex = Math.min(activeIndex, tabs.length - 1);
+
   const handleChange = (next: number) => {
-    setDirection(next > activeIndex ? 1 : -1);
+    setDirection(next > safeActiveIndex ? 1 : -1);
     setActiveIndex(next);
   };
 
@@ -197,8 +224,16 @@ export default function Page() {
           height: "calc(100vh - 65px)",
         }}
       >
-        <SideBar activeIndex={activeIndex} onChange={handleChange} />
-        <ProfileContent activeIndex={activeIndex} direction={direction} />
+        <SideBar
+          tabs={tabs}
+          activeIndex={safeActiveIndex}
+          onChange={handleChange}
+        />
+        <ProfileContent
+          tabs={tabs}
+          activeIndex={safeActiveIndex}
+          direction={direction}
+        />
       </Container>
     </AuthGuard>
   );
