@@ -1,4 +1,5 @@
 import { ClassTaskDashboardData, ClassTaskDashboardStudentRow } from "@/@types/ClassTaskDashboard";
+import { ClassTaskListDashboardData } from "@/@types/ClassTaskListDashboard";
 import { ISubmission } from "@/@types/Submission";
 import API from "@/services/API";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
@@ -16,7 +17,6 @@ import {
   TextField,
   ToggleButton,
   ToggleButtonGroup,
-  Tooltip,
   Typography,
   useTheme,
 } from "@mui/material";
@@ -24,6 +24,8 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import FeedbackDialog from "./FeedbackDialog";
 import KpiCards from "./KpiCards";
+import ListKpiCards from "./list/ListKpiCards";
+import ListStudentsTable from "./list/ListStudentsTable";
 import StudentsTable from "./StudentsTable";
 import { ISearchOption, SearchType } from "./types";
 
@@ -35,15 +37,19 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
   const theme = useTheme();
 
   const [searchType, setSearchType] = useState<SearchType>("tasks");
-  const [taskOptions, setTaskOptions] = useState<ISearchOption[]>([]);
+  const [options, setOptions] = useState<ISearchOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
   const [selectedOption, setSelectedOption] = useState<ISearchOption | null>(null);
 
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
+
   const [dashboardData, setDashboardData] = useState<ClassTaskDashboardData | null>(null);
   const [submissionsByStudent, setSubmissionsByStudent] = useState<Record<string, ISubmission[]>>(
     {},
+  );
+  const [listDashboardData, setListDashboardData] = useState<ClassTaskListDashboardData | null>(
+    null,
   );
 
   const [feedbackStudent, setFeedbackStudent] = useState<ClassTaskDashboardStudentRow | null>(
@@ -51,31 +57,50 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
   );
 
   useEffect(() => {
-    const fetchTasks = async () => {
+    const fetchOptions = async () => {
       setLoadingOptions(true);
       setSelectedOption(null);
+      setHasSearched(false);
+      setDashboardData(null);
+      setListDashboardData(null);
+
       try {
-        const response = await API.get(`/class-task/class/${classId}`);
-        const formatted: ISearchOption[] = response.data.data.map(
-          ({ task }: { task: { taskId: string; title: string } }) => ({
-            id: task.taskId,
-            title: task.title,
-          }),
-        );
-        setTaskOptions(formatted);
+        if (searchType === "tasks") {
+          const response = await API.get(`/class-task/class/${classId}`);
+          const formatted: ISearchOption[] = response.data.data.map(
+            ({ task }: { task: { taskId: string; title: string } }) => ({
+              id: task.taskId,
+              title: task.title,
+            }),
+          );
+          setOptions(formatted);
+        } else {
+          const response = await API.get(`/list/class/${classId}`, {
+            params: { page: 1, limit: 100 },
+          });
+          const formatted: ISearchOption[] = response.data.data.map(
+            (list: { listId: string; title: string }) => ({
+              id: list.listId,
+              title: list.title,
+            }),
+          );
+          setOptions(formatted);
+        }
       } catch (error) {
-        console.error("Failed to fetch tasks:", error);
-        toast.error("Erro ao carregar tarefas.");
-        setTaskOptions([]);
+        console.error("Failed to fetch options:", error);
+        toast.error(
+          searchType === "tasks" ? "Erro ao carregar tarefas." : "Erro ao carregar listas.",
+        );
+        setOptions([]);
       } finally {
         setLoadingOptions(false);
       }
     };
 
-    fetchTasks();
-  }, [classId]);
+    fetchOptions();
+  }, [searchType, classId]);
 
-  const fetchDashboard = async (taskId: string) => {
+  const fetchTaskDashboard = async (taskId: string) => {
     setLoadingDashboard(true);
     try {
       const [dashboardResponse, submissionsResponse] = await Promise.all([
@@ -109,15 +134,36 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
     }
   };
 
+  const fetchListDashboard = async (listId: string) => {
+    setLoadingDashboard(true);
+    try {
+      const response = await API.get<ClassTaskListDashboardData>("/class-task-list/dashboard", {
+        params: { classId, listId },
+      });
+      setListDashboardData(response.data);
+      setHasSearched(true);
+    } catch (error) {
+      console.error("Failed to fetch list dashboard:", error);
+      toast.error("Erro ao carregar dados do dashboard.");
+      setListDashboardData(null);
+    } finally {
+      setLoadingDashboard(false);
+    }
+  };
+
   const handleSearch = () => {
     if (!selectedOption) return;
-    fetchDashboard(selectedOption.id);
+    if (searchType === "tasks") {
+      fetchTaskDashboard(selectedOption.id);
+    } else {
+      fetchListDashboard(selectedOption.id);
+    }
   };
 
   const handleFeedbackSubmitted = () => {
     setFeedbackStudent(null);
-    if (selectedOption) {
-      fetchDashboard(selectedOption.id);
+    if (selectedOption && searchType === "tasks") {
+      fetchTaskDashboard(selectedOption.id);
     }
   };
 
@@ -125,6 +171,8 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
     () => (feedbackStudent ? submissionsByStudent[feedbackStudent.studentId] ?? [] : []),
     [feedbackStudent, submissionsByStudent],
   );
+
+  const autocompleteLabel = searchType === "tasks" ? "Selecione uma tarefa" : "Selecione uma lista";
 
   return (
     <Stack spacing={2.5} sx={{ pb: 4 }}>
@@ -169,20 +217,16 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
               <AssignmentOutlinedIcon fontSize="small" />
               Tarefas
             </ToggleButton>
-            <Tooltip title="Em breve">
-              <span>
-                <ToggleButton value="lists" disabled>
-                  <FormatListBulletedOutlinedIcon fontSize="small" />
-                  Listas
-                </ToggleButton>
-              </span>
-            </Tooltip>
+            <ToggleButton value="lists">
+              <FormatListBulletedOutlinedIcon fontSize="small" />
+              Listas
+            </ToggleButton>
           </ToggleButtonGroup>
 
           <Autocomplete
             fullWidth
             size="small"
-            options={taskOptions}
+            options={options}
             loading={loadingOptions}
             value={selectedOption}
             onChange={(_, newValue) => setSelectedOption(newValue)}
@@ -191,7 +235,7 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
             renderInput={(params) => (
               <TextField
                 {...params}
-                label="Selecione uma tarefa"
+                label={autocompleteLabel}
                 InputProps={{
                   ...params.InputProps,
                   endAdornment: (
@@ -230,7 +274,7 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
           <CircularProgress />
         </Box>
-      ) : !hasSearched || !dashboardData ? (
+      ) : !hasSearched || (searchType === "tasks" ? !dashboardData : !listDashboardData) ? (
         <Paper
           elevation={0}
           sx={{
@@ -260,19 +304,24 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
             <TuneOutlinedIcon />
           </Box>
           <Typography variant="subtitle1" fontWeight={600}>
-            Selecione uma tarefa
+            {searchType === "tasks" ? "Selecione uma tarefa" : "Selecione uma lista"}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, textAlign: "center" }}>
-            Escolha a tarefa desejada e aperte em pesquisar para visualizar os envios e as
-            métricas da turma.
+            Escolha {searchType === "tasks" ? "a tarefa" : "a lista"} desejada e aperte em
+            pesquisar para visualizar os envios e as métricas da turma.
           </Typography>
         </Paper>
-      ) : (
+      ) : searchType === "tasks" && dashboardData ? (
         <Stack spacing={2.5}>
           <KpiCards kpis={dashboardData.kpis} />
           <StudentsTable rows={dashboardData.students} onOpenFeedback={setFeedbackStudent} />
         </Stack>
-      )}
+      ) : listDashboardData ? (
+        <Stack spacing={2.5}>
+          <ListKpiCards kpis={listDashboardData.kpis} />
+          <ListStudentsTable columns={listDashboardData.columns} rows={listDashboardData.students} />
+        </Stack>
+      ) : null}
 
       <FeedbackDialog
         open={!!feedbackStudent}
