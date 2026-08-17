@@ -8,6 +8,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import HistoryOutlinedIcon from "@mui/icons-material/HistoryOutlined";
 import RemoveIcon from "@mui/icons-material/Remove";
 import SearchIcon from "@mui/icons-material/Search";
+import SendOutlinedIcon from "@mui/icons-material/SendOutlined";
 import {
   alpha,
   Avatar,
@@ -38,7 +39,7 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
   NOT_SUBMITTED: "Não enviou",
 };
 
-type OrderBy = "name" | "score" | "submissions" | "lastSubmittedAt";
+type OrderBy = "name" | "score" | "submissions" | "lastSubmittedAt" | "feedback";
 type Order = "asc" | "desc";
 
 function StatusDot({ status, title }: { status: SubmissionStatus; title: string }) {
@@ -104,7 +105,14 @@ function initialsFrom(name: string) {
   return `${parts[0]?.[0] ?? ""}${parts[1]?.[0] ?? ""}`.toUpperCase();
 }
 
-function getSortValue(row: ClassTaskListDashboardStudentRow, orderBy: OrderBy): string | number {
+function getFeedbackState(row: ClassTaskListDashboardStudentRow) {
+  return row.submissionsCount > 0;
+}
+
+function getSortValue(
+  row: ClassTaskListDashboardStudentRow,
+  orderBy: OrderBy,
+): string | number {
   switch (orderBy) {
     case "name":
       return row.name.toLowerCase();
@@ -114,15 +122,22 @@ function getSortValue(row: ClassTaskListDashboardStudentRow, orderBy: OrderBy): 
       return row.submissionsCount;
     case "lastSubmittedAt":
       return row.lastSubmittedAt ? new Date(row.lastSubmittedAt).getTime() : -1;
+    case "feedback":
+      return getFeedbackState(row) ? 1 : 0;
   }
 }
 
 interface IListStudentsTableProps {
   columns: ClassTaskListDashboardColumn[];
   rows: ClassTaskListDashboardStudentRow[];
+  onOpenFeedback: (row: ClassTaskListDashboardStudentRow) => void;
 }
 
-export default function ListStudentsTable({ columns, rows }: IListStudentsTableProps) {
+export default function ListStudentsTable({
+  columns,
+  rows,
+  onOpenFeedback,
+}: IListStudentsTableProps) {
   const theme = useTheme();
   const [query, setQuery] = useState("");
   const [onlyPending, setOnlyPending] = useState(false);
@@ -220,7 +235,7 @@ export default function ListStudentsTable({ columns, rows }: IListStudentsTableP
       </Stack>
 
       <TableContainer>
-        <Table size="small" sx={{ minWidth: 200 + columns.length * 60 + 260 }}>
+        <Table size="small" sx={{ minWidth: 200 + columns.length * 60 + 420 }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: 200, maxWidth: 200 }}>
@@ -276,21 +291,33 @@ export default function ListStudentsTable({ columns, rows }: IListStudentsTableP
                   Último envio
                 </TableSortLabel>
               </TableCell>
+              <TableCell align="right" sx={{ fontWeight: 600 }}>
+                <TableSortLabel
+                  active={orderBy === "feedback"}
+                  direction={orderBy === "feedback" ? order : "asc"}
+                  onClick={() => handleSort("feedback")}
+                >
+                  Feedback
+                </TableSortLabel>
+              </TableCell>
             </TableRow>
           </TableHead>
 
           <TableBody>
             {sortedRows.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={columns.length + 4} align="center" sx={{ py: 8 }}>
+                <TableCell colSpan={columns.length + 5} align="center" sx={{ py: 8 }}>
                   <Typography variant="body2" color="text.secondary">
                     Nenhum aluno encontrado para este filtro.
                   </Typography>
                 </TableCell>
               </TableRow>
             ) : (
-              sortedRows.map((row) => (
-                <TableRow key={row.studentId} hover>
+              sortedRows.map((row) => {
+                const canGiveFeedback = getFeedbackState(row);
+
+                return (
+                  <TableRow key={row.studentId} hover>
                   <TableCell sx={{ width: 200, maxWidth: 200 }}>
                     <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
                       <Avatar
@@ -363,8 +390,29 @@ export default function ListStudentsTable({ columns, rows }: IListStudentsTableP
                       {formatDate(row.lastSubmittedAt)}
                     </Typography>
                   </TableCell>
-                </TableRow>
-              ))
+
+                  <TableCell align="right">
+                    <Chip
+                      icon={<SendOutlinedIcon sx={{ fontSize: 15 }} />}
+                      label="Enviar feedback"
+                      size="small"
+                      clickable={canGiveFeedback}
+                      disabled={!canGiveFeedback}
+                      onClick={canGiveFeedback ? () => onOpenFeedback(row) : undefined}
+                      variant="outlined"
+                      sx={{
+                        fontWeight: 500,
+                        paddingY: 1.5,
+                        paddingX: 1.2,
+                        borderColor: alpha(theme.palette.primary.main, 0.4),
+                        color: theme.palette.primary.main,
+                        "& .MuiChip-icon": { color: theme.palette.primary.main },
+                      }}
+                    />
+                  </TableCell>
+                  </TableRow>
+                );
+              })
             )}
           </TableBody>
 
@@ -393,7 +441,7 @@ export default function ListStudentsTable({ columns, rows }: IListStudentsTableP
                   </TableCell>
                 );
               })}
-              <TableCell colSpan={3} />
+              <TableCell colSpan={4} />
             </TableRow>
           </TableFooter>
         </Table>

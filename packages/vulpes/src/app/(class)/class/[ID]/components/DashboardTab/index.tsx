@@ -1,5 +1,11 @@
-import { ClassTaskDashboardData, ClassTaskDashboardStudentRow } from "@/@types/ClassTaskDashboard";
-import { ClassTaskListDashboardData } from "@/@types/ClassTaskListDashboard";
+import {
+  ClassTaskDashboardData,
+  ClassTaskDashboardStudentRow,
+} from "@/@types/ClassTaskDashboard";
+import {
+  ClassTaskListDashboardData,
+  ClassTaskListDashboardStudentRow,
+} from "@/@types/ClassTaskListDashboard";
 import { ISubmission } from "@/@types/Submission";
 import API from "@/services/API";
 import AssignmentOutlinedIcon from "@mui/icons-material/AssignmentOutlined";
@@ -24,6 +30,7 @@ import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import FeedbackDialog from "./FeedbackDialog";
 import KpiCards from "./KpiCards";
+import ListFeedbackDialog from "./list/ListFeedbackDialog";
 import ListKpiCards from "./list/ListKpiCards";
 import ListStudentsTable from "./list/ListStudentsTable";
 import StudentsTable from "./StudentsTable";
@@ -39,22 +46,25 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
   const [searchType, setSearchType] = useState<SearchType>("tasks");
   const [options, setOptions] = useState<ISearchOption[]>([]);
   const [loadingOptions, setLoadingOptions] = useState(false);
-  const [selectedOption, setSelectedOption] = useState<ISearchOption | null>(null);
+  const [selectedOption, setSelectedOption] = useState<ISearchOption | null>(
+    null,
+  );
 
   const [loadingDashboard, setLoadingDashboard] = useState(false);
   const [hasSearched, setHasSearched] = useState(false);
 
-  const [dashboardData, setDashboardData] = useState<ClassTaskDashboardData | null>(null);
-  const [submissionsByStudent, setSubmissionsByStudent] = useState<Record<string, ISubmission[]>>(
-    {},
-  );
-  const [listDashboardData, setListDashboardData] = useState<ClassTaskListDashboardData | null>(
-    null,
-  );
+  const [dashboardData, setDashboardData] =
+    useState<ClassTaskDashboardData | null>(null);
+  const [submissionsByStudent, setSubmissionsByStudent] = useState<
+    Record<string, ISubmission[]>
+  >({});
+  const [listDashboardData, setListDashboardData] =
+    useState<ClassTaskListDashboardData | null>(null);
 
-  const [feedbackStudent, setFeedbackStudent] = useState<ClassTaskDashboardStudentRow | null>(
-    null,
-  );
+  const [feedbackStudent, setFeedbackStudent] =
+    useState<ClassTaskDashboardStudentRow | null>(null);
+  const [listFeedbackStudent, setListFeedbackStudent] =
+    useState<ClassTaskListDashboardStudentRow | null>(null);
 
   useEffect(() => {
     const fetchOptions = async () => {
@@ -63,6 +73,9 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
       setHasSearched(false);
       setDashboardData(null);
       setListDashboardData(null);
+      setFeedbackStudent(null);
+      setListFeedbackStudent(null);
+      setSubmissionsByStudent({});
 
       try {
         if (searchType === "tasks") {
@@ -89,7 +102,9 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
       } catch (error) {
         console.error("Failed to fetch options:", error);
         toast.error(
-          searchType === "tasks" ? "Erro ao carregar tarefas." : "Erro ao carregar listas.",
+          searchType === "tasks"
+            ? "Erro ao carregar tarefas."
+            : "Erro ao carregar listas.",
         );
         setOptions([]);
       } finally {
@@ -119,7 +134,9 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
       });
       Object.values(grouped).forEach((list) =>
         list.sort(
-          (a, b) => new Date(a.submittedAt).getTime() - new Date(b.submittedAt).getTime(),
+          (a, b) =>
+            new Date(a.submittedAt).getTime() -
+            new Date(b.submittedAt).getTime(),
         ),
       );
       setSubmissionsByStudent(grouped);
@@ -137,9 +154,12 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
   const fetchListDashboard = async (listId: string) => {
     setLoadingDashboard(true);
     try {
-      const response = await API.get<ClassTaskListDashboardData>("/class-task-list/dashboard", {
-        params: { classId, listId },
-      });
+      const response = await API.get<ClassTaskListDashboardData>(
+        "/class-task-list/dashboard",
+        {
+          params: { classId, listId },
+        },
+      );
       setListDashboardData(response.data);
       setHasSearched(true);
     } catch (error) {
@@ -162,17 +182,25 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
 
   const handleFeedbackSubmitted = () => {
     setFeedbackStudent(null);
-    if (selectedOption && searchType === "tasks") {
+    setListFeedbackStudent(null);
+    if (!selectedOption) return;
+    if (searchType === "tasks") {
       fetchTaskDashboard(selectedOption.id);
+    } else {
+      fetchListDashboard(selectedOption.id);
     }
   };
 
   const feedbackAttempts = useMemo(
-    () => (feedbackStudent ? submissionsByStudent[feedbackStudent.studentId] ?? [] : []),
+    () =>
+      feedbackStudent
+        ? (submissionsByStudent[feedbackStudent.studentId] ?? [])
+        : [],
     [feedbackStudent, submissionsByStudent],
   );
 
-  const autocompleteLabel = searchType === "tasks" ? "Selecione uma tarefa" : "Selecione uma lista";
+  const autocompleteLabel =
+    searchType === "tasks" ? "Selecione uma tarefa" : "Selecione uma lista";
 
   return (
     <Stack spacing={2.5} sx={{ pb: 4 }}>
@@ -194,7 +222,9 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
           <ToggleButtonGroup
             value={searchType}
             exclusive
-            onChange={(_, value: SearchType | null) => value && setSearchType(value)}
+            onChange={(_, value: SearchType | null) =>
+              value && setSearchType(value)
+            }
             size="small"
             sx={{
               flexShrink: 0,
@@ -208,7 +238,9 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
                 "&.Mui-selected": {
                   bgcolor: alpha(theme.palette.primary.main, 0.12),
                   color: theme.palette.primary.main,
-                  "&:hover": { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.primary.main, 0.18),
+                  },
                 },
               },
             }}
@@ -263,7 +295,12 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
                 <SearchIcon fontSize="small" />
               )
             }
-            sx={{ px: 3, flexShrink: 0, textTransform: "none", fontWeight: 600 }}
+            sx={{
+              px: 3,
+              flexShrink: 0,
+              textTransform: "none",
+              fontWeight: 600,
+            }}
           >
             Pesquisar
           </Button>
@@ -274,7 +311,8 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
         <Box sx={{ display: "flex", justifyContent: "center", py: 10 }}>
           <CircularProgress />
         </Box>
-      ) : !hasSearched || (searchType === "tasks" ? !dashboardData : !listDashboardData) ? (
+      ) : !hasSearched ||
+        (searchType === "tasks" ? !dashboardData : !listDashboardData) ? (
         <Paper
           elevation={0}
           sx={{
@@ -304,22 +342,36 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
             <TuneOutlinedIcon />
           </Box>
           <Typography variant="subtitle1" fontWeight={600}>
-            {searchType === "tasks" ? "Selecione uma tarefa" : "Selecione uma lista"}
+            {searchType === "tasks"
+              ? "Selecione uma tarefa"
+              : "Selecione uma lista"}
           </Typography>
-          <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 360, textAlign: "center" }}>
-            Escolha {searchType === "tasks" ? "a tarefa" : "a lista"} desejada e aperte em
-            pesquisar para visualizar os envios e as métricas da turma.
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            sx={{ maxWidth: 360, textAlign: "center" }}
+          >
+            Escolha {searchType === "tasks" ? "a tarefa" : "a lista"} desejada e
+            aperte em pesquisar para visualizar os envios e as métricas da
+            turma.
           </Typography>
         </Paper>
       ) : searchType === "tasks" && dashboardData ? (
         <Stack spacing={2.5}>
           <KpiCards kpis={dashboardData.kpis} />
-          <StudentsTable rows={dashboardData.students} onOpenFeedback={setFeedbackStudent} />
+          <StudentsTable
+            rows={dashboardData.students}
+            onOpenFeedback={setFeedbackStudent}
+          />
         </Stack>
       ) : listDashboardData ? (
         <Stack spacing={2.5}>
           <ListKpiCards kpis={listDashboardData.kpis} />
-          <ListStudentsTable columns={listDashboardData.columns} rows={listDashboardData.students} />
+          <ListStudentsTable
+            columns={listDashboardData.columns}
+            rows={listDashboardData.students}
+            onOpenFeedback={setListFeedbackStudent}
+          />
         </Stack>
       ) : null}
 
@@ -328,6 +380,14 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
         student={feedbackStudent}
         attempts={feedbackAttempts}
         onClose={() => setFeedbackStudent(null)}
+        onSubmitted={handleFeedbackSubmitted}
+      />
+
+      <ListFeedbackDialog
+        open={!!listFeedbackStudent}
+        student={listFeedbackStudent}
+        columns={listDashboardData?.columns ?? []}
+        onClose={() => setListFeedbackStudent(null)}
         onSubmitted={handleFeedbackSubmitted}
       />
     </Stack>
