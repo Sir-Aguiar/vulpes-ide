@@ -106,7 +106,7 @@ export default function ClassPage() {
       <AppNavBar />
       <Container
         maxWidth={activeTab === "dashboard" ? false : "lg"}
-        sx={{ py: 2 }}
+        sx={{ py: 2, bgcolor: "background.default" }}
       >
         <Box sx={{ mb: 3 }}>
           <Typography variant="h4" component="h1">

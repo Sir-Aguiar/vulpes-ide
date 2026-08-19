@@ -29,6 +29,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../../../../libs/monaco-config";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 
 function initialsFrom(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -99,6 +100,7 @@ export default function ListFeedbackDialog({
   onSubmitted,
 }: IListFeedbackDialogProps) {
   const theme = useTheme();
+  const appTheme = useAppTheme();
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [taskIndex, setTaskIndex] = useState(0);
@@ -478,7 +480,7 @@ export default function ListFeedbackDialog({
                           }}
                         />
                       </Stack>
-                      <Box sx={{ flex: 1, minHeight: 320 }}>
+                      <Box sx={{ flex: 1, minHeight: 320, bgcolor: appTheme.codeBg }}>
                         <Editor
                           key={currentTask.submission.submissionId}
                           height="100%"
@@ -517,6 +519,7 @@ export default function ListFeedbackDialog({
                           minHeight: 320,
                           "& .w-md-editor": { height: "100% !important" },
                         }}
+                        data-color-mode={appTheme.mode}
                       >
                         <MDEditor
                           key={currentTask.classTaskListId}

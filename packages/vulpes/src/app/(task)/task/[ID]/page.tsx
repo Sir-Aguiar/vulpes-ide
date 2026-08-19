@@ -24,7 +24,7 @@ import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
 import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
-import { COLORS } from "@/utils/colors";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import CheckIcon from "../../../../../public/icons/CheckIcon";
 import XIcon from "../../../../../public/icons/XIcon";
 
@@ -38,6 +38,8 @@ export default function Page() {
 }
 
 function LayoutBox({ children }: { children: React.ReactNode }) {
+  const theme = useAppTheme();
+
   return (
     <Box
       sx={{
@@ -45,7 +47,7 @@ function LayoutBox({ children }: { children: React.ReactNode }) {
         width: "100%",
         gap: 2,
         padding: 2,
-        bgcolor: "#263238",
+        bgcolor: theme.bg,
         "@media (min-width: 1281px)": {
           flexDirection: "row",
           height: "calc(100vh - 64px)",
@@ -76,6 +78,8 @@ function CollapsibleHeader({
   onToggle,
   trailing,
 }: ICollapsibleHeaderProps) {
+  const theme = useAppTheme();
+
   return (
     <Box
       onClick={onToggle}
@@ -85,23 +89,23 @@ function CollapsibleHeader({
         justifyContent: "space-between",
         px: 2,
         py: 1,
-        bgcolor: "#252526",
+        bgcolor: theme.contentPanel,
         borderBottom: collapsed ? "none" : "1px solid",
-        borderColor: "rgba(255,255,255,0.08)",
+        borderColor: theme.contentPanelBorder,
         cursor: "pointer",
         userSelect: "none",
         borderRadius: collapsed ? "8px" : "8px 8px 0 0",
         transition: "background-color 0.15s ease",
-        "&:hover": { bgcolor: "#2d2d30" },
+        "&:hover": { bgcolor: theme.hover },
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box sx={{ color: COLORS.dark.primary[500], display: "flex" }}>
+        <Box sx={{ color: theme.brand, display: "flex" }}>
           {icon}
         </Box>
         <Typography
           variant="body2"
-          sx={{ color: "#d4d4d4", fontWeight: 600, letterSpacing: 0.2 }}
+          sx={{ color: theme.contentPanelText, fontWeight: 600, letterSpacing: 0.2 }}
         >
           {title}
         </Typography>
@@ -110,7 +114,7 @@ function CollapsibleHeader({
         {trailing}
         <IconButton
           size="small"
-          sx={{ color: "#9e9e9e", p: 0.25 }}
+          sx={{ color: theme.textMuted, p: 0.25 }}
           onClick={(e) => {
             e.stopPropagation();
             onToggle();
@@ -144,6 +148,7 @@ function CodeSection({
   compileErrors,
   isRunning,
 }: ICodeSection) {
+  const theme = useAppTheme();
   const [editorCollapsed, setEditorCollapsed] = useState(false);
   const [outputCollapsed, setOutputCollapsed] = useState(false);
 
@@ -181,8 +186,9 @@ function CodeSection({
           minHeight: 0,
           borderRadius: "8px",
           overflow: "hidden",
-          bgcolor: "#1e1e1e",
-          border: "1px solid rgba(255,255,255,0.05)",
+          bgcolor: theme.contentPanel,
+          border: "1px solid",
+          borderColor: theme.contentPanelBorder,
         }}
       >
         <CollapsibleHeader
@@ -192,7 +198,7 @@ function CodeSection({
           onToggle={() => setEditorCollapsed((v) => !v)}
         />
         {!editorCollapsed && (
-          <Box sx={{ flex: 1, minHeight: 240 }}>
+          <Box sx={{ flex: 1, minHeight: 240, bgcolor: theme.codeBg }}>
             <Editor
               height="100%"
               theme="vs-dark"
@@ -225,8 +231,9 @@ function CodeSection({
           minHeight: 0,
           borderRadius: "8px",
           overflow: "hidden",
-          bgcolor: "#1e1e1e",
-          border: "1px solid rgba(255,255,255,0.05)",
+          bgcolor: theme.contentPanel,
+          border: "1px solid",
+          borderColor: theme.contentPanelBorder,
         }}
       >
         <CollapsibleHeader
@@ -237,22 +244,55 @@ function CodeSection({
           trailing={statusBadge}
         />
         {!outputCollapsed && (
-          <div className="flex-1 overflow-y-auto p-4 space-y-2 bg-[#1e1e1e] min-h-[160px]">
+          <Box
+            sx={{
+              flex: 1,
+              overflowY: "auto",
+              p: 2,
+              minHeight: 160,
+              bgcolor: theme.contentPanel,
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
             {compileErrors.length === 0 &&
               lastResults.length === 0 &&
               !isRunning && (
-                <div className="flex h-full items-center justify-center text-gray-500 text-sm">
+                <Box
+                  sx={{
+                    display: "flex",
+                    height: "100%",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: theme.textMuted,
+                    fontSize: 14,
+                  }}
+                >
                   Execute o código para ver os resultados.
-                </div>
+                </Box>
               )}
             {isRunning && (
-              <div className="flex h-full items-center justify-center text-gray-400 text-sm animate-pulse">
+              <Box
+                sx={{
+                  display: "flex",
+                  height: "100%",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  color: theme.textSecondary,
+                  fontSize: 14,
+                }}
+                className="animate-pulse"
+              >
                 Executando testes...
-              </div>
+              </Box>
             )}
 
             {!isRunning && compileErrors.length > 0 && (
-              <div className="bg-[#1e1e1e] rounded border border-red-500/30 overflow-hidden">
+              <div
+                className="rounded border border-red-500/30 overflow-hidden"
+                style={{ backgroundColor: theme.bgElevated }}
+              >
                 <div className="flex items-center px-3 py-2 bg-red-500/10 border-b border-red-500/20">
                   <XIcon className="w-4 h-4 text-red-500 mr-2" />
                   <span className="text-sm font-semibold text-red-400">
@@ -264,17 +304,20 @@ function CodeSection({
                 <ul className="px-4 py-2 space-y-1 text-xs font-mono text-red-300">
                   {compileErrors.map((err, idx) => (
                     <li key={idx} className="leading-relaxed">
-                      <span className="text-gray-500 mr-2">
+                      <span className="mr-2" style={{ color: theme.textMuted }}>
                         [{err.kind === "parse" ? "sintaxe" : "semântico"}]
                       </span>
-                      <span className="text-gray-400 mr-2">
+                      <span className="mr-2" style={{ color: theme.textSecondary }}>
                         linha {err.line}, coluna {err.column}:
                       </span>
                       <span>{err.message}</span>
                     </li>
                   ))}
                 </ul>
-                <div className="px-4 py-2 text-[11px] text-gray-500 border-t border-gray-700">
+                <div
+                  className="px-4 py-2 text-[11px] border-t"
+                  style={{ color: theme.textMuted, borderColor: theme.border }}
+                >
                   Corrija os erros acima para que os testes sejam executados.
                 </div>
               </div>
@@ -283,9 +326,17 @@ function CodeSection({
             {!isRunning &&
               compileErrors.length === 0 &&
               lastResults.map((result, index) => (
-                <div
+                <Box
                   key={index}
-                  className="flex flex-col bg-[#2d2d2d] rounded bg-opacity-40 overflow-hidden"
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    bgcolor: theme.bgElevated,
+                    borderRadius: 1,
+                    overflow: "hidden",
+                    border: "1px solid",
+                    borderColor: theme.border,
+                  }}
                 >
                   <div
                     className={`flex items-center px-3 py-2 border-l-4 ${
@@ -308,36 +359,47 @@ function CodeSection({
                     >
                       Teste {index + 1}
                     </span>
-                    <span className="ml-auto text-xs text-gray-500">
+                    <span className="ml-auto text-xs" style={{ color: theme.textMuted }}>
                       {result.passed ? "Passou" : "Falhou"}
                     </span>
                   </div>
 
                   {!result.passed && (
-                    <div className="px-4 py-2 bg-[#1e1e1e] bg-opacity-50 text-xs font-mono border-t border-gray-700 text-gray-300">
+                    <Box
+                      sx={{
+                        px: 2,
+                        py: 1,
+                        bgcolor: theme.bg,
+                        fontSize: 12,
+                        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                        borderTop: "1px solid",
+                        borderColor: theme.border,
+                        color: theme.textSecondary,
+                      }}
+                    >
                       <div className="grid grid-cols-2 gap-4">
                         <div>
-                          <span className="block text-gray-500 mb-0.5">
+                          <span className="block mb-0.5" style={{ color: theme.textMuted }}>
                             Esperado:
                           </span>
-                          <div className="bg-gray-800 p-1 rounded text-green-300">
+                          <Box sx={{ bgcolor: theme.bgElevated, p: 0.5, borderRadius: 1, color: "success.light" }}>
                             {result.expectedOutput}
-                          </div>
+                          </Box>
                         </div>
                         <div>
-                          <span className="block text-gray-500 mb-0.5">
+                          <span className="block mb-0.5" style={{ color: theme.textMuted }}>
                             Obtido:
                           </span>
-                          <div className="bg-gray-800 p-1 rounded text-red-300">
+                          <Box sx={{ bgcolor: theme.bgElevated, p: 0.5, borderRadius: 1, color: "error.light" }}>
                             {result.actualOutput}
-                          </div>
+                          </Box>
                         </div>
                       </div>
-                    </div>
+                    </Box>
                   )}
-                </div>
+                </Box>
               ))}
-          </div>
+          </Box>
         )}
       </Box>
     </Box>
@@ -349,8 +411,11 @@ interface IDetailsSection {
 }
 
 function DetailsSection({ task }: IDetailsSection) {
+  const theme = useAppTheme();
+
   return (
     <Box
+      data-color-mode={theme.mode}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -358,8 +423,10 @@ function DetailsSection({ task }: IDetailsSection) {
         minHeight: 0,
         borderRadius: "8px",
         overflow: "hidden",
-        backgroundColor: "transparent",
-        color: "white",
+        backgroundColor: theme.contentPanel,
+        color: theme.contentPanelText,
+        border: "1px solid",
+        borderColor: theme.contentPanelBorder,
       }}
     >
       <Box sx={{ flex: 1, minHeight: 0, overflowY: "auto" }}>
@@ -368,7 +435,7 @@ function DetailsSection({ task }: IDetailsSection) {
           style={{
             padding: "8px 16px",
             backgroundColor: "transparent",
-            color: "white",
+            color: theme.contentPanelText,
           }}
         />
       </Box>

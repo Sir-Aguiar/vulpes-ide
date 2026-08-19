@@ -1,4 +1,7 @@
+"use client";
+
 import { ITask } from "@/@types/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import TaskSummaryCard from "./TaskSummaryCard";
 import { ITestCaseResult } from "@/utils/code-tester";
 import { TaskSubmissionStatus } from "../page";
@@ -11,7 +14,6 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
-import { COLORS } from "@/utils/colors";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import SendIcon from "@mui/icons-material/Send";
 
@@ -38,6 +40,7 @@ export default function FinishedScreen({
   onSubmitList,
   canRegisterSubmission,
 }: IFinishedScreenProps) {
+  const theme = useAppTheme();
   const totalLines = tasks.reduce(
     (acc, t) => acc + (codesByTaskId[t.taskId]?.split("\n").length ?? 0),
     0,
@@ -85,11 +88,11 @@ export default function FinishedScreen({
               display: "flex",
               alignItems: "center",
               gap: 2,
-              color: COLORS.dark.primary[500],
+              color: theme.brand,
             }}
           >
             <CheckCircleIcon sx={{ fontSize: 40 }} />
-            <Typography variant="h4" sx={{ fontWeight: 700, color: "#fff" }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: theme.text }}>
               Lista finalizada!
             </Typography>
           </Box>
@@ -115,14 +118,14 @@ export default function FinishedScreen({
                 }
                 startIcon={
                   isSubmittingList ? (
-                    <CircularProgress size={18} sx={{ color: "#fff" }} />
+                    <CircularProgress size={18} sx={{ color: "inherit" }} />
                   ) : (
                     <SendIcon />
                   )
                 }
                 sx={{
-                  bgcolor: COLORS.dark.primary[500],
-                  "&:hover": { bgcolor: COLORS.dark.primary[600] },
+                  bgcolor: theme.brand,
+                  "&:hover": { bgcolor: theme.brandDark },
                   fontWeight: 600,
                   textTransform: "none",
                   px: 3,
@@ -138,7 +141,7 @@ export default function FinishedScreen({
           </Tooltip>
         </Box>
 
-        <Typography variant="body1" sx={{ color: "#cfd8dc", mb: 3 }}>
+        <Typography variant="body1" sx={{ color: theme.textSecondary, mb: 3 }}>
           Você concluiu todas as tarefas desta lista. Revise suas soluções
           abaixo e clique em <b>Enviar lista</b> para submeter cada tarefa
           individualmente.
@@ -156,9 +159,9 @@ export default function FinishedScreen({
             mb: 3,
           }}
         >
-          <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
+          <Card sx={{ bgcolor: theme.bgCard, color: theme.text, borderRadius: 2, border: "1px solid", borderColor: theme.border }}>
             <CardContent>
-              <Typography variant="caption" sx={{ color: "#90a4ae" }}>
+              <Typography variant="caption" sx={{ color: theme.textSecondary }}>
                 Tarefas
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
@@ -166,29 +169,29 @@ export default function FinishedScreen({
               </Typography>
             </CardContent>
           </Card>
-          <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
+          <Card sx={{ bgcolor: theme.bgCard, color: theme.text, borderRadius: 2, border: "1px solid", borderColor: theme.border }}>
             <CardContent>
-              <Typography variant="caption" sx={{ color: "#90a4ae" }}>
+              <Typography variant="caption" sx={{ color: theme.textSecondary }}>
                 Corretas
               </Typography>
               <Typography
                 variant="h4"
-                sx={{ fontWeight: 700, color: "#a5d6a7" }}
+                sx={{ fontWeight: 700, color: "success.main" }}
               >
                 {correctCount}
                 <Typography
                   component="span"
                   variant="body2"
-                  sx={{ color: "#90a4ae", ml: 0.5 }}
+                  sx={{ color: theme.textMuted, ml: 0.5 }}
                 >
                   / {tasks.length}
                 </Typography>
               </Typography>
             </CardContent>
           </Card>
-          <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
+          <Card sx={{ bgcolor: theme.bgCard, color: theme.text, borderRadius: 2, border: "1px solid", borderColor: theme.border }}>
             <CardContent>
-              <Typography variant="caption" sx={{ color: "#90a4ae" }}>
+              <Typography variant="caption" sx={{ color: theme.textSecondary }}>
                 Linhas de código
               </Typography>
               <Typography variant="h4" sx={{ fontWeight: 700 }}>
@@ -196,23 +199,23 @@ export default function FinishedScreen({
               </Typography>
             </CardContent>
           </Card>
-          <Card sx={{ bgcolor: "#1e272c", color: "#fff", borderRadius: 2 }}>
+          <Card sx={{ bgcolor: theme.bgCard, color: theme.text, borderRadius: 2, border: "1px solid", borderColor: theme.border }}>
             <CardContent>
-              <Typography variant="caption" sx={{ color: "#90a4ae" }}>
+              <Typography variant="caption" sx={{ color: theme.textSecondary }}>
                 Enviadas
               </Typography>
               <Typography
                 variant="h4"
                 sx={{
                   fontWeight: 700,
-                  color: failedCount > 0 ? "#ef9a9a" : "#a5d6a7",
+                  color: failedCount > 0 ? "error.main" : "success.main",
                 }}
               >
                 {sentCount}
                 <Typography
                   component="span"
                   variant="body2"
-                  sx={{ color: "#90a4ae", ml: 0.5 }}
+                  sx={{ color: theme.textMuted, ml: 0.5 }}
                 >
                   / {tasks.length}
                 </Typography>
@@ -220,7 +223,7 @@ export default function FinishedScreen({
               {failedCount > 0 && (
                 <Typography
                   variant="caption"
-                  sx={{ color: "#ef9a9a", display: "block" }}
+                  sx={{ color: "error.main", display: "block" }}
                 >
                   {failedCount} falha{failedCount === 1 ? "" : "s"}
                 </Typography>
@@ -231,7 +234,7 @@ export default function FinishedScreen({
 
         <Typography
           variant="h6"
-          sx={{ color: "#fff", fontWeight: 600, mb: 1.5 }}
+          sx={{ color: theme.text, fontWeight: 600, mb: 1.5 }}
         >
           Suas soluções
         </Typography>

@@ -1,4 +1,7 @@
+"use client";
+
 import { IClassListItem } from "@/@types/Class";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import {
   Autocomplete,
   Box,
@@ -26,15 +29,30 @@ export const StepClassSelection = ({
   onSelectionChange,
   loading,
 }: StepClassSelectionProps) => {
+  const theme = useAppTheme();
+
   return (
-    <div className="w-full h-full flex flex-col gap-4 overflow-y-auto pr-2">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-xl font-semibold">Vincular às Turmas</h2>
-        <p className="text-sm opacity-70">
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        overflowY: "auto",
+        pr: 1,
+        color: theme.text,
+      }}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" fontWeight={600}>
+          Vincular às Turmas
+        </Typography>
+        <Typography variant="body2" sx={{ color: theme.textSecondary }}>
           Selecione as turmas onde esta tarefa ficará disponível automaticamente.
           Você pode deixar em branco para adicionar depois.
-        </p>
-      </div>
+        </Typography>
+      </Box>
 
       <Autocomplete
         multiple
@@ -84,17 +102,29 @@ export const StepClassSelection = ({
       />
 
       {selectedClasses.length > 0 && (
-        <div className="p-4 rounded-md border border-gray-100/10">
-          <h3 className="text-lg font-medium mb-2">Turmas selecionadas ({selectedClasses.length})</h3>
-          <ul className="list-disc list-inside space-y-1">
+        <Box
+          sx={{
+            p: 2,
+            borderRadius: 1,
+            border: "1px solid",
+            borderColor: theme.border,
+          }}
+        >
+          <Typography variant="h6" sx={{ mb: 1 }}>
+            Turmas selecionadas ({selectedClasses.length})
+          </Typography>
+          <Box component="ul" sx={{ pl: 2, m: 0 }}>
             {selectedClasses.map((classItem) => (
-              <li key={classItem.classId} className="text-sm">
-                {classItem.name} <span className="opacity-60">(Código: {classItem.code})</span>
-              </li>
+              <Typography key={classItem.classId} component="li" variant="body2">
+                {classItem.name}{" "}
+                <Box component="span" sx={{ color: theme.textMuted }}>
+                  (Código: {classItem.code})
+                </Box>
+              </Typography>
             ))}
-          </ul>
-        </div>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };

@@ -275,7 +275,7 @@ export default function ManageUsersTab() {
             {loading ? (
               <TableRow>
                 <TableCell colSpan={4} align="center" sx={{ py: 8 }}>
-                  <CircularProgress size={32} sx={{ color: "#FF6D00" }} />
+                  <CircularProgress size={32} color="primary" />
                 </TableCell>
               </TableRow>
             ) : users.length === 0 ? (
@@ -325,11 +325,11 @@ export default function ManageUsersTab() {
                           }}
                           sx={{
                             "& .MuiSwitch-switchBase.Mui-checked": {
-                              color: "#FF6D00",
+                              color: "primary.main",
                             },
                             "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track":
                               {
-                                bgcolor: "#FF6D00",
+                                bgcolor: "primary.main",
                               },
                           }}
                         />
@@ -352,12 +352,12 @@ export default function ManageUsersTab() {
             size="medium"
             sx={{
               "& .MuiPaginationItem-root:hover": {
-                bgcolor: "rgba(255,109,0,0.08)",
+                bgcolor: "action.hover",
               },
               "& .Mui-selected": {
-                bgcolor: "#FF6D00 !important",
-                color: "#fff !important",
-                "&:hover": { bgcolor: "#E65100 !important" },
+                bgcolor: "primary.main !important",
+                color: "primary.contrastText !important",
+                "&:hover": { bgcolor: "primary.dark !important" },
               },
             }}
           />

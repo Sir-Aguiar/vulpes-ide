@@ -1,4 +1,7 @@
+"use client";
+
 import { ITask } from "@/@types/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import {
   Box,
   Card,
@@ -16,7 +19,6 @@ import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { Editor } from "@monaco-editor/react";
 import CodeIcon from "@mui/icons-material/Code";
 import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
-import { COLORS } from "@/utils/colors";
 import { TaskSubmissionStatus } from "../page";
 
 interface ITaskSummaryCardProps {
@@ -38,16 +40,18 @@ export default function TaskSummaryCard({
   submissionStatus,
   onReview,
 }: ITaskSummaryCardProps) {
+  const theme = useAppTheme();
   const [codeCollapsed, setCodeCollapsed] = useState(true);
   const lines = code.split("\n").length;
 
   return (
     <Card
       sx={{
-        bgcolor: "#1e272c",
-        border: "1px solid rgba(255,255,255,0.06)",
+        bgcolor: theme.bgCard,
+        border: "1px solid",
+        borderColor: theme.border,
         borderRadius: 2,
-        color: "#fff",
+        color: theme.text,
       }}
     >
       <CardContent sx={{ p: 0, "&:last-child": { pb: 0 } }}>
@@ -58,9 +62,8 @@ export default function TaskSummaryCard({
             gap: 2,
             px: 2.5,
             py: 2,
-            borderBottom: codeCollapsed
-              ? "none"
-              : "1px solid rgba(255,255,255,0.06)",
+            borderBottom: codeCollapsed ? "none" : "1px solid",
+            borderColor: theme.border,
           }}
         >
           <Box
@@ -68,7 +71,7 @@ export default function TaskSummaryCard({
               width: 40,
               height: 40,
               borderRadius: "50%",
-              bgcolor: COLORS.dark.primary[500],
+              bgcolor: theme.brand,
               color: "#fff",
               display: "flex",
               alignItems: "center",
@@ -82,14 +85,14 @@ export default function TaskSummaryCard({
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography
               variant="subtitle1"
-              sx={{ fontWeight: 600, color: "#fff", lineHeight: 1.2 }}
+              sx={{ fontWeight: 600, color: theme.text, lineHeight: 1.2 }}
               noWrap
             >
               {task.title}
             </Typography>
             <Typography
               variant="caption"
-              sx={{ color: "#90a4ae", display: "block" }}
+              sx={{ color: theme.textSecondary, display: "block" }}
             >
               Tarefa {index + 1} · {lines} linha{lines === 1 ? "" : "s"} de
               código
@@ -101,7 +104,7 @@ export default function TaskSummaryCard({
             <IconButton
               size="small"
               onClick={onReview}
-              sx={{ color: "#90a4ae" }}
+              sx={{ color: theme.textMuted }}
             >
               <CodeIcon fontSize="small" />
             </IconButton>
@@ -109,7 +112,7 @@ export default function TaskSummaryCard({
           <IconButton
             size="small"
             onClick={() => setCodeCollapsed((v) => !v)}
-            sx={{ color: "#90a4ae" }}
+            sx={{ color: theme.textMuted }}
           >
             {codeCollapsed ? (
               <ExpandMoreIcon fontSize="small" />
@@ -120,7 +123,7 @@ export default function TaskSummaryCard({
         </Box>
 
         <Collapse in={!codeCollapsed} unmountOnExit>
-          <Box sx={{ bgcolor: "#1e1e1e", height: 260 }}>
+          <Box sx={{ bgcolor: theme.codeBg, height: 260 }}>
             <Editor
               height="100%"
               theme="vs-dark"

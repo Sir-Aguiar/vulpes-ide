@@ -1,7 +1,11 @@
+"use client";
+
 import { IFunctionData } from "@/utils/code-extractor";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import AddIcon from "@mui/icons-material/Add";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
+import { Box, Typography } from "@mui/material";
 import { TestWithId } from "../hooks/useTestCases";
 
 interface ITestCaseProps {
@@ -66,8 +70,21 @@ export const StepTestCases = ({
   onRemove,
   onInputChange,
   onOutputChange,
-}: ITestCaseProps) => (
-  <div className="w-full h-full flex flex-col gap-2 overflow-y-auto">
+}: ITestCaseProps) => {
+  const theme = useAppTheme();
+
+  return (
+  <Box
+    sx={{
+      width: "100%",
+      height: "100%",
+      display: "flex",
+      flexDirection: "column",
+      gap: 1,
+      overflowY: "auto",
+      color: theme.text,
+    }}
+  >
     {userFunctionData && (
       <Button startIcon={<AddIcon />} sx={{ marginY: 2 }} onClick={onAdd}>
         Adicionar Teste
@@ -75,13 +92,22 @@ export const StepTestCases = ({
     )}
 
     {testCases.map(({ testId, input, expectedOutput }, index) => (
-      <div
+      <Box
         key={testId}
-        className="w-full p-2 rounded-sm flex flex-col gap-2 border border-gray-100/10"
+        sx={{
+          width: "100%",
+          p: 1,
+          borderRadius: 1,
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          border: "1px solid",
+          borderColor: theme.border,
+        }}
       >
-        <span className="w-full text-sm opacity-60">
+        <Typography variant="body2" sx={{ color: theme.textMuted }}>
           Caso de Teste {index + 1}
-        </span>
+        </Typography>
         {userFunctionData?.params.map((param, paramIndex) =>
           param.isArray ? (
             <ArrayMaskedInput
@@ -119,7 +145,7 @@ export const StepTestCases = ({
           onChange={(e) => onOutputChange(testId, e.target.value)}
           defaultValue={expectedOutput}
         />
-        <div className="w-full flex justify-end">
+        <Box sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}>
           <Button
             variant="outlined"
             color="error"
@@ -127,8 +153,9 @@ export const StepTestCases = ({
           >
             Remover Teste
           </Button>
-        </div>
-      </div>
+        </Box>
+      </Box>
     ))}
-  </div>
-);
+  </Box>
+  );
+};

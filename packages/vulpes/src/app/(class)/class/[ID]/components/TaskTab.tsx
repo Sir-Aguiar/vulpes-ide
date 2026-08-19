@@ -1,5 +1,6 @@
 import { ISubmission } from "@/@types/Submission";
 import { ITask } from "@/@types/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
 import { Editor } from "@monaco-editor/react";
@@ -88,6 +89,7 @@ export default function TasksTab({
     onBack: () => void;
     taskId: string;
   }) {
+    const appTheme = useAppTheme();
     const [submissions, setSubmissions] = useState<ISubmission[]>([]);
     const [selectedSubmission, setSelectedSubmission] =
       useState<ISubmission | null>(null);
@@ -166,19 +168,23 @@ export default function TasksTab({
             >
               <Divider sx={{ my: 2 }} />
               <Stack direction="row" gap={1} sx={{ height: 300 }}>
-                <Editor
-                  height="100%"
-                  theme="vs-dark"
-                  language="portugol"
-                  onMount={handleEditorDidMount}
-                  value={selectedSubmission ? selectedSubmission.code : ""}
-                />
-                <MDEditor
-                  height="100%"
-                  style={{ width: "100%" }}
-                  value={professorComments}
-                  onChange={(val) => setProfessorComments(val || "")}
-                />
+                <Box sx={{ flex: 1, bgcolor: appTheme.codeBg, borderRadius: 1, overflow: "hidden" }}>
+                  <Editor
+                    height="100%"
+                    theme="vs-dark"
+                    language="portugol"
+                    onMount={handleEditorDidMount}
+                    value={selectedSubmission ? selectedSubmission.code : ""}
+                  />
+                </Box>
+                <Box data-color-mode={appTheme.mode} sx={{ width: "100%" }}>
+                  <MDEditor
+                    height="100%"
+                    style={{ width: "100%" }}
+                    value={professorComments}
+                    onChange={(val) => setProfessorComments(val || "")}
+                  />
+                </Box>
               </Stack>
               <Stack
                 direction="row"

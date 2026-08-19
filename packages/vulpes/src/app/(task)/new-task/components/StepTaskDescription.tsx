@@ -1,12 +1,16 @@
+"use client";
+
+import { CreateTaskDTO } from "@/@dtos/Task";
 import RHFCheckBox from "@/components/RHF/CheckBox";
 import RHFMDEditor from "@/components/RHF/MarkdownEditor";
 import RHFSelect from "@/components/RHF/Select";
 import RHFTextField from "@/components/RHF/TextField";
-import { Editor } from "@monaco-editor/react";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import MenuItem from "@mui/material/MenuItem";
+import { Box, Typography } from "@mui/material";
+import { Editor } from "@monaco-editor/react";
 import { Control, FieldErrors } from "react-hook-form";
 import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
-import { CreateTaskDTO } from "@/@dtos/Task";
 
 export const StepTaskDescription = ({
   control,
@@ -19,13 +23,26 @@ export const StepTaskDescription = ({
   code: string;
   onCodeChange: (value: string | undefined) => void;
 }) => {
-  const handleEditorDidMount = (editorInstance: any, monacoInstance: any) => {
+  const theme = useAppTheme();
+
+  const handleEditorDidMount = (editorInstance: unknown, monacoInstance: any) => {
     registerPortugolLanguage(monacoInstance);
     monacoInstance.editor.setTheme("vs-dark");
   };
 
   return (
-    <div className="w-full h-full flex flex-col gap-4 overflow-y-auto pr-2">
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 2,
+        overflowY: "auto",
+        pr: 1,
+        color: theme.text,
+      }}
+    >
       <RHFTextField
         control={control}
         label="Título"
@@ -34,18 +51,34 @@ export const StepTaskDescription = ({
         sx={{ minWidth: "328px" }}
       />
 
-      <div className="flex flex-col gap-1 min-h-[500px]">
-        <span className="text-sm opacity-70">Descrição da Tarefa</span>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, minHeight: 500 }}>
+        <Typography variant="body2" sx={{ color: theme.textSecondary }}>
+          Descrição da Tarefa
+        </Typography>
         <RHFMDEditor
           control={control}
           name="description"
           errors={errors}
           height="100%"
         />
-      </div>
+      </Box>
 
-      <div className="w-full flex flex-col gap-2 p-2 rounded-sm border border-gray-100/10 mt-2">
-        <h3 className="text-lg font-medium mb-2">Definição do Código</h3>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 1,
+          borderRadius: 1,
+          border: "1px solid",
+          borderColor: theme.border,
+          mt: 1,
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Definição do Código
+        </Typography>
         <RHFSelect
           control={control}
           name="inputMode"
@@ -56,7 +89,16 @@ export const StepTaskDescription = ({
           <MenuItem value="LEIA">Leia()</MenuItem>
         </RHFSelect>
 
-        <div className="h-[400px] border border-gray-700 rounded overflow-hidden">
+        <Box
+          sx={{
+            height: 400,
+            border: "1px solid",
+            borderColor: theme.border,
+            borderRadius: 1,
+            overflow: "hidden",
+            bgcolor: theme.codeBg,
+          }}
+        >
           <Editor
             height="100%"
             theme="vs-dark"
@@ -65,21 +107,35 @@ export const StepTaskDescription = ({
             value={code}
             onChange={onCodeChange}
           />
-        </div>
+        </Box>
 
-        <div className="w-full flex flex-col gap-1">
-          <span className="w-full text-center text-sm opacity-60">
+        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 0.5 }}>
+          <Typography variant="body2" sx={{ textAlign: "center", color: theme.textMuted }}>
             Insira no editor a definição da função em que o aluno deverá
             desenvolver seu algoritmo
-          </span>
-          <span className="w-full text-center text-sm opacity-60">
+          </Typography>
+          <Typography variant="body2" sx={{ textAlign: "center", color: theme.textMuted }}>
             Ex: <code>funcao inteiro somar() &#123; &#125;</code>
-          </span>
-        </div>
-      </div>
+          </Typography>
+        </Box>
+      </Box>
 
-      <div className="w-full flex flex-col gap-2 p-2 rounded-sm border border-gray-100/10 mt-2">
-        <h3 className="text-lg font-medium mb-2">Visibilidade da Tarefa</h3>
+      <Box
+        sx={{
+          width: "100%",
+          display: "flex",
+          flexDirection: "column",
+          gap: 1,
+          p: 1,
+          borderRadius: 1,
+          border: "1px solid",
+          borderColor: theme.border,
+          mt: 1,
+        }}
+      >
+        <Typography variant="h6" sx={{ mb: 1 }}>
+          Visibilidade da Tarefa
+        </Typography>
         <RHFCheckBox
           control={control}
           name="isVisible"
@@ -92,7 +148,7 @@ export const StepTaskDescription = ({
           label="Tarefa pública (outros professores podem usar)"
           errors={errors}
         />
-      </div>
-    </div>
+      </Box>
+    </Box>
   );
 };

@@ -1,6 +1,9 @@
+"use client";
+
 import { Chip } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import ErrorIcon from "@mui/icons-material/Error";
+import { alpha, useTheme } from "@mui/material/styles";
 
 export default function TaskStatusChip({
   hasResults,
@@ -9,15 +12,18 @@ export default function TaskStatusChip({
   hasResults: boolean;
   isCorrect: boolean;
 }) {
+  const theme = useTheme();
+
   if (!hasResults) {
     return (
       <Chip
         label="Não executada"
         size="small"
         sx={{
-          bgcolor: "rgba(255,255,255,0.06)",
-          color: "#cfd8dc",
-          border: "1px solid rgba(255,255,255,0.12)",
+          bgcolor: alpha(theme.palette.text.primary, 0.06),
+          color: "text.secondary",
+          border: "1px solid",
+          borderColor: "divider",
           fontWeight: 600,
         }}
       />
@@ -27,13 +33,14 @@ export default function TaskStatusChip({
   if (isCorrect) {
     return (
       <Chip
-        icon={<CheckCircleIcon sx={{ color: "#66bb6a !important" }} />}
+        icon={<CheckCircleIcon sx={{ color: `${theme.palette.success.main} !important` }} />}
         label="Correta"
         size="small"
         sx={{
-          bgcolor: "rgba(102,187,106,0.12)",
-          color: "#a5d6a7",
-          border: "1px solid rgba(102,187,106,0.25)",
+          bgcolor: alpha(theme.palette.success.main, 0.12),
+          color: "success.main",
+          border: "1px solid",
+          borderColor: alpha(theme.palette.success.main, 0.25),
           fontWeight: 600,
         }}
       />
@@ -42,13 +49,14 @@ export default function TaskStatusChip({
 
   return (
     <Chip
-      icon={<ErrorIcon sx={{ color: "#ef5350 !important" }} />}
+      icon={<ErrorIcon sx={{ color: `${theme.palette.error.main} !important` }} />}
       label="Incorreta"
       size="small"
       sx={{
-        bgcolor: "rgba(239,83,80,0.12)",
-        color: "#ef9a9a",
-        border: "1px solid rgba(239,83,80,0.25)",
+        bgcolor: alpha(theme.palette.error.main, 0.12),
+        color: "error.main",
+        border: "1px solid",
+        borderColor: alpha(theme.palette.error.main, 0.25),
         fontWeight: 600,
       }}
     />

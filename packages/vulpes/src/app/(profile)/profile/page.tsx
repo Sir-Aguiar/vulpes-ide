@@ -3,6 +3,7 @@
 import AppNavBar from "@/components/AppNavBar";
 import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/providers/AuthProvider";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
 import LockIcon from "@mui/icons-material/Lock";
 import PeopleIcon from "@mui/icons-material/People";
@@ -74,6 +75,7 @@ interface SideBarProps {
 }
 
 function SideBar({ tabs, activeIndex, onChange }: SideBarProps) {
+  const theme = useAppTheme();
   const boxStyle: SxProps = {
     width: "296px",
     flexShrink: 0,
@@ -106,13 +108,13 @@ function SideBar({ tabs, activeIndex, onChange }: SideBarProps) {
                   minWidth: 40,
                 },
                 "&:hover": {
-                  backgroundColor: "rgba(255, 109, 0, 0.08)",
+                  backgroundColor: theme.hover,
                 },
                 "&.Mui-selected": {
-                  backgroundColor: "rgba(255, 109, 0, 0.12)",
-                  color: isDanger ? "error.main" : "#FF6D00",
+                  backgroundColor: theme.brandGlow,
+                  color: isDanger ? "error.main" : theme.brand,
                   "&:hover": {
-                    backgroundColor: "rgba(255, 109, 0, 0.18)",
+                    backgroundColor: theme.brandGlow,
                   },
                 },
               }}

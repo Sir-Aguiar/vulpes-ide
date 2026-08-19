@@ -1,5 +1,6 @@
 import { ISubmission } from "@/@types/Submission";
 import { ITask } from "@/@types/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
 import { Editor } from "@monaco-editor/react";
@@ -62,6 +63,7 @@ function ListSubmissionsContent({
   onBack: () => void;
   listId: string;
 }) {
+  const appTheme = useAppTheme();
   const [submissionGroups, setSubmissionGroups] = useState<ISubmissionGroup[]>([]);
   const [selectedGroup, setSelectedGroup] = useState<ISubmissionGroup | null>(null);
   const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
@@ -179,28 +181,32 @@ function ListSubmissionsContent({
               </Box>
             </Box>
             <Stack direction="row" gap={1} sx={{ height: 300 }}>
-              <Editor
-                height="100%"
-                theme="vs-dark"
-                language="portugol"
-                onMount={handleEditorDidMount}
-                value={currentSubmission ? currentSubmission.code : ""}
-                options={{ readOnly: true }}
-              />
+              <Box sx={{ flex: 1, bgcolor: appTheme.codeBg, borderRadius: 1, overflow: "hidden" }}>
+                <Editor
+                  height="100%"
+                  theme="vs-dark"
+                  language="portugol"
+                  onMount={handleEditorDidMount}
+                  value={currentSubmission ? currentSubmission.code : ""}
+                  options={{ readOnly: true }}
+                />
+              </Box>
               <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
                 <Typography variant="subtitle2">
                   Status: {currentSubmission?.isCorrect ? (
-                    <span style={{ color: "#4caf50" }}>Correto</span>
+                    <Box component="span" sx={{ color: "success.main" }}>Correto</Box>
                   ) : (
-                    <span style={{ color: "#f44336" }}>Incorreto</span>
+                    <Box component="span" sx={{ color: "error.main" }}>Incorreto</Box>
                   )}
                 </Typography>
-                <MDEditor
-                  height="100%"
-                  style={{ width: "100%", flexGrow: 1 }}
-                  value={professorComments}
-                  onChange={(val) => setProfessorComments(val || "")}
-                />
+                <Box data-color-mode={appTheme.mode} sx={{ flexGrow: 1 }}>
+                  <MDEditor
+                    height="100%"
+                    style={{ width: "100%", flexGrow: 1 }}
+                    value={professorComments}
+                    onChange={(val) => setProfessorComments(val || "")}
+                  />
+                </Box>
               </Box>
             </Stack>
             <Stack

@@ -18,6 +18,7 @@ import {
 } from "@/@schemas/RequestPermission.schema";
 import RHFTextField from "@/components/RHF/TextField";
 import API from "@/services/API";
+import { useTheme } from "@mui/material/styles";
 import { useRouter, useSearchParams } from "next/navigation";
 import RHFSelect from "@/components/RHF/Select";
 import { MenuItem } from "@mui/material";
@@ -45,6 +46,7 @@ function SuspenseFallback() {
 }
 
 function RequestPermissionPage() {
+  const muiTheme = useTheme();
   const searchParams = useSearchParams();
   const [isSuccess, setIsSuccess] = useState(false);
 
@@ -330,7 +332,7 @@ function RequestPermissionPage() {
                       width: "100%",
                       height: "100%",
                       borderRadius: "50%",
-                      backgroundColor: "#2e7d32", // success.main default
+                      backgroundColor: muiTheme.palette.success.main,
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "center",

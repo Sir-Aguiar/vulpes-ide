@@ -1,7 +1,8 @@
 "use client";
 
-import { Box, Typography, Button } from "@mui/material";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import { TaskAccessMode } from "../types";
 
@@ -12,6 +13,7 @@ interface TaskAccessGuardProps {
 
 export function TaskAccessGuard({ access, children }: TaskAccessGuardProps) {
   const router = useRouter();
+  const theme = useAppTheme();
 
   if (!access) {
     return (
@@ -23,8 +25,8 @@ export function TaskAccessGuard({ access, children }: TaskAccessGuardProps) {
           justifyContent: "center",
           height: "calc(100vh - 64px)",
           gap: 2,
-          bgcolor: "#263238",
-          color: "white",
+          bgcolor: theme.bg,
+          color: theme.text,
         }}
       >
         <ErrorOutlineIcon sx={{ fontSize: 56, color: "error.main", mb: 1 }} />

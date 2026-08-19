@@ -20,8 +20,8 @@ import StopIcon from "@mui/icons-material/Stop";
 import SendIcon from "@mui/icons-material/Send";
 import { PlayIcon, SaveAsIcon } from "../Icons";
 
-import { COLORS } from "@/utils/colors";
 import { ITask } from "@/@types/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 
 interface SidebarProps {
   isRunning: boolean;
@@ -45,24 +45,6 @@ interface SidebarProps {
   submitDisabledReason?: string;
 }
 
-const BoxStyle: SxProps = {
-  gridColumn: "1 / 1",
-  gridRow: "1 / 13",
-  maxWidth: "84px",
-  bgcolor: "#222",
-  display: "flex",
-  flexDirection: "column",
-  alignItems: "center",
-  gap: "12px",
-  padding: "8px",
-  borderRadius: "8px",
-  "@media (max-width: 1280px)": {
-    gridColumn: "1 / 11",
-    gridRow: "7/ 8",
-    flexDirection: "row",
-    maxWidth: "100%",
-  },
-};
 
 const SiderBarButton = ({
   children,
@@ -100,7 +82,30 @@ const Sidebar: React.FC<SidebarProps> = ({
   submitDisabledReason,
 }) => {
   const router = useRouter();
+  const theme = useAppTheme();
   const isSmallScreen = window.innerWidth < 1280;
+
+  const boxStyle: SxProps = {
+    gridColumn: "1 / 1",
+    gridRow: "1 / 13",
+    maxWidth: "84px",
+    bgcolor: theme.menuBg,
+    border: "1px solid",
+    borderColor: theme.menuBorder,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: "12px",
+    padding: "8px",
+    borderRadius: "8px",
+    color: theme.text,
+    "@media (max-width: 1280px)": {
+      gridColumn: "1 / 11",
+      gridRow: "7/ 8",
+      flexDirection: "row",
+      maxWidth: "100%",
+    },
+  };
 
   const handleAdvance = () => {
     if (onAdvance) {
@@ -124,15 +129,15 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <Box sx={BoxStyle}>
+    <Box sx={boxStyle}>
       <SiderBarButton onClick={onRunCode}>
         {isRunning ? <StopIcon /> : <PlayIcon />}
       </SiderBarButton>
 
-      <Divider sx={{ background: "#fff" }} flexItem />
+      <Divider sx={{ background: theme.borderStrong }} flexItem />
 
       <SiderBarButton>
-        <SaveAsIcon style={{ color: "Highlight" }} />
+        <SaveAsIcon style={{ color: theme.brand }} />
       </SiderBarButton>
 
       {isInList && (
@@ -149,7 +154,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                 margin: 0,
                 borderRadius: "8px",
                 "&:hover": {
-                  backgroundColor: "rgba(255,255,255,0.05)",
+                  backgroundColor: theme.hover,
                 },
               },
               ...(isSmallScreen ? { mx: "auto" } : { my: "auto" }),

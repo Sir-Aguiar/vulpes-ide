@@ -26,6 +26,7 @@ import {
   resolveTaskEndpoint,
   TaskAccessMode,
 } from "./types";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import { TaskAccessGuard } from "./components/TaskAccessGuard";
 import { TaskView } from "./components/TaskView";
 
@@ -41,6 +42,8 @@ export default function Page() {
 }
 
 function LoadingBox() {
+  const theme = useAppTheme();
+
   return (
     <Box
       sx={{
@@ -49,7 +52,7 @@ function LoadingBox() {
         alignItems: "center",
         justifyContent: "center",
         height: "calc(100vh - 64px)",
-        bgcolor: "#263238",
+        bgcolor: theme.bg,
       }}
     >
       <CircularProgress />
@@ -85,6 +88,7 @@ function TaskContent({ access }: ITaskContentProps) {
   >(null);
   const [hasRun, setHasRun] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const theme = useAppTheme();
 
   const accessKey =
     access.mode === "task" ? access.taskId : access.classTaskId;
@@ -198,7 +202,7 @@ function TaskContent({ access }: ITaskContentProps) {
         width: "100%",
         gap: 2,
         padding: 2,
-        bgcolor: "#263238",
+        bgcolor: theme.bg,
         "@media (min-width: 1281px)": {
           flexDirection: "row",
           height: "calc(100vh - 64px)",

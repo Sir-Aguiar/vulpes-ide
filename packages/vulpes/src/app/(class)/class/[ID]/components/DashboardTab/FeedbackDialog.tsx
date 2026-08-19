@@ -25,6 +25,7 @@ import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
 import { registerPortugolLanguage } from "../../../../../../../libs/monaco-config";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 
 function initialsFrom(name: string) {
   const parts = name.trim().split(/\s+/);
@@ -47,6 +48,7 @@ export default function FeedbackDialog({
   onSubmitted,
 }: IFeedbackDialogProps) {
   const theme = useTheme();
+  const appTheme = useAppTheme();
   const [attemptIndex, setAttemptIndex] = useState(0);
   const [feedback, setFeedback] = useState("");
   const [sending, setSending] = useState(false);
@@ -222,7 +224,7 @@ export default function FeedbackDialog({
                 />
               )}
             </Stack>
-            <Box sx={{ flex: 1, minHeight: 320 }}>
+            <Box sx={{ flex: 1, minHeight: 320, bgcolor: appTheme.codeBg }}>
               {selectedAttempt ? (
                 <Editor
                   height="100%"
@@ -239,7 +241,7 @@ export default function FeedbackDialog({
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    bgcolor: "#1e1e1e",
+                    bgcolor: appTheme.codeBg,
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
@@ -265,7 +267,10 @@ export default function FeedbackDialog({
                 Feedback para o aluno
               </Typography>
             </Box>
-            <Box sx={{ flex: 1, minHeight: 320, "& .w-md-editor": { height: "100% !important" } }}>
+            <Box
+              sx={{ flex: 1, minHeight: 320, "& .w-md-editor": { height: "100% !important" } }}
+              data-color-mode={appTheme.mode}
+            >
               <MDEditor
                 height="100%"
                 style={{ width: "100%" }}

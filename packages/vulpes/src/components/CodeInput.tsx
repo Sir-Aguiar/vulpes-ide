@@ -1,5 +1,6 @@
 "use client";
 
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import { Box } from "@mui/material";
 import React, { useRef } from "react";
 
@@ -18,6 +19,7 @@ export default function CodeInput({
   onComplete,
   disabled = false,
 }: CodeInputProps) {
+  const theme = useAppTheme();
   const inputsRef = useRef<Array<HTMLInputElement | null>>([]);
 
   const focusInput = (index: number) => {
@@ -132,23 +134,21 @@ export default function CodeInput({
             fontSize: "1.75rem",
             fontWeight: 600,
             color: "text.primary",
-            caretColor: "#FF6D00",
+            caretColor: theme.brand,
             borderRadius: "12px",
             border: "2px solid",
-            borderColor: value[index]
-              ? "#FF6D00"
-              : "rgba(255, 255, 255, 0.18)",
-            backgroundColor: "rgba(255, 255, 255, 0.04)",
+            borderColor: value[index] ? theme.brand : theme.border,
+            backgroundColor: theme.hover,
             outline: "none",
             transition:
               "border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease",
             "&:hover": {
-              borderColor: "rgba(255, 109, 0, 0.6)",
+              borderColor: theme.brandGlow,
             },
             "&:focus": {
-              borderColor: "#FF6D00",
-              backgroundColor: "rgba(255, 109, 0, 0.08)",
-              boxShadow: "0 0 0 4px rgba(255, 109, 0, 0.18)",
+              borderColor: theme.brand,
+              backgroundColor: theme.brandGlow,
+              boxShadow: `0 0 0 4px ${theme.brandGlow}`,
             },
             "&:disabled": {
               opacity: 0.5,

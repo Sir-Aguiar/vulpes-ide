@@ -2,6 +2,7 @@
 import FormControlLabel from "@mui/material/FormControlLabel";
 import Checkbox from "@mui/material/Checkbox";
 import FormControl from "@mui/material/FormControl";
+import Typography from "@mui/material/Typography";
 import type { SelectProps } from "@mui/material/Select";
 import React from "react";
 import {
@@ -86,9 +87,9 @@ const RHFCheckBox = <
             }
           />
           {error && (
-            <p style={{ color: "#ff0000", fontSize: "13px" }}>
+            <Typography color="error" sx={{ fontSize: "13px" }}>
               {String(error.message)}
-            </p>
+            </Typography>
           )}
         </FormControl>
       )}

@@ -22,6 +22,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import FinishedScreen from "./components/FinishedScreen";
 import TaskView from "./components/TaskView";
 
@@ -37,6 +38,8 @@ export default function Page() {
 }
 
 function LayoutBox({ children }: { children: React.ReactNode }) {
+  const theme = useAppTheme();
+
   return (
     <Box
       sx={{
@@ -44,7 +47,7 @@ function LayoutBox({ children }: { children: React.ReactNode }) {
         width: "100%",
         gap: 2,
         padding: 2,
-        bgcolor: "#263238",
+        bgcolor: theme.bg,
         "@media (min-width: 1281px)": {
           flexDirection: "row",
           height: "calc(100vh - 64px)",

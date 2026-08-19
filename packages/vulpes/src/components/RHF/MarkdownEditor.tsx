@@ -1,4 +1,6 @@
-import { TextFieldProps } from "@mui/material/TextField";
+"use client";
+
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import MDEditor, { MDEditorProps } from "@uiw/react-md-editor";
 import {
   Controller,
@@ -31,12 +33,18 @@ const RHFMDEditor = <
   errors,
   ...props
 }: InputProps<TFieldValues, TName>) => {
+  const theme = useAppTheme();
+
   return (
     <Controller
       control={control}
       name={name}
       rules={props.rules}
-      render={({ field }) => <MDEditor {...field} {...props} />}
+      render={({ field }) => (
+        <div data-color-mode={theme.mode}>
+          <MDEditor {...field} {...props} />
+        </div>
+      )}
     />
   );
 };

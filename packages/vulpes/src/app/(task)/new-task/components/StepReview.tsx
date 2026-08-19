@@ -1,9 +1,13 @@
+"use client";
+
+import { IClassListItem } from "@/@types/Class";
+import { CreateTaskDTO } from "@/@dtos/Task";
+import { useAppTheme } from "@/providers/ColorModeProvider";
+import { Box, Typography } from "@mui/material";
 import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
-import { TestWithId } from "../hooks/useTestCases";
 import { Control, useWatch } from "react-hook-form";
-import { CreateTaskDTO } from "@/@dtos/Task";
-import { IClassListItem } from "@/@types/Class";
+import { TestWithId } from "../hooks/useTestCases";
 
 interface StepReviewProps {
   control: Control<CreateTaskDTO>;
@@ -12,107 +16,193 @@ interface StepReviewProps {
   selectedClasses?: IClassListItem[];
 }
 
-export const StepReview = ({ control, code, testCases, selectedClasses = [] }: StepReviewProps) => {
+export const StepReview = ({
+  control,
+  code,
+  testCases,
+  selectedClasses = [],
+}: StepReviewProps) => {
+  const theme = useAppTheme();
   const values = useWatch({ control });
 
   return (
-    <div className="w-full h-full flex flex-col gap-6 overflow-y-auto">
-      <div className="flex flex-col gap-2">
-        <h2 className="text-2xl font-bold">{values.title || "Sem título"}</h2>
-        <div className="rounded">
-          <h3 className="text-sm font-bold uppercase mb-2">Descrição</h3>
-          <MDEditor
-            value={values.description}
-            preview="preview"
-            height="500px"
-          />
-        </div>
-      </div>
+    <Box
+      sx={{
+        width: "100%",
+        height: "100%",
+        display: "flex",
+        flexDirection: "column",
+        gap: 3,
+        overflowY: "auto",
+        color: theme.text,
+      }}
+    >
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h5" fontWeight={700}>
+          {values.title || "Sem título"}
+        </Typography>
+        <Box>
+          <Typography variant="caption" fontWeight={700} sx={{ textTransform: "uppercase", mb: 1, display: "block" }}>
+            Descrição
+          </Typography>
+          <Box data-color-mode={theme.mode}>
+            <MDEditor
+              value={values.description}
+              preview="preview"
+              height="500px"
+            />
+          </Box>
+        </Box>
+      </Box>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold">Código Base</h3>
-        <div className="text-sm mb-2">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" fontWeight={700}>
+          Código Base
+        </Typography>
+        <Typography variant="body2" sx={{ mb: 1 }}>
           <strong>Modo de Entrada:</strong>{" "}
           {values.inputMode === "params"
             ? "Parâmetros da Função"
             : "Comando Leia()"}
-        </div>
-        <div className="h-64 rounded overflow-hidden">
+        </Typography>
+        <Box
+          sx={{
+            height: 256,
+            borderRadius: 1,
+            overflow: "hidden",
+            bgcolor: theme.codeBg,
+            border: "1px solid",
+            borderColor: theme.border,
+          }}
+        >
           <Editor
             theme="vs-dark"
             language="portugol"
             value={code}
             options={{ readOnly: true, minimap: { enabled: false } }}
           />
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold">
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" fontWeight={700}>
           Casos de Teste ({testCases.length})
-        </h3>
+        </Typography>
         {testCases.length === 0 && (
-          <span className="text-sm opacity-60 italic">
+          <Typography variant="body2" fontStyle="italic" sx={{ color: theme.textMuted }}>
             Nenhum caso de teste adicionado.
-          </span>
+          </Typography>
         )}
-        <div className="grid grid-cols-1 gap-2">
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 1 }}>
           {testCases.map((test, index) => (
-            <div key={test.testId} className="p-3 rounded flex flex-col gap-1">
-              <span className="text-xs font-bold opacity-50 uppercase mb-1">
+            <Box
+              key={test.testId}
+              sx={{
+                p: 1.5,
+                borderRadius: 1,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                bgcolor: theme.bgCard,
+                border: "1px solid",
+                borderColor: theme.border,
+              }}
+            >
+              <Typography
+                variant="caption"
+                fontWeight={700}
+                sx={{ textTransform: "uppercase", color: theme.textMuted, mb: 0.5 }}
+              >
                 Teste {index + 1}
-              </span>
-              <div className="text-sm">
-                <span className="font-semibold text-blue-400">Entrada:</span>{" "}
-                <span className="font-mono bg-black/20 px-1 rounded">
+              </Typography>
+              <Typography variant="body2">
+                <Box component="span" sx={{ fontWeight: 600, color: theme.brand }}>
+                  Entrada:
+                </Box>{" "}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                    bgcolor: theme.hover,
+                    px: 0.5,
+                    borderRadius: 0.5,
+                  }}
+                >
                   {test.input.join(", ")}
-                </span>
-              </div>
-              <div className="text-sm">
-                <span className="font-semibold text-green-400">
+                </Box>
+              </Typography>
+              <Typography variant="body2">
+                <Box component="span" sx={{ fontWeight: 600, color: "success.main" }}>
                   Saída Esperada:
-                </span>{" "}
-                <span className="font-mono bg-black/20 px-1 rounded">
+                </Box>{" "}
+                <Box
+                  component="span"
+                  sx={{
+                    fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+                    bgcolor: theme.hover,
+                    px: 0.5,
+                    borderRadius: 0.5,
+                  }}
+                >
                   {test.expectedOutput}
-                </span>
-              </div>
-            </div>
+                </Box>
+              </Typography>
+            </Box>
           ))}
-        </div>
-      </div>
+        </Box>
+      </Box>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-lg font-bold">Configurações</h3>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="p-3 rounded border border-gray-100/10">
-            <span className="text-sm font-semibold">Visibilidade:</span>{" "}
-            <span className={values.isVisible ? "text-green-400" : "text-yellow-400"}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <Typography variant="h6" fontWeight={700}>
+          Configurações
+        </Typography>
+        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+          <Box sx={{ p: 1.5, borderRadius: 1, border: "1px solid", borderColor: theme.border }}>
+            <Typography component="span" variant="body2" fontWeight={600}>
+              Visibilidade:
+            </Typography>{" "}
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ color: values.isVisible ? "success.main" : "warning.main" }}
+            >
               {values.isVisible ? "Visível" : "Oculta"}
-            </span>
-          </div>
-          <div className="p-3 rounded border border-gray-100/10">
-            <span className="text-sm font-semibold">Acesso:</span>{" "}
-            <span className={values.isPublic ? "text-blue-400" : "text-orange-400"}>
+            </Typography>
+          </Box>
+          <Box sx={{ p: 1.5, borderRadius: 1, border: "1px solid", borderColor: theme.border }}>
+            <Typography component="span" variant="body2" fontWeight={600}>
+              Acesso:
+            </Typography>{" "}
+            <Typography
+              component="span"
+              variant="body2"
+              sx={{ color: values.isPublic ? "info.main" : theme.brand }}
+            >
               {values.isPublic ? "Pública" : "Privada"}
-            </span>
-          </div>
-        </div>
-      </div>
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
 
       {selectedClasses.length > 0 && (
-        <div className="flex flex-col gap-2">
-          <h3 className="text-lg font-bold">Turmas Vinculadas ({selectedClasses.length})</h3>
-          <div className="p-3 rounded border border-gray-100/10">
-            <ul className="list-disc list-inside space-y-1">
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+          <Typography variant="h6" fontWeight={700}>
+            Turmas Vinculadas ({selectedClasses.length})
+          </Typography>
+          <Box sx={{ p: 1.5, borderRadius: 1, border: "1px solid", borderColor: theme.border }}>
+            <Box component="ul" sx={{ pl: 2, m: 0 }}>
               {selectedClasses.map((classItem) => (
-                <li key={classItem.classId} className="text-sm">
-                  {classItem.name} <span className="opacity-60">(Código: {classItem.code})</span>
-                </li>
+                <Typography key={classItem.classId} component="li" variant="body2">
+                  {classItem.name}{" "}
+                  <Box component="span" sx={{ color: theme.textMuted }}>
+                    (Código: {classItem.code})
+                  </Box>
+                </Typography>
               ))}
-            </ul>
-          </div>
-        </div>
+            </Box>
+          </Box>
+        </Box>
       )}
-    </div>
+    </Box>
   );
 };

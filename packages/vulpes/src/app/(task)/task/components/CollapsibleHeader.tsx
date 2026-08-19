@@ -1,9 +1,9 @@
 "use client";
 
-import { Box, IconButton, Typography } from "@mui/material";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import { COLORS } from "@/utils/colors";
+import { Box, IconButton, Typography } from "@mui/material";
 
 export interface ICollapsibleHeaderProps {
   icon: React.ReactNode;
@@ -20,6 +20,8 @@ export function CollapsibleHeader({
   onToggle,
   trailing,
 }: ICollapsibleHeaderProps) {
+  const theme = useAppTheme();
+
   return (
     <Box
       onClick={onToggle}
@@ -29,23 +31,23 @@ export function CollapsibleHeader({
         justifyContent: "space-between",
         px: 2,
         py: 1,
-        bgcolor: "#252526",
+        bgcolor: theme.contentPanel,
         borderBottom: collapsed ? "none" : "1px solid",
-        borderColor: "rgba(255,255,255,0.08)",
+        borderColor: theme.contentPanelBorder,
         cursor: "pointer",
         userSelect: "none",
         borderRadius: collapsed ? "8px" : "8px 8px 0 0",
         transition: "background-color 0.15s ease",
-        "&:hover": { bgcolor: "#2d2d30" },
+        "&:hover": { bgcolor: theme.hover },
       }}
     >
       <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-        <Box sx={{ color: COLORS.dark.primary[500], display: "flex" }}>
+        <Box sx={{ color: theme.brand, display: "flex" }}>
           {icon}
         </Box>
         <Typography
           variant="body2"
-          sx={{ color: "#d4d4d4", fontWeight: 600, letterSpacing: 0.2 }}
+          sx={{ color: theme.contentPanelText, fontWeight: 600, letterSpacing: 0.2 }}
         >
           {title}
         </Typography>
@@ -54,7 +56,7 @@ export function CollapsibleHeader({
         {trailing}
         <IconButton
           size="small"
-          sx={{ color: "#9e9e9e", p: 0.25 }}
+          sx={{ color: theme.textMuted, p: 0.25 }}
           onClick={(e) => {
             e.stopPropagation();
             onToggle();

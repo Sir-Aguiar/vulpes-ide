@@ -1,9 +1,16 @@
+"use client";
+
 import LocalizationProvider from "./LocalizationProvider";
-import { ColorModeProvider } from "./ColorModeProvider";
+import { ColorModeProvider, useColorMode } from "./ColorModeProvider";
 import ServerThemeProvider from "./MUIThemeProvider";
 import { AuthProvider } from "./AuthProvider";
 import { BugReportProvider } from "./BugReportProvider";
 import { ToastContainer } from "react-toastify";
+
+function ThemedToastContainer() {
+  const { isDark } = useColorMode();
+  return <ToastContainer closeOnClick theme={isDark ? "dark" : "light"} />;
+}
 
 export const LayoutProvider = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -13,7 +20,7 @@ export const LayoutProvider = ({ children }: { children: React.ReactNode }) => {
           <AuthProvider>
             <BugReportProvider>{children}</BugReportProvider>
           </AuthProvider>
-          <ToastContainer closeOnClick theme="colored" />
+          <ThemedToastContainer />
         </LocalizationProvider>
       </ServerThemeProvider>
     </ColorModeProvider>
