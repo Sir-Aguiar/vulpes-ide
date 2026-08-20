@@ -12,6 +12,23 @@ export interface EncryptedPayload<T extends object> {
   body: T;
 }
 
+export function isEncryptedEnvelope(
+  data: unknown,
+): data is EncryptedRequestEnvelope {
+  if (typeof data !== "object" || data === null) {
+    return false;
+  }
+
+  const envelope = data as Partial<EncryptedRequestEnvelope>;
+
+  return (
+    typeof envelope.version === "string" &&
+    typeof envelope.encryptedKey === "string" &&
+    typeof envelope.iv === "string" &&
+    typeof envelope.ciphertext === "string"
+  );
+}
+
 const ENVELOPE_VERSION = "1";
 const AES_IV_LENGTH = 12;
 
