@@ -1,5 +1,3 @@
-import { exportPages } from "next/dist/build/worker";
-
 const XIcon = ({ className }: { className?: string }) => (
   <svg
     className={className}

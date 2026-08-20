@@ -33,7 +33,7 @@ function shouldEncryptBody(config: InternalAxiosRequestConfig): boolean {
     return false;
   }
 
-  const { data } = config;
+  const { data, url } = config;
 
   if (typeof data !== "object" || data === null) {
     return false;
@@ -47,7 +47,7 @@ function shouldEncryptBody(config: InternalAxiosRequestConfig): boolean {
     return false;
   }
 
-  return ENCRYPTED_BODY_PATHS.has(canonicalizePath(config.url));
+  return ENCRYPTED_BODY_PATHS.has(canonicalizePath(url));
 }
 
 const API = axios.create({

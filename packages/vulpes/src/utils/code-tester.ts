@@ -125,6 +125,22 @@ export const normalizeTestCaseInput = (input: unknown): string[] => {
   return result;
 };
 
+const normalizeComparableOutput = (value: unknown): string =>
+  String(value ?? "")
+    .replaceAll("\r", "")
+    .trim();
+
+const extractReceivedOutput = (output: string): string | null => {
+  const matches = [...output.matchAll(/Saída recebida:\s*(.*)/g)];
+  const last = matches.at(-1)?.[1];
+
+  if (last == null) {
+    return null;
+  }
+
+  return normalizeComparableOutput(last);
+};
+
 export const executeWithTestInputs = async (
   code: string,
   task: ITask,
@@ -436,18 +452,34 @@ export const executeWithTestInputs = async (
       const stdoutBuffer: string[] = [];
       let gotOutput = false;
 
+      const applyCapturedOutput = (output: string) => {
+        const actualOutput = extractReceivedOutput(output);
+
+        if (actualOutput == null) {
+          return false;
+        }
+
+        gotOutput = true;
+        const result = testCaseResults.get(testCase.testId)!;
+        result.actualOutput = actualOutput;
+        result.passed =
+          actualOutput === normalizeComparableOutput(result.expectedOutput);
+        return true;
+      };
+
+      const finishTest = () => {
+        stdOutSubscription.unsubscribe();
+        eventsSubscription.unsubscribe();
+        executor.stop();
+      };
+
       const stdOutSubscription = executor.stdOut$.subscribe((output) => {
         stdoutBuffer.push(output);
-        const match = output.match(/Saída recebida:\s*(.*)/);
 
-        if (match) {
-          gotOutput = true;
-          const actualOutput = match[1];
+        if (applyCapturedOutput(output)) {
           const result = testCaseResults.get(testCase.testId)!;
-          result.actualOutput = actualOutput;
-          result.passed = actualOutput === result.expectedOutput;
           devLog.info(
-            `stdout → saída capturada: ${JSON.stringify(actualOutput)} (esperado ${JSON.stringify(result.expectedOutput)}) — ${result.passed ? "OK" : "DIVERGE"}`,
+            `stdout → saída capturada: ${JSON.stringify(result.actualOutput)} (esperado ${JSON.stringify(result.expectedOutput)}) — ${result.passed ? "OK" : "DIVERGE"}`,
           );
         } else {
           devLog.info(`stdout → ${JSON.stringify(output)}`);
@@ -456,14 +488,15 @@ export const executeWithTestInputs = async (
 
       const eventsSubscription = executor.events.subscribe((event) => {
         if (event.type === "finish") {
-          stdOutSubscription.unsubscribe();
-          eventsSubscription.unsubscribe();
-          executor.stop();
+          finishTest();
           const result = testCaseResults.get(testCase.testId)!;
           if (result.passed) passedCount += 1;
           else failedCount += 1;
 
           if (!gotOutput) {
+            result.actualOutput =
+              result.actualOutput ??
+              "A execução terminou sem produzir saída da função.";
             devLog.warn(
               "Execução terminou sem emitir 'Saída recebida:' — verifique se o código chama 'escreva' e se a função retorna um valor.",
             );
@@ -480,16 +513,31 @@ export const executeWithTestInputs = async (
           resolve();
         }
 
+        if (event.type === "parseError") {
+          finishTest();
+          const result = testCaseResults.get(testCase.testId)!;
+          const errorMessage =
+            event.errors
+              .map((err) => err.message)
+              .filter(Boolean)
+              .join("; ") ||
+            "Erro de compilação no código gerado para o teste.";
+          result.actualOutput = `Erro: ${errorMessage}`;
+          result.passed = false;
+          failedCount += 1;
+          devLog.error("Erro de parse no executor", event.errors);
+          devLog.kv("mensagem", errorMessage);
+          devLog.groupEnd();
+          resolve();
+        }
+
         if (event.type === "error") {
-          stdOutSubscription.unsubscribe();
-          eventsSubscription.unsubscribe();
-          executor.stop();
+          finishTest();
 
           const result = testCaseResults.get(testCase.testId)!;
           const errorMessage =
             (event.error && (event.error.message || String(event.error))) ||
             "Erro na execução do código";
-          // Mantém a saída parcial se houver, senão registra o erro.
           if (result.actualOutput === null) {
             result.actualOutput = `Erro: ${errorMessage}`;
           }
@@ -510,7 +558,6 @@ export const executeWithTestInputs = async (
             devLog.warn("Falha ao serializar byteCode para log");
           }
           devLog.groupEnd();
-          // Resolve (em vez de rejeitar) para que os demais casos sigam executando.
           resolve();
         }
       });
