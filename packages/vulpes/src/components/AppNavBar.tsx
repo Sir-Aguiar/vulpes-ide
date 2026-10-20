@@ -1,6 +1,7 @@
 "use client";
 
 import { useAppTheme, useColorMode } from "@/providers/ColorModeProvider";
+import logoIcon from "@/app/icon.png";
 import { useAuth } from "@/providers/AuthProvider";
 import { useBugReport } from "@/providers/BugReportProvider";
 import AddIcon from "@mui/icons-material/Add";
@@ -26,6 +27,7 @@ import {
   Tooltip,
   Typography,
 } from "@mui/material";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
@@ -114,22 +116,49 @@ export default function AppNavBar(props?: IProps) {
       }}
       {...props}
     >
-      <Toolbar>
-        <Typography
-          variant="h6"
+      <Toolbar
+        disableGutters
+        sx={{
+          width: "100%",
+          maxWidth: theme.maxWidth,
+          mx: "auto",
+          px: { xs: 2, sm: 3 },
+        }}
+      >
+        <Box
           component="div"
+          role="link"
+          aria-label="Vulpes IDE - Ir para o início"
           sx={{
             flexGrow: 0,
             mr: 4,
+            display: "flex",
+            alignItems: "center",
+            gap: 1,
             cursor: "pointer",
-            fontWeight: 700,
-            letterSpacing: "-0.5px",
-            color: theme.brand,
           }}
           onClick={() => router.push("/")}
         >
-          Vulpes IDE
-        </Typography>
+          <Image
+            src={logoIcon}
+            alt="Logo da Vulpes IDE"
+            width={36}
+            height={36}
+            priority
+            style={{ display: "block", objectFit: "contain" }}
+          />
+          <Typography
+            variant="h6"
+            component="span"
+            sx={{
+              fontWeight: 700,
+              letterSpacing: "-0.5px",
+              color: theme.brand,
+            }}
+          >
+            Vulpes IDE
+          </Typography>
+        </Box>
 
         <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 1 }}>
           <Button
