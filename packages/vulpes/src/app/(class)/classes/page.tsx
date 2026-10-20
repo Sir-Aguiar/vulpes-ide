@@ -7,7 +7,6 @@ import {
   Box,
   Card,
   CardContent,
-  CardActionArea,
   Typography,
   CircularProgress,
   Container,
@@ -22,11 +21,17 @@ import {
   DialogContent,
   DialogActions,
   Alert,
+  Stack,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import GroupsIcon from "@mui/icons-material/Groups";
+import { motion } from "framer-motion";
+import { Montserrat } from "next/font/google";
 import AuthGuard from "@/components/AuthGuard";
 import AppNavBar from "@/components/AppNavBar";
+import { useAppTheme } from "@/providers/ColorModeProvider";
 import API from "@/services/API";
 import { AuthContext, useAuth } from "@/providers/AuthProvider";
 import {
@@ -43,6 +48,8 @@ import {
 import { safeZodResolver } from "@/utils/safeZodResolver";
 import { toast } from "react-toastify";
 import RHFTextField from "@/components/RHF/TextField";
+
+const montserrat = Montserrat({ subsets: ["latin"] });
 
 export default function ClassesPage() {
   return (
@@ -151,13 +158,14 @@ function MyClassesList() {
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
-        gap: 2,
+        gap: 2.5,
       }}
     >
-      {classes.map((classItem) => (
+      {classes.map((classItem, index) => (
         <ClassCard
           key={classItem.classId}
           classItem={classItem}
+          index={index}
           onClick={() => router.push(`/class/${classItem.classId}`)}
         />
       ))}
@@ -244,13 +252,14 @@ function AllClassesList() {
                 sm: "1fr 1fr",
                 md: "1fr 1fr 1fr",
               },
-              gap: 2,
+              gap: 2.5,
             }}
           >
-            {classes.map((classItem) => (
+            {classes.map((classItem, index) => (
               <ClassCard
                 key={classItem.classId}
                 classItem={classItem}
+                index={index}
                 onClick={() => router.push(`/class/${classItem.classId}`)}
               />
             ))}
@@ -339,13 +348,14 @@ function StudentMyClassesList() {
       sx={{
         display: "grid",
         gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", md: "1fr 1fr 1fr" },
-        gap: 2,
+        gap: 2.5,
       }}
     >
-      {classes.map((classItem) => (
+      {classes.map((classItem, index) => (
         <ClassCard
           key={classItem.classId}
           classItem={classItem}
+          index={index}
           onClick={() => router.push(`/class/${classItem.classId}`)}
         />
       ))}
@@ -624,28 +634,143 @@ function MyRequestsView() {
 
 // ============ SHARED COMPONENTS ============
 
+function formatClassDate(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(dateValue));
+}
+
 function ClassCard({
   classItem,
+  index = 0,
   onClick,
 }: {
   classItem: IClassListItem;
+  index?: number;
   onClick: () => void;
 }) {
+  const theme = useAppTheme();
+  const code = String(classItem.code).padStart(4, "0");
+
   return (
-    <Card>
-      <CardActionArea onClick={onClick}>
-        <CardContent>
-          <Typography variant="h6" noWrap>
+    <Box
+      component={motion.div}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: Math.min(index, 8) * 0.05 }}
+      sx={{ height: "100%" }}
+    >
+      <Box
+        component="button"
+        type="button"
+        onClick={onClick}
+        sx={{
+          appearance: "none",
+          font: "inherit",
+          color: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
+          width: "100%",
+          height: "100%",
+          p: 2.5,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: theme.border,
+          bgcolor: theme.bgCard,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          transition: "border-color 0.2s, transform 0.2s, box-shadow 0.2s",
+          "&:hover": {
+            borderColor: "rgba(255,109,0,0.4)",
+            transform: "translateY(-3px)",
+            boxShadow:
+              theme.mode === "dark"
+                ? "0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,109,0,0.1)"
+                : "0 12px 32px rgba(15,23,42,0.08), 0 0 0 1px rgba(255,109,0,0.08)",
+          },
+          "&:focus-visible": {
+            outline: `2px solid ${theme.brand}`,
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(255,109,0,0.1)",
+              color: theme.brand,
+              flexShrink: 0,
+            }}
+          >
+            <GroupsIcon fontSize="small" />
+          </Box>
+          <Typography
+            variant="caption"
+            sx={{
+              px: 1,
+              py: 0.4,
+              borderRadius: 1.5,
+              border: "1px solid",
+              borderColor: theme.border,
+              color: theme.textSecondary,
+              fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+              letterSpacing: "0.12em",
+              fontWeight: 600,
+            }}
+          >
+            {code}
+          </Typography>
+        </Stack>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle1"
+            className={montserrat.className}
+            sx={{
+              color: theme.text,
+              fontWeight: 700,
+              mb: 0.5,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
             {classItem.name}
           </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Professor: {classItem.professor.name}
+          <Typography
+            variant="body2"
+            noWrap
+            sx={{ color: theme.textSecondary, fontSize: "0.8125rem" }}
+          >
+            {classItem.professor.name}
           </Typography>
-          <Typography variant="caption" color="text.secondary">
-            Código: {classItem.code}
+        </Box>
+
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="caption" sx={{ color: theme.textMuted }}>
+            {formatClassDate(classItem.createdAt)}
           </Typography>
-        </CardContent>
-      </CardActionArea>
-    </Card>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.5}
+            sx={{ color: theme.brand, fontWeight: 600, fontSize: "0.8125rem" }}
+          >
+            <span>Abrir</span>
+            <ArrowForwardIcon sx={{ fontSize: 16 }} />
+          </Stack>
+        </Stack>
+      </Box>
+    </Box>
   );
 }
