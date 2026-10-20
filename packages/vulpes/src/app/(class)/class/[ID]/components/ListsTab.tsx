@@ -1,21 +1,15 @@
-import { ISubmission } from "@/@types/Submission";
 import { ITask } from "@/@types/Task";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
-import { Editor } from "@monaco-editor/react";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
-import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 import InsertLinkIcon from "@mui/icons-material/InsertLink";
+import ListAltIcon from "@mui/icons-material/ListAlt";
 import {
   Box,
   Button,
-  Card,
-  CardContent,
   CircularProgress,
-  Divider,
-  IconButton,
   Paper,
   Stack,
   Table,
@@ -26,13 +20,140 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import MDEditor from "@uiw/react-md-editor";
 import { AnimatePresence, motion } from "framer-motion";
+import { Montserrat } from "next/font/google";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { toast } from "react-toastify";
-import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
+
+const montserrat = Montserrat({ subsets: ["latin"] });
+
+function formatListDeadline(dateValue: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(new Date(dateValue));
+}
+
+function ListCard({
+  list,
+  index = 0,
+  onClick,
+}: {
+  list: IListItem;
+  index?: number;
+  onClick: () => void;
+}) {
+  const theme = useAppTheme();
+  const closed = new Date(list.deadline).getTime() < Date.now();
+  return (
+    <Box
+      component={motion.div}
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35, delay: Math.min(index, 8) * 0.05 }}
+      sx={{ height: "100%" }}
+    >
+      <Box
+        component="button"
+        type="button"
+        onClick={onClick}
+        sx={{
+          appearance: "none",
+          font: "inherit",
+          color: "inherit",
+          textAlign: "left",
+          cursor: "pointer",
+          width: "100%",
+          height: "100%",
+          p: 2.5,
+          borderRadius: 3,
+          border: "1px solid",
+          borderColor: theme.border,
+          bgcolor: theme.bgCard,
+          display: "flex",
+          flexDirection: "column",
+          gap: 2,
+          transition: "border-color 0.2s, transform 0.2s, box-shadow 0.2s",
+          "&:hover": {
+            borderColor: "rgba(255,109,0,0.4)",
+            transform: "translateY(-3px)",
+            boxShadow:
+              theme.mode === "dark"
+                ? "0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,109,0,0.1)"
+                : "0 12px 32px rgba(15,23,42,0.08), 0 0 0 1px rgba(255,109,0,0.08)",
+          },
+          "&:focus-visible": {
+            outline: `2px solid ${theme.brand}`,
+            outlineOffset: 2,
+          },
+        }}
+      >
+        <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
+          <Box
+            sx={{
+              width: 40,
+              height: 40,
+              borderRadius: 2,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              bgcolor: "rgba(255,109,0,0.1)",
+              color: theme.brand,
+              flexShrink: 0,
+            }}
+          >
+            <ListAltIcon fontSize="small" />
+          </Box>
+        </Stack>
+
+        <Box sx={{ flex: 1, minWidth: 0 }}>
+          <Typography
+            variant="subtitle1"
+            className={montserrat.className}
+            sx={{
+              color: theme.text,
+              fontWeight: 700,
+              mb: 0.5,
+              overflow: "hidden",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+            }}
+          >
+            {list.title}
+          </Typography>
+          <Typography
+            variant="body2"
+            noWrap
+            sx={{ color: theme.textSecondary, fontSize: "0.8125rem" }}
+          >
+            Prazo · {formatListDeadline(list.deadline)}
+          </Typography>
+        </Box>
+
+        <Stack direction="row" alignItems="center" justifyContent="space-between">
+          <Typography variant="caption" sx={{ color: theme.textMuted }}>
+            {closed ? "Encerrada" : "Em aberto"}
+          </Typography>
+          <Stack
+            direction="row"
+            alignItems="center"
+            spacing={0.5}
+            sx={{ color: theme.brand, fontWeight: 600, fontSize: "0.8125rem" }}
+          >
+            <span>Abrir</span>
+            <ArrowForwardIcon sx={{ fontSize: 16 }} />
+          </Stack>
+        </Stack>
+      </Box>
+    </Box>
+  );
+}
 
 interface IListItem {
   listId: string;
@@ -48,245 +169,6 @@ interface IGetListsResponse {
   page: number;
   limit: number;
   totalPages: number;
-}
-
-interface ISubmissionGroup {
-  submittedAt: string;
-  student: ISubmission["student"];
-  submissions: ISubmission[];
-}
-
-function ListSubmissionsContent({
-  onBack,
-  listId,
-}: {
-  onBack: () => void;
-  listId: string;
-}) {
-  const appTheme = useAppTheme();
-  const [submissionGroups, setSubmissionGroups] = useState<ISubmissionGroup[]>([]);
-  const [selectedGroup, setSelectedGroup] = useState<ISubmissionGroup | null>(null);
-  const [currentTaskIndex, setCurrentTaskIndex] = useState(0);
-  const [professorComments, setProfessorComments] = useState<string>("");
-  const [feedbackLoading, setFeedbackLoading] = useState(false);
-
-  const fetchSubmissions = async () => {
-    try {
-      const response = await API.get(`/submission/list/${listId}`);
-      const groupsMap: Record<string, ISubmissionGroup> = {};
-
-      response.data.forEach((sub: ISubmission) => {
-        if (!groupsMap[sub.submittedAt]) {
-          groupsMap[sub.submittedAt] = {
-            submittedAt: sub.submittedAt,
-            student: sub.student,
-            submissions: [],
-          };
-        }
-        groupsMap[sub.submittedAt].submissions.push(sub);
-      });
-
-      const groups = Object.values(groupsMap).sort(
-        (a, b) => new Date(b.submittedAt).getTime() - new Date(a.submittedAt).getTime()
-      );
-      setSubmissionGroups(groups);
-    } catch (error) {
-      console.error("Failed to fetch submissions:", error);
-      toast.error("Erro ao carregar submissões.");
-    }
-  };
-
-  useEffect(() => {
-    fetchSubmissions();
-  }, [listId]);
-
-  const handleEditorDidMount = (editorInstance: any, monacoInstance: any) => {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  };
-
-  const currentSubmission = selectedGroup?.submissions[currentTaskIndex];
-
-  useEffect(() => {
-    if (currentSubmission) {
-      setProfessorComments(currentSubmission.professorComments || "");
-    }
-  }, [currentSubmission]);
-
-  const sendFeedback = async () => {
-    if (!currentSubmission) return;
-    if (!professorComments.trim()) {
-      toast.error("Defina o comentário do professor");
-      return;
-    }
-
-    setFeedbackLoading(true);
-    try {
-      await API.put(`/submission/feedback/${currentSubmission.submissionId}`, {
-        professorComments,
-      });
-      await fetchSubmissions();
-
-      // Update local state to reflect change without closing the modal
-      const updatedGroup = { ...selectedGroup! };
-      updatedGroup.submissions[currentTaskIndex].professorComments = professorComments;
-      setSelectedGroup(updatedGroup);
-
-      toast.success("Feedback enviado com sucesso!");
-    } catch (error: any) {
-      console.error("Failed to send feedback:", error);
-      toast.error(error.response?.data?.message || "Erro ao enviar feedback.");
-    } finally {
-      setFeedbackLoading(false);
-    }
-  };
-
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-      <Button
-        startIcon={<ArrowBackIcon />}
-        onClick={onBack}
-        variant="outlined"
-        sx={{ maxWidth: 128 }}
-      >
-        Voltar
-      </Button>
-      <AnimatePresence mode="wait" initial={false}>
-        {selectedGroup && (
-          <motion.div
-            key="submission-review"
-            initial={{ y: -100, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ x: -100, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <Divider sx={{ my: 2 }} />
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-              <Typography variant="h6">
-                Tarefa {currentTaskIndex + 1} de {selectedGroup.submissions.length}
-              </Typography>
-              <Box>
-                <IconButton
-                  disabled={currentTaskIndex === 0}
-                  onClick={() => setCurrentTaskIndex(prev => prev - 1)}
-                >
-                  <ArrowBackIosIcon />
-                </IconButton>
-                <IconButton
-                  disabled={currentTaskIndex === selectedGroup.submissions.length - 1}
-                  onClick={() => setCurrentTaskIndex(prev => prev + 1)}
-                >
-                  <ArrowForwardIosIcon />
-                </IconButton>
-              </Box>
-            </Box>
-            <Stack direction="row" gap={1} sx={{ height: 300 }}>
-              <Box sx={{ flex: 1, bgcolor: appTheme.codeBg, borderRadius: 1, overflow: "hidden" }}>
-                <Editor
-                  height="100%"
-                  theme="vs-dark"
-                  language="portugol"
-                  onMount={handleEditorDidMount}
-                  value={currentSubmission ? currentSubmission.code : ""}
-                  options={{ readOnly: true }}
-                />
-              </Box>
-              <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 1 }}>
-                <Typography variant="subtitle2">
-                  Status: {currentSubmission?.isCorrect ? (
-                    <Box component="span" sx={{ color: "success.main" }}>Correto</Box>
-                  ) : (
-                    <Box component="span" sx={{ color: "error.main" }}>Incorreto</Box>
-                  )}
-                </Typography>
-                <Box data-color-mode={appTheme.mode} sx={{ flexGrow: 1 }}>
-                  <MDEditor
-                    height="100%"
-                    style={{ width: "100%", flexGrow: 1 }}
-                    value={professorComments}
-                    onChange={(val) => setProfessorComments(val || "")}
-                  />
-                </Box>
-              </Box>
-            </Stack>
-            <Stack
-              direction="row"
-              gap={1}
-              alignItems="center"
-              justifyContent="flex-end"
-              sx={{ my: 2 }}
-            >
-              <Button
-                onClick={() => {
-                  setSelectedGroup(null);
-                  setCurrentTaskIndex(0);
-                  setProfessorComments("");
-                }}
-                disabled={feedbackLoading}
-              >
-                Fechar
-              </Button>
-              <Button
-                variant="contained"
-                onClick={sendFeedback}
-                disabled={feedbackLoading}
-              >
-                {feedbackLoading ? (
-                  <CircularProgress size={24} />
-                ) : (
-                  "Enviar Feedback para esta tarefa"
-                )}
-              </Button>
-            </Stack>
-            <Divider />
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <TableContainer component={Paper}>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell width={320}>Nome</TableCell>
-              <TableCell>Email</TableCell>
-              <TableCell width={130} align="center">
-                Tarefas
-              </TableCell>
-              <TableCell width={130} align="center">
-                Código
-              </TableCell>
-              <TableCell width={250}>Data</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {submissionGroups.map((group) => {
-              const correctCount = group.submissions.filter(s => s.isCorrect).length;
-              return (
-                <TableRow key={group.submittedAt + group.student.email}>
-                  <TableCell>{group.student.name}</TableCell>
-                  <TableCell>{group.student.email}</TableCell>
-                  <TableCell align="center">
-                    {correctCount} / {group.submissions.length} corretas
-                  </TableCell>
-                  <TableCell align="center">
-                    <Button onClick={() => {
-                      setSelectedGroup(group);
-                      setCurrentTaskIndex(0);
-                    }}>
-                      Analisar
-                    </Button>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(group.submittedAt).toLocaleString()}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Box>
-  );
 }
 
 export default function ListsTab({ classId }: { classId: string }) {
@@ -343,7 +225,6 @@ export default function ListsTab({ classId }: { classId: string }) {
     const router = useRouter();
     const [tasksInList, setTasksInList] = useState<ITask[]>([]);
     const [loading, setLoading] = useState(false);
-    const [showSubmissions, setShowSubmissions] = useState(false);
 
     const fetchTasks = async () => {
       setLoading(true);
@@ -362,45 +243,16 @@ export default function ListsTab({ classId }: { classId: string }) {
       };
     }, []);
 
-    if (showSubmissions && selectedList) {
-      return (
-        <AnimatePresence mode="wait" initial={false}>
-          <motion.div
-            key="list-submissions"
-            initial={{ x: 100, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            exit={{ x: 100, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            <ListSubmissionsContent
-              onBack={() => setShowSubmissions(false)}
-              listId={selectedList.listId}
-            />
-          </motion.div>
-        </AnimatePresence>
-      );
-    }
-
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-        <Stack direction="row" gap={2} justifyContent="space-between">
-          <Button
-            startIcon={<ArrowBackIcon />}
-            onClick={() => setSelectedList(null)}
-            variant="outlined"
-            sx={{ maxWidth: 128 }}
-          >
-            Voltar
-          </Button>
-          {(user?.role === "PROFESSOR" || user?.role === "ADMIN") && (
-            <Button
-              variant="contained"
-              onClick={() => setShowSubmissions(true)}
-            >
-              Envios
-            </Button>
-          )}
-        </Stack>
+        <Button
+          startIcon={<ArrowBackIcon />}
+          onClick={() => setSelectedList(null)}
+          variant="outlined"
+          sx={{ maxWidth: 128 }}
+        >
+          Voltar
+        </Button>
         <Button
           variant="outlined"
           fullWidth
@@ -501,21 +353,16 @@ export default function ListsTab({ classId }: { classId: string }) {
                   sm: "1fr 1fr",
                   md: "1fr 1fr 1fr",
                 },
-                gap: 2,
+                gap: 2.5,
               }}
             >
-              {lists.map((list) => (
-                <Card
+              {lists.map((list, index) => (
+                <ListCard
                   key={list.listId}
-                  sx={{ cursor: "pointer" }}
+                  list={list}
+                  index={index}
                   onClick={() => handleListSelect(list.listId)}
-                >
-                  <CardContent>
-                    <Typography variant="h6" noWrap>
-                      {list.title}
-                    </Typography>
-                  </CardContent>
-                </Card>
+                />
               ))}
             </Box>
           </motion.div>
