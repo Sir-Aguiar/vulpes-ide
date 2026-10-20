@@ -41,7 +41,14 @@ const RHFMDEditor = <
       name={name}
       rules={props.rules}
       render={({ field }) => (
-        <div data-color-mode={theme.mode}>
+        <div
+          data-color-mode={theme.mode}
+          style={
+            props.height === "100%"
+              ? { height: "100%", display: "flex", flexDirection: "column", flex: 1, minHeight: 0 }
+              : undefined
+          }
+        >
           <MDEditor {...field} {...props} />
         </div>
       )}

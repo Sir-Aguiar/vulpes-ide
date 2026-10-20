@@ -51,16 +51,35 @@ export const StepTaskDescription = ({
         sx={{ minWidth: "328px" }}
       />
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, minHeight: 500 }}>
+      <Box
+        sx={{
+          display: "flex",
+          flexDirection: "column",
+          gap: 0.5,
+          flex: 1,
+          minHeight: 360,
+        }}
+      >
         <Typography variant="body2" sx={{ color: theme.textSecondary }}>
           Descrição da Tarefa
         </Typography>
-        <RHFMDEditor
-          control={control}
-          name="description"
-          errors={errors}
-          height="100%"
-        />
+        <Box
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            display: "flex",
+            flexDirection: "column",
+            "& .w-md-editor": { flex: 1, height: "100% !important" },
+          }}
+        >
+          <RHFMDEditor
+            control={control}
+            name="description"
+            errors={errors}
+            height="100%"
+            visibleDragbar={false}
+          />
+        </Box>
       </Box>
 
       <Box
