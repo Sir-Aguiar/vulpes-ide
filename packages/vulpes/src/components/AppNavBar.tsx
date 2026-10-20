@@ -119,12 +119,21 @@ export default function AppNavBar(props?: IProps) {
       <Toolbar
         disableGutters
         sx={{
+          position: "relative",
           width: "100%",
           maxWidth: theme.maxWidth,
           mx: "auto",
           px: { xs: 2, sm: 3 },
         }}
       >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            minWidth: 0,
+            flex: 1,
+          }}
+        >
         <Box
           component="div"
           role="link"
@@ -160,7 +169,7 @@ export default function AppNavBar(props?: IProps) {
           </Typography>
         </Box>
 
-        <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" }, gap: 1 }}>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
           <Button
             onClick={() => router.push("/")}
             sx={navButtonSx(pathname === "/")}
@@ -177,6 +186,7 @@ export default function AppNavBar(props?: IProps) {
             </Button>
           ))}
         </Box>
+        </Box>
 
         <Button
           variant="outlined"
@@ -184,11 +194,15 @@ export default function AppNavBar(props?: IProps) {
           startIcon={<BugReportIcon fontSize="small" />}
           onClick={openBugReport}
           sx={{
-            ml: 1,
             textTransform: "none",
             fontWeight: 600,
             color: theme.text,
             borderColor: theme.borderStrong,
+            whiteSpace: "nowrap",
+            minWidth: { xs: 40, sm: "auto" },
+            marginRight: 2,
+            marginY: "auto",
+            px: { xs: 1, sm: 1.5 },
             "&:hover": {
               borderColor: theme.brand,
               bgcolor: "rgba(255,109,0,0.06)",
@@ -196,19 +210,30 @@ export default function AppNavBar(props?: IProps) {
             },
           }}
         >
-          Reportar bug
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+            Reportar bug
+          </Box>
         </Button>
 
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            flexShrink: 0,
+            ml: "auto",
+          }}
+        >
         <Button
           variant="outlined"
           startIcon={<AddIcon fontSize="small" />}
           onClick={() => router.push("/new-task")}
           sx={{
-            ml: 1,
             textTransform: "none",
             fontWeight: 600,
             color: theme.text,
             borderColor: theme.borderStrong,
+            minWidth: { xs: 40, sm: "auto" },
+            px: { xs: 1, sm: 2 },
             "&:hover": {
               borderColor: theme.brand,
               bgcolor: "rgba(255,109,0,0.06)",
@@ -216,7 +241,9 @@ export default function AppNavBar(props?: IProps) {
             },
           }}
         >
-          Criar Tarefa
+          <Box component="span" sx={{ display: { xs: "none", sm: "inline" } }}>
+            Criar Tarefa
+          </Box>
         </Button>
 
         {user && (
@@ -368,6 +395,7 @@ export default function AppNavBar(props?: IProps) {
             </Menu>
           </Box>
         )}
+        </Box>
       </Toolbar>
     </AppBar>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import {
@@ -364,6 +364,7 @@ function StudentMyClassesList() {
 }
 
 function SearchByCodeView() {
+  const router = useRouter();
   const [foundClass, setFoundClass] = useState<IClass | null>(null);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [searching, setSearching] = useState(false);
@@ -441,22 +442,26 @@ function SearchByCodeView() {
       )}
 
       {foundClass && (
-        <Card>
-          <CardContent>
-            <Typography variant="h6">{foundClass.name}</Typography>
-            <Typography color="text.secondary" sx={{ mb: 1 }}>
-              Professor: {foundClass.professor.name}
-            </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Código: {foundClass.code}
-            </Typography>
-            {foundClass.professorId != user?.userId && (
-              <Button variant="contained" onClick={handleRequestJoin}>
-                Solicitar Participação
+        <ClassCard
+          classItem={foundClass}
+          onClick={
+            foundClass.professorId === user?.userId
+              ? () => router.push(`/class/${foundClass.classId}`)
+              : undefined
+          }
+          action={
+            foundClass.professorId !== user?.userId ? (
+              <Button
+                variant="contained"
+                size="small"
+                onClick={handleRequestJoin}
+                sx={{ textTransform: "none", fontWeight: 600 }}
+              >
+                Solicitar participação
               </Button>
-            )}
-          </CardContent>
-        </Card>
+            ) : undefined
+          }
+        />
       )}
 
       {foundClass && (
@@ -646,13 +651,16 @@ function ClassCard({
   classItem,
   index = 0,
   onClick,
+  action,
 }: {
   classItem: IClassListItem;
   index?: number;
-  onClick: () => void;
+  onClick?: () => void;
+  action?: ReactNode;
 }) {
   const theme = useAppTheme();
   const code = String(classItem.code).padStart(4, "0");
+  const clickable = Boolean(onClick) && !action;
 
   return (
     <Box
@@ -663,15 +671,15 @@ function ClassCard({
       sx={{ height: "100%" }}
     >
       <Box
-        component="button"
-        type="button"
-        onClick={onClick}
+        component={clickable ? "button" : "div"}
+        type={clickable ? "button" : undefined}
+        onClick={clickable ? onClick : undefined}
         sx={{
           appearance: "none",
           font: "inherit",
           color: "inherit",
           textAlign: "left",
-          cursor: "pointer",
+          cursor: clickable ? "pointer" : "default",
           width: "100%",
           height: "100%",
           p: 2.5,
@@ -683,18 +691,22 @@ function ClassCard({
           flexDirection: "column",
           gap: 2,
           transition: "border-color 0.2s, transform 0.2s, box-shadow 0.2s",
-          "&:hover": {
-            borderColor: "rgba(255,109,0,0.4)",
-            transform: "translateY(-3px)",
-            boxShadow:
-              theme.mode === "dark"
-                ? "0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,109,0,0.1)"
-                : "0 12px 32px rgba(15,23,42,0.08), 0 0 0 1px rgba(255,109,0,0.08)",
-          },
-          "&:focus-visible": {
-            outline: `2px solid ${theme.brand}`,
-            outlineOffset: 2,
-          },
+          ...(clickable
+            ? {
+                "&:hover": {
+                  borderColor: "rgba(255,109,0,0.4)",
+                  transform: "translateY(-3px)",
+                  boxShadow:
+                    theme.mode === "dark"
+                      ? "0 12px 40px rgba(0,0,0,0.35), 0 0 0 1px rgba(255,109,0,0.1)"
+                      : "0 12px 32px rgba(15,23,42,0.08), 0 0 0 1px rgba(255,109,0,0.08)",
+                },
+                "&:focus-visible": {
+                  outline: `2px solid ${theme.brand}`,
+                  outlineOffset: 2,
+                },
+              }
+            : {}),
         }}
       >
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between">
@@ -760,15 +772,17 @@ function ClassCard({
           <Typography variant="caption" sx={{ color: theme.textMuted }}>
             {formatClassDate(classItem.createdAt)}
           </Typography>
-          <Stack
-            direction="row"
-            alignItems="center"
-            spacing={0.5}
-            sx={{ color: theme.brand, fontWeight: 600, fontSize: "0.8125rem" }}
-          >
-            <span>Abrir</span>
-            <ArrowForwardIcon sx={{ fontSize: 16 }} />
-          </Stack>
+          {action ?? (
+            <Stack
+              direction="row"
+              alignItems="center"
+              spacing={0.5}
+              sx={{ color: theme.brand, fontWeight: 600, fontSize: "0.8125rem" }}
+            >
+              <span>Abrir</span>
+              <ArrowForwardIcon sx={{ fontSize: 16 }} />
+            </Stack>
+          )}
         </Stack>
       </Box>
     </Box>
