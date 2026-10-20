@@ -36,6 +36,18 @@ import ListStudentsTable from "./list/ListStudentsTable";
 import StudentsTable from "./StudentsTable";
 import { ISearchOption, SearchType } from "./types";
 
+function unwrapSubmissions(data: unknown): ISubmission[] {
+  if (Array.isArray(data)) return data;
+  if (
+    data &&
+    typeof data === "object" &&
+    Array.isArray((data as { data?: unknown }).data)
+  ) {
+    return (data as { data: ISubmission[] }).data;
+  }
+  return [];
+}
+
 interface IDashboardTabProps {
   classId: string;
 }
@@ -81,8 +93,15 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
         if (searchType === "tasks") {
           const response = await API.get(`/class-task/class/${classId}`);
           const formatted: ISearchOption[] = response.data.data.map(
-            ({ task }: { task: { taskId: string; title: string } }) => ({
+            ({
+              classTaskId,
+              task,
+            }: {
+              classTaskId: string;
+              task: { taskId: string; title: string };
+            }) => ({
               id: task.taskId,
+              classTaskId,
               title: task.title,
             }),
           );
@@ -115,20 +134,20 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
     fetchOptions();
   }, [searchType, classId]);
 
-  const fetchTaskDashboard = async (taskId: string) => {
+  const fetchTaskDashboard = async (taskId: string, classTaskId: string) => {
     setLoadingDashboard(true);
     try {
       const [dashboardResponse, submissionsResponse] = await Promise.all([
         API.get<ClassTaskDashboardData>("/class-task/dashboard", {
           params: { classId, taskId },
         }),
-        API.get<ISubmission[]>(`/submission/task/${taskId}`),
+        API.get(`/submission/class-task/${classTaskId}`),
       ]);
 
       setDashboardData(dashboardResponse.data);
 
       const grouped: Record<string, ISubmission[]> = {};
-      submissionsResponse.data.forEach((submission) => {
+      unwrapSubmissions(submissionsResponse.data).forEach((submission) => {
         if (!grouped[submission.studentId]) grouped[submission.studentId] = [];
         grouped[submission.studentId].push(submission);
       });
@@ -174,7 +193,8 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
   const handleSearch = () => {
     if (!selectedOption) return;
     if (searchType === "tasks") {
-      fetchTaskDashboard(selectedOption.id);
+      if (!selectedOption.classTaskId) return;
+      fetchTaskDashboard(selectedOption.id, selectedOption.classTaskId);
     } else {
       fetchListDashboard(selectedOption.id);
     }
@@ -185,7 +205,8 @@ export default function DashboardTab({ classId }: IDashboardTabProps) {
     setListFeedbackStudent(null);
     if (!selectedOption) return;
     if (searchType === "tasks") {
-      fetchTaskDashboard(selectedOption.id);
+      if (!selectedOption.classTaskId) return;
+      fetchTaskDashboard(selectedOption.id, selectedOption.classTaskId);
     } else {
       fetchListDashboard(selectedOption.id);
     }
