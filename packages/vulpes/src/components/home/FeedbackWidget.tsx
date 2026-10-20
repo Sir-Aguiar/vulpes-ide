@@ -22,20 +22,22 @@ import { Montserrat } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAppTheme } from "@/providers/ColorModeProvider";
+import {
+  getFeedbackActivityId,
+  getFeedbackTitle,
+  type IFeedbackActivity,
+} from "@/utils/feedback-activity";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-interface IFeedbackResponse {
-  submissionId: string;
+interface IFeedbackResponse extends IFeedbackActivity {
   studentId: string;
-  taskId: string;
   listId: string | null;
   code: string;
   isCorrect: boolean;
   submittedAt: string;
   professorComments: string | null;
   updatedAt: string;
-  task?: { taskId: string; title: string };
 }
 
 function formatFeedbackDate(dateValue: string) {
@@ -64,7 +66,8 @@ function groupFeedbacksByTask(feedbacks: IFeedbackResponse[]) {
   );
   const map = new Map<string, IFeedbackResponse>();
   for (const fb of ordered) {
-    if (!map.has(fb.taskId)) map.set(fb.taskId, fb);
+    const activityId = getFeedbackActivityId(fb);
+    if (!map.has(activityId)) map.set(activityId, fb);
   }
   return Array.from(map.values());
 }
@@ -73,7 +76,9 @@ export default function FeedbackWidget() {
   const router = useRouter();
   const theme = useAppTheme();
   const [feedbacks, setFeedbacks] = useState<IFeedbackResponse[]>([]);
-  const [selectedTaskId, setSelectedTaskId] = useState<string | null>(null);
+  const [selectedActivityId, setSelectedActivityId] = useState<string | null>(
+    null,
+  );
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -103,18 +108,21 @@ export default function FeedbackWidget() {
   );
 
   const selectedFeedback = useMemo(
-    () => feedbackItems.find((f) => f.taskId === selectedTaskId) ?? null,
-    [feedbackItems, selectedTaskId],
+    () =>
+      feedbackItems.find(
+        (f) => getFeedbackActivityId(f) === selectedActivityId,
+      ) ?? null,
+    [feedbackItems, selectedActivityId],
   );
 
 
   // TODO: Verificar problemas de desempenho
   // Este efeito pode acabar em looping infinito
   useEffect(() => {
-    if (!selectedTaskId && feedbackItems.length > 0) {
-      setSelectedTaskId(feedbackItems[0].taskId);
+    if (!selectedActivityId && feedbackItems.length > 0) {
+      setSelectedActivityId(getFeedbackActivityId(feedbackItems[0]));
     }
-  }, [feedbackItems, selectedTaskId]);
+  }, [feedbackItems, selectedActivityId]);
 
   return (
     <Box
@@ -242,7 +250,8 @@ export default function FeedbackWidget() {
                 ) : (
                   <List sx={{ display: "flex", flexDirection: "column", gap: 1, p: 0 }}>
                     {feedbackItems.map((feedback) => {
-                      const isSelected = feedback.taskId === selectedTaskId;
+                      const activityId = getFeedbackActivityId(feedback);
+                      const isSelected = activityId === selectedActivityId;
                       const StatusIcon = feedback.isCorrect
                         ? CheckCircleIcon
                         : WarningAmberIcon;
@@ -252,8 +261,8 @@ export default function FeedbackWidget() {
 
                       return (
                         <ListItemButton
-                          key={feedback.taskId}
-                          onClick={() => setSelectedTaskId(feedback.taskId)}
+                          key={activityId}
+                          onClick={() => setSelectedActivityId(activityId)}
                           sx={{
                             borderRadius: 2,
                             border: "1px solid",
@@ -277,7 +286,7 @@ export default function FeedbackWidget() {
                         >
                           <StatusIcon sx={{ fontSize: 18, color: statusColor, flexShrink: 0 }} />
                           <ListItemText
-                            primary={feedback.task?.title || "Atividade sem título"}
+                            primary={getFeedbackTitle(feedback)}
                             secondary={formatFeedbackDate(feedback.updatedAt)}
                             primaryTypographyProps={{
                               sx: {
@@ -380,7 +389,7 @@ export default function FeedbackWidget() {
                             className={montserrat.className}
                             sx={{ color: theme.contentPanelText, fontWeight: 700 }}
                           >
-                            {selectedFeedback.task?.title || "Atividade sem título"}
+                            {getFeedbackTitle(selectedFeedback)}
                           </Typography>
                           <Typography variant="body2" sx={{ color: theme.contentPanelTextSecondary, mt: 0.5 }}>
                             Enviado em {formatFeedbackDate(selectedFeedback.submittedAt)}

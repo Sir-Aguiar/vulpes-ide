@@ -27,23 +27,23 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 import { registerPortugolLanguage } from "../../../../libs/monaco-config";
+import {
+  getFeedbackActivityId,
+  getFeedbackRetryHref,
+  getFeedbackTitle,
+  type IFeedbackActivity,
+} from "@/utils/feedback-activity";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
-interface IFeedbackResponse {
-  submissionId: string;
+interface IFeedbackResponse extends IFeedbackActivity {
   studentId: string;
-  taskId: string;
   listId: string | null;
   code: string;
   isCorrect: boolean;
   submittedAt: string;
   professorComments: string | null;
   updatedAt: string;
-  task?: {
-    taskId: string;
-    title: string;
-  };
 }
 
 type FeedbackStatusKey = "approved" | "redo";
@@ -118,8 +118,9 @@ function groupFeedbacksByTask(feedbacks: IFeedbackResponse[]) {
   const uniqueByTask = new Map<string, IFeedbackResponse>();
 
   for (const feedback of orderedFeedbacks) {
-    if (!uniqueByTask.has(feedback.taskId)) {
-      uniqueByTask.set(feedback.taskId, feedback);
+    const activityId = getFeedbackActivityId(feedback);
+    if (!uniqueByTask.has(activityId)) {
+      uniqueByTask.set(activityId, feedback);
     }
   }
 
@@ -300,14 +301,15 @@ function FeedbackSidebar({
             <Stack spacing={1}>
               {feedbacks.map((feedback, index) => {
                 const status = getFeedbackStatus(feedback);
-                const isSelected = feedback.taskId === selectedTaskId;
+                const activityId = getFeedbackActivityId(feedback);
+                const isSelected = activityId === selectedTaskId;
 
                 return (
                   <Box
                     component={motion.button}
                     type="button"
-                    key={feedback.taskId}
-                    onClick={() => onSelect(feedback.taskId)}
+                    key={activityId}
+                    onClick={() => onSelect(activityId)}
                     initial={{ opacity: 0, y: 12 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -362,7 +364,7 @@ function FeedbackSidebar({
                           whiteSpace: "nowrap",
                         }}
                       >
-                        {feedback.task?.title || "Atividade sem título"}
+                        {getFeedbackTitle(feedback)}
                       </Typography>
                     </Stack>
                     <Typography
@@ -413,7 +415,7 @@ function InfoCard({ feedback, onRetry }: IInfoCardProps) {
             className={montserrat.className}
             sx={{ color: theme.text, fontWeight: 700 }}
           >
-            {feedback.task?.title || "Atividade sem título"}
+            {getFeedbackTitle(feedback)}
           </Typography>
           <Chip
             icon={
@@ -698,18 +700,22 @@ function FeedbacksContent() {
   );
 
   const selectedFeedback = useMemo(
-    () => feedbackItems.find((item) => item.taskId === selectedTaskId) ?? null,
+    () =>
+      feedbackItems.find(
+        (item) => getFeedbackActivityId(item) === selectedTaskId,
+      ) ?? null,
     [feedbackItems, selectedTaskId],
   );
 
   useEffect(() => {
     if (!selectedTaskId && feedbackItems.length > 0) {
-      setSelectedTaskId(feedbackItems[0].taskId);
+      setSelectedTaskId(getFeedbackActivityId(feedbackItems[0]));
     }
   }, [feedbackItems, selectedTaskId]);
 
   const handleRetry = (feedback: IFeedbackResponse) => {
-    router.push(`/task?taskId=${feedback.taskId}`);
+    const href = getFeedbackRetryHref(feedback);
+    if (href) router.push(href);
   };
 
   return (
