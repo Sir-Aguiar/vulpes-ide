@@ -12,8 +12,8 @@ export const CreateTeacherPermissionSchema = Zod.object({
   ),
   institutionId: Zod.preprocess(
     (value) => {
-      if (value === "" || value === null || value === undefined) {
-        return undefined;
+      if (value === "" || value == null) {
+        return;
       }
 
       const parsed = typeof value === "number" ? value : Number(value);
