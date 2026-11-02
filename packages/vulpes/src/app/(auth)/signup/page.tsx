@@ -50,6 +50,7 @@ export default function SignupPage() {
   const {
     control,
     handleSubmit,
+    trigger,
     formState: { errors, isValid, isSubmitting },
     getValues,
   } = useForm<ISignupDTO>({
@@ -80,6 +81,19 @@ export default function SignupPage() {
         toast.error("Erro ao criar conta");
       }
     }
+  };
+
+  const handleOpenProfessorRequest = async () => {
+    const isFormValid = await trigger();
+
+    if (!isFormValid) {
+      toast.warning(
+        "Preencha todos os dados do formulário para solicitar acesso como professor.",
+      );
+      return;
+    }
+
+    setOpenProfessorModal(true);
   };
 
   const handleContinueAsStudent = () => {
@@ -250,8 +264,21 @@ export default function SignupPage() {
                       )}
                     </Button>
 
-                    <Box sx={{ textAlign: "center", mt: 2 }}>
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ textAlign: "center", mt: 1 }}>
+                      <Link
+                        component="button"
+                        type="button"
+                        underline="hover"
+                        onClick={handleOpenProfessorRequest}
+                        sx={{ cursor: "pointer", fontWeight: 600 }}
+                      >
+                        Solicitar Acesso como professor
+                      </Link>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1.5 }}
+                      >
                         Já tem uma conta?{" "}
                         <Link
                           href="/login"
