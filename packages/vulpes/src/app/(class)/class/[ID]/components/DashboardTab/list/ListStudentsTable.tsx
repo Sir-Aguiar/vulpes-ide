@@ -42,6 +42,8 @@ const STATUS_LABEL: Record<SubmissionStatus, string> = {
 type OrderBy = "name" | "score" | "submissions" | "lastSubmittedAt" | "feedback";
 type Order = "asc" | "desc";
 
+const ACTIVITY_COL_WIDTH = 76;
+
 function StatusDot({ status, title }: { status: SubmissionStatus; title: string }) {
   const theme = useTheme();
 
@@ -235,7 +237,7 @@ export default function ListStudentsTable({
       </Stack>
 
       <TableContainer>
-        <Table size="small" sx={{ minWidth: 200 + columns.length * 60 + 420 }}>
+        <Table size="small" sx={{ minWidth: 200 + columns.length * ACTIVITY_COL_WIDTH + 420 }}>
           <TableHead>
             <TableRow>
               <TableCell sx={{ fontWeight: 600, width: 200, maxWidth: 200 }}>
@@ -252,7 +254,12 @@ export default function ListStudentsTable({
                 <TableCell
                   key={column.classTaskListId}
                   align="center"
-                  sx={{ fontWeight: 600, px: 0.5, width: 60, maxWidth: 60 }}
+                  sx={{
+                    fontWeight: 600,
+                    px: 0.5,
+                    width: ACTIVITY_COL_WIDTH,
+                    minWidth: ACTIVITY_COL_WIDTH,
+                  }}
                 >
                   <Tooltip title={column.title}>
                     <Typography variant="body2" sx={{ fontWeight: 600 }}>
@@ -345,7 +352,11 @@ export default function ListStudentsTable({
                     <TableCell
                       key={cell.classTaskListId}
                       align="center"
-                      sx={{ px: 0.5, width: 60, maxWidth: 60 }}
+                      sx={{
+                        px: 0.5,
+                        width: ACTIVITY_COL_WIDTH,
+                        minWidth: ACTIVITY_COL_WIDTH,
+                      }}
                     >
                       <StatusDot status={cell.status} title={columns[index]?.title ?? ""} />
                     </TableCell>
@@ -418,8 +429,8 @@ export default function ListStudentsTable({
 
           <TableFooter>
             <TableRow>
-              <TableCell sx={{ fontWeight: 600, width: 200, maxWidth: 200 }}>
-                <Typography variant="caption" color="text.secondary" fontWeight={600} noWrap>
+              <TableCell sx={{ fontWeight: 600, width: 200, maxWidth: 200, py: 1.75 }}>
+                <Typography variant="body2" color="text.secondary" fontWeight={600} noWrap>
                   Aproveitamento
                 </Typography>
               </TableCell>
@@ -429,12 +440,24 @@ export default function ListStudentsTable({
                   <TableCell
                     key={column.classTaskListId}
                     align="center"
-                    sx={{ px: 0.5, width: 60, maxWidth: 60 }}
+                    sx={{
+                      width: ACTIVITY_COL_WIDTH,
+                      minWidth: ACTIVITY_COL_WIDTH,
+                      px: 0.75,
+                      py: 1.75,
+                      lineHeight: 1.5,
+                      whiteSpace: "nowrap",
+                      overflow: "visible",
+                    }}
                   >
                     <Typography
-                      variant="caption"
+                      variant="body2"
                       fontWeight={700}
-                      sx={{ color: column.submittedCount > 0 ? scoreColor(pct, theme) : "text.secondary" }}
+                      sx={{
+                        lineHeight: 1.5,
+                        whiteSpace: "nowrap",
+                        color: column.submittedCount > 0 ? scoreColor(pct, theme) : "text.secondary",
+                      }}
                     >
                       {column.submittedCount > 0 ? `${pct}%` : "—"}
                     </Typography>

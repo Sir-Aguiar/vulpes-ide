@@ -4,9 +4,7 @@ import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dialog from "@mui/material/Dialog";
-import DialogActions from "@mui/material/DialogActions";
 import DialogContent from "@mui/material/DialogContent";
-import DialogContentText from "@mui/material/DialogContentText";
 import DialogTitle from "@mui/material/DialogTitle";
 import InputAdornment from "@mui/material/InputAdornment";
 import IconButton from "@mui/material/IconButton";
@@ -15,27 +13,45 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
-import { redirect, useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CloseIcon from "@mui/icons-material/Close";
 import SchoolIcon from "@mui/icons-material/School";
 import { safeZodResolver } from "@/utils/safeZodResolver";
 
 import { SignupSchema, ISignupDTO } from "@/@schemas/Auth.schema";
+import RequestPermissionSection from "./RequestPermissionSection";
 import RHFTextField from "@/components/RHF/TextField";
 import { useAuth } from "@/providers/AuthProvider";
 import RHFSelect from "@/components/RHF/Select";
 import API from "@/services/API";
 import { MenuItem } from "@mui/material";
 
+function toInstitutionId(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value) && value > 0) {
+    return value;
+  }
+
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed) && parsed > 0) return parsed;
+  }
+
+  return undefined;
+}
+
 export default function SignupPage() {
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
   const [openProfessorModal, setOpenProfessorModal] = useState(false);
+  const [professorStep, setProfessorStep] = useState<"intro" | "details">(
+    "intro",
+  );
   const [Institutions, setInstitutions] = useState<any[]>([]);
 
   const router = useRouter();
@@ -50,8 +66,11 @@ export default function SignupPage() {
   const {
     control,
     handleSubmit,
-    formState: { errors, isValid, isSubmitting },
+    trigger,
     getValues,
+    setValue,
+    watch,
+    formState: { errors, isValid, isSubmitting },
   } = useForm<ISignupDTO>({
     resolver: safeZodResolver(SignupSchema),
     mode: "onChange",
@@ -71,7 +90,7 @@ export default function SignupPage() {
       toast.success("Conta criada com sucesso!");
 
       setTimeout(() => {
-        setOpenProfessorModal(true);
+        router.push("/");
       }, 1000);
     } catch (error: any) {
       if (error?.response?.status === 409) {
@@ -82,27 +101,59 @@ export default function SignupPage() {
     }
   };
 
-  const handleContinueAsStudent = () => {
-    setOpenProfessorModal(false);
-    router.push("/");
+  const handleOpenProfessorRequest = async () => {
+    const isFormValid = await trigger();
+
+    if (!isFormValid) {
+      toast.warning(
+        "Preencha todos os dados do formulário para solicitar acesso como professor.",
+      );
+      return;
+    }
+
+    setOpenProfessorModal(true);
   };
 
-  const handleRequestProfessorAccess = () => {
+  const handleCloseProfessorModal = () => {
     setOpenProfessorModal(false);
+  };
 
-    const { name, email, institutionId } = getValues();
+  const mainName = watch("name");
+  const mainInstitutionId = toInstitutionId(watch("institutionId"));
 
-    const queryParams = new URLSearchParams({
+  const handleInstitutionSelected = (institutionId: number) => {
+    setValue("institutionId", institutionId, {
+      shouldDirty: true,
+      shouldValidate: true,
+    });
+  };
+
+  const handleCreateAccountForProfessor = async ({
+    name,
+    institutionId,
+  }: {
+    name: string;
+    institutionId: number;
+  }) => {
+    const { email, password } = getValues();
+
+    setValue("name", name);
+    setValue("institutionId", institutionId);
+
+    await signup({
       name,
       email,
-    }).toString();
-
-    const requestURL = window.location.origin + "/request-permission";
-
-    redirect(
-      `${requestURL}?${queryParams}${institutionId ? `&institutionId=${institutionId}` : ""}`,
-    );
+      password,
+      institutionId,
+    });
   };
+
+  useEffect(() => {
+    if (openProfessorModal) return;
+
+    const timeout = setTimeout(() => setProfessorStep("intro"), 220);
+    return () => clearTimeout(timeout);
+  }, [openProfessorModal]);
 
   return (
     <Box
@@ -224,6 +275,7 @@ export default function SignupPage() {
                     />
 
                     <RHFSelect
+                      key={mainInstitutionId ?? "none"}
                       control={control}
                       name="institutionId"
                       label="Instituição"
@@ -250,8 +302,21 @@ export default function SignupPage() {
                       )}
                     </Button>
 
-                    <Box sx={{ textAlign: "center", mt: 2 }}>
-                      <Typography variant="body2" color="text.secondary">
+                    <Box sx={{ textAlign: "center", mt: 1 }}>
+                      <Link
+                        component="button"
+                        type="button"
+                        underline="hover"
+                        onClick={handleOpenProfessorRequest}
+                        sx={{ cursor: "pointer", fontWeight: 600 }}
+                      >
+                        Solicitar Acesso como professor
+                      </Link>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mt: 1.5 }}
+                      >
                         Já tem uma conta?{" "}
                         <Link
                           href="/login"
@@ -332,39 +397,113 @@ export default function SignupPage() {
 
       <Dialog
         open={openProfessorModal}
-        onClose={handleContinueAsStudent}
+        onClose={handleCloseProfessorModal}
         maxWidth="sm"
         fullWidth
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              bgcolor: "background.paper",
+              backgroundImage: "none",
+              maxHeight: "calc(100% - 64px)",
+            },
+          },
+        }}
       >
-        <DialogTitle>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <SchoolIcon color="primary" />
-            <Typography variant="h6">Você é professor?</Typography>
-          </Box>
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Se você é um professor e deseja criar e gerenciar tarefas para seus
-            alunos, você pode solicitar acesso especial. Envie uma solicitação
-            com seus documentos de identificação e aguarde a aprovação.
-          </DialogContentText>
-          <DialogContentText sx={{ mt: 2, fontWeight: 500 }}>
-            Caso contrário, você pode continuar como estudante e começar a usar
-            a plataforma imediatamente.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button onClick={handleContinueAsStudent} variant="outlined">
-            Continuar como Estudante
-          </Button>
-          <Button
-            onClick={handleRequestProfessorAccess}
-            variant="contained"
-            startIcon={<SchoolIcon />}
+        <DialogTitle sx={{ px: 3, pt: 2.5, pb: 0 }}>
+          <Stack
+            direction="row"
+            alignItems="center"
+            justifyContent="space-between"
+            spacing={1}
           >
-            Solicitar Acesso de Professor
-          </Button>
-        </DialogActions>
+            <Stack direction="row" alignItems="center" spacing={1.5}>
+              <Box
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: 1.5,
+                  display: "grid",
+                  placeItems: "center",
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  flexShrink: 0,
+                }}
+              >
+                <SchoolIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Typography variant="h6" fontWeight={700} lineHeight={1.2}>
+                Você é professor?
+              </Typography>
+            </Stack>
+            <IconButton
+              aria-label="Fechar"
+              onClick={handleCloseProfessorModal}
+              size="small"
+              sx={{ color: "text.secondary" }}
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            px: 3,
+            pt: 2,
+            pb: 3,
+            overflowX: "hidden",
+            overflowY: professorStep === "details" ? "auto" : "hidden",
+          }}
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            {professorStep === "intro" ? (
+              <motion.div
+                key="intro"
+                initial={{ opacity: 0, x: 36 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -36 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+              >
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ lineHeight: 1.7, mb: 3 }}
+                >
+                  Se você é professor e deseja criar e gerenciar tarefas para
+                  seus alunos, solicite acesso especial. Envie seus documentos
+                  de identificação e aguarde a aprovação.
+                </Typography>
+                <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
+                  <Button
+                    onClick={() => setProfessorStep("details")}
+                    variant="contained"
+                    size="small"
+                  >
+                    Solicitar Acesso de Professor
+                  </Button>
+                </Box>
+              </motion.div>
+            ) : (
+              <motion.div
+                key="details"
+                initial={{ opacity: 0, x: 36 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -36 }}
+                transition={{ duration: 0.28, ease: "easeInOut" }}
+              >
+                <RequestPermissionSection
+                  initialName={mainName}
+                  initialPersonalEmail={getValues("email")}
+                  initialInstitutionId={mainInstitutionId}
+                  institutions={Institutions}
+                  onInstitutionSelected={handleInstitutionSelected}
+                  onCreateAccount={handleCreateAccountForProfessor}
+                />
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </DialogContent>
       </Dialog>
     </Box>
   );

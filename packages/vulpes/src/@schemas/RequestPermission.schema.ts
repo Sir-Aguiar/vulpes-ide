@@ -10,7 +10,20 @@ export const CreateTeacherPermissionSchema = Zod.object({
     1,
     "Email institucional é obrigatório",
   ),
-  institutionId: Zod.number().min(1, "Instituição de ensino é obrigatória"),
+  institutionId: Zod.preprocess(
+    (value) => {
+      if (value === "" || value == null) {
+        return;
+      }
+
+      const parsed = typeof value === "number" ? value : Number(value);
+      return Number.isNaN(parsed) ? value : parsed;
+    },
+    Zod.number({ error: "Instituição de ensino é obrigatória" }).min(
+      1,
+      "Instituição de ensino é obrigatória",
+    ),
+  ),
   document: Zod.instanceof(File, { message: "Documento é obrigatório" }),
 });
 
