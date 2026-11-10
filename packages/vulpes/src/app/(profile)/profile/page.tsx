@@ -5,6 +5,7 @@ import AuthGuard from "@/components/AuthGuard";
 import { useAuth } from "@/providers/AuthProvider";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 import DeleteForeverIcon from "@mui/icons-material/DeleteForever";
+import TuneIcon from "@mui/icons-material/Tune";
 import LockIcon from "@mui/icons-material/Lock";
 import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
@@ -27,6 +28,7 @@ import DeactivateAccountTab from "./components/DeactivateAccountTab";
 import InstitutionalDataTab from "./components/InstitutionalDataTab";
 import ManageUsersTab from "./components/ManageUsersTab";
 import PersonalInfoTab from "./components/PersonalInfoTab";
+import UserPreferencesTab from "./components/UserPreferencesTab";
 
 const ALL_TABS = [
   {
@@ -48,6 +50,13 @@ const ALL_TABS = [
     label: "Dados institucionais",
     icon: <SchoolIcon />,
     Component: InstitutionalDataTab,
+    adminOnly: false,
+  },
+  {
+    key: "preferences",
+    label: "Preferências de Usuário",
+    icon: <TuneIcon />,
+    Component: UserPreferencesTab,
     adminOnly: false,
   },
   {
