@@ -5,7 +5,9 @@ export const USER_PREFERENCES_STORAGE_KEY = "vulpes-user-preferences";
 const listeners = new Set<() => void>();
 
 function notify() {
-  listeners.forEach((listener) => listener());
+  for (const listener of listeners) {
+    listener();
+  }
 }
 
 export function readStoredUserPreferences(): IUserPreferences {
