@@ -1,6 +1,9 @@
 "use client";
 
+import { IUserPreferences } from "@/@dtos/Auth";
 import { useAppTheme, useColorMode } from "@/providers/ColorModeProvider";
+import API from "@/services/API";
+import { writeStoredUserPreferences } from "@/utils/user-preferences-storage";
 import logoIcon from "@/app/icon.png";
 import { useAuth } from "@/providers/AuthProvider";
 import { useBugReport } from "@/providers/BugReportProvider";
@@ -40,12 +43,25 @@ export default function AppNavBar(props?: IProps) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
   const theme = useAppTheme();
-  const { isDark, toggleMode } = useColorMode();
+  const { isDark, setMode } = useColorMode();
   const { openBugReport } = useBugReport();
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
 
   const handleMenu = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
+  };
+
+  const handleThemeToggle = async () => {
+    const next = isDark ? "light" : "dark";
+    setMode(next);
+
+    try {
+      await API.patch("/user/me/preferences", { theme: next });
+      const { data } = await API.get<IUserPreferences>("/user/me/preferences");
+      writeStoredUserPreferences(data ?? {});
+    } catch {
+      toast.error("Não foi possível salvar o tema.");
+    }
   };
 
   const handleClose = () => {
@@ -340,7 +356,7 @@ export default function AppNavBar(props?: IProps) {
                 />
                 <Switch
                   checked={isDark}
-                  onChange={toggleMode}
+                  onChange={handleThemeToggle}
                   size="small"
                   inputProps={{ "aria-label": "Alternar tema escuro" }}
                   sx={{

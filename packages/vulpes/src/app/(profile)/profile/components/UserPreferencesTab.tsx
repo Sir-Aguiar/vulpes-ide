@@ -1,9 +1,12 @@
 "use client";
 
+import { IUserPreferences } from "@/@dtos/Auth";
 import { EDITOR_THEMES, UserPreferencesSchema } from "@/@schemas/User";
 import RHFSelect from "@/components/RHF/Select";
+import { useStoredUserPreferences } from "@/hooks/useStoredUserPreferences";
 import { useAuth } from "@/providers/AuthProvider";
 import API from "@/services/API";
+import { writeStoredUserPreferences } from "@/utils/user-preferences-storage";
 import { safeZodResolver } from "@/utils/safeZodResolver";
 import {
   Box,
@@ -18,7 +21,7 @@ import {
   Switch,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { toast } from "react-toastify";
 import { z } from "zod";
@@ -29,8 +32,31 @@ const DEFAULTS: PreferencesForm = {
   editorTheme: "vs-dark",
   editorFontSize: 14,
   editorWordWrap: true,
-  adminNotifyBugReport: false,
+  adminNotifyBugReport: true,
 };
+
+function isEditorTheme(
+  value: string | undefined,
+): value is PreferencesForm["editorTheme"] {
+  return EDITOR_THEMES.some((theme) => theme === value);
+}
+
+function formFromUser(preferences: IUserPreferences | undefined): PreferencesForm {
+  return {
+    editorTheme: isEditorTheme(preferences?.editorTheme)
+      ? preferences.editorTheme
+      : DEFAULTS.editorTheme,
+    editorFontSize:
+      typeof preferences?.editorFontSize === "number"
+        ? preferences.editorFontSize
+        : DEFAULTS.editorFontSize,
+    editorWordWrap:
+      typeof preferences?.editorWordWrap === "boolean"
+        ? preferences.editorWordWrap
+        : DEFAULTS.editorWordWrap,
+    adminNotifyBugReport: preferences?.adminNotifyBugReport ?? true,
+  };
+}
 
 const THEME_LABELS: Record<(typeof EDITOR_THEMES)[number], string> = {
   "vs-dark": "Escuro",
@@ -41,8 +67,8 @@ const THEME_LABELS: Record<(typeof EDITOR_THEMES)[number], string> = {
 
 export default function UserPreferencesTab() {
   const { user } = useAuth();
+  const storedPreferences = useStoredUserPreferences();
   const isAdmin = user?.role === "ADMIN";
-  const [loading, setLoading] = useState(true);
 
   const {
     control,
@@ -52,82 +78,32 @@ export default function UserPreferencesTab() {
   } = useForm<PreferencesForm>({
     resolver: safeZodResolver(UserPreferencesSchema),
     mode: "onChange",
-    defaultValues: DEFAULTS,
+    defaultValues: formFromUser(storedPreferences),
   });
 
   useEffect(() => {
-    let active = true;
-
-    const load = async () => {
-      try {
-        const { data } = await API.get<Partial<PreferencesForm>>(
-          "/user/me/preferences",
-        );
-        if (!active) return;
-
-        reset({
-          editorTheme: EDITOR_THEMES.includes(
-            data.editorTheme as (typeof EDITOR_THEMES)[number],
-          )
-            ? (data.editorTheme as PreferencesForm["editorTheme"])
-            : DEFAULTS.editorTheme,
-          editorFontSize:
-            typeof data.editorFontSize === "number"
-              ? data.editorFontSize
-              : DEFAULTS.editorFontSize,
-          editorWordWrap:
-            typeof data.editorWordWrap === "boolean"
-              ? data.editorWordWrap
-              : DEFAULTS.editorWordWrap,
-          adminNotifyBugReport: data.adminNotifyBugReport ?? false,
-        });
-      } catch {
-        if (active) toast.error("Não foi possível carregar suas preferências.");
-      } finally {
-        if (active) setLoading(false);
-      }
-    };
-
-    load();
-    return () => {
-      active = false;
-    };
-  }, [reset]);
+    reset(formFromUser(storedPreferences));
+  }, [reset, storedPreferences]);
 
   const onSave = async (data: PreferencesForm) => {
-    const payload: Record<string, string | number | boolean> = {
+    const payload: IUserPreferences = {
       editorTheme: data.editorTheme,
       editorFontSize: data.editorFontSize,
       editorWordWrap: data.editorWordWrap,
+      ...(isAdmin
+        ? { adminNotifyBugReport: data.adminNotifyBugReport }
+        : {}),
     };
-
-    if (isAdmin) {
-      payload.adminNotifyBugReport = data.adminNotifyBugReport;
-    }
 
     try {
       await API.patch("/user/me/preferences", payload);
+      const { data } = await API.get<IUserPreferences>("/user/me/preferences");
+      writeStoredUserPreferences(data ?? {});
       toast.success("Preferências salvas.");
     } catch {
       toast.error("Não foi possível salvar suas preferências.");
     }
   };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          width: "100%",
-          height: "100%",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-        }}
-      >
-        <CircularProgress />
-      </Box>
-    );
-  }
 
   return (
     <Box sx={{ width: "100%", height: "100%", p: 3, overflow: "auto" }}>
@@ -146,7 +122,7 @@ export default function UserPreferencesTab() {
                 control={control}
                 name="editorTheme"
                 errors={errors}
-                label=""
+                label="Tema do editor"
               >
                 {EDITOR_THEMES.map((theme) => (
                   <MenuItem key={theme} value={theme}>

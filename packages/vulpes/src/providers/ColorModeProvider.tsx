@@ -8,6 +8,10 @@ import {
   ThemeMode,
 } from "@/utils/app-theme";
 import {
+  readStoredUserPreferences,
+  subscribeStoredUserPreferences,
+} from "@/utils/user-preferences-storage";
+import {
   createContext,
   useCallback,
   useContext,
@@ -43,6 +47,18 @@ export function ColorModeProvider({ children }: { children: React.ReactNode }) {
     setModeState(stored);
     applyThemeMode(stored);
     setReady(true);
+  }, []);
+
+  useEffect(() => {
+    const applyFromPreferences = () => {
+      const { theme } = readStoredUserPreferences();
+      if (theme !== "light" && theme !== "dark") return;
+      setModeState(theme);
+      applyThemeMode(theme);
+    };
+
+    applyFromPreferences();
+    return subscribeStoredUserPreferences(applyFromPreferences);
   }, []);
 
   const setMode = useCallback((next: ThemeMode) => {

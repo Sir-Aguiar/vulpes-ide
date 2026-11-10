@@ -3,12 +3,21 @@ export interface IAuthResponse {
   user: IUser;
 }
 
+export interface IUserPreferences {
+  theme?: "light" | "dark";
+  editorFontSize?: number;
+  editorWordWrap?: boolean;
+  editorTheme?: string;
+  adminNotifyBugReport?: boolean;
+}
+
 export interface IUser {
   userId: string;
   email: string;
   name: string;
   role: "STUDENT" | "PROFESSOR" | "ADMIN";
   institutionId: number | null;
+  userPreferences?: IUserPreferences;
 }
 
 export interface ISignupRequest {

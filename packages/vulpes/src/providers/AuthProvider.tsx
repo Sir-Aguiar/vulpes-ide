@@ -5,9 +5,14 @@ import API from "@/services/API";
 import {
   IAuthResponse,
   IUser,
+  IUserPreferences,
   ISignupRequest,
   ILoginRequest,
 } from "@/@dtos/Auth";
+import {
+  clearStoredUserPreferences,
+  writeStoredUserPreferences,
+} from "@/utils/user-preferences-storage";
 
 interface IAuthContext {
   user: IUser | null;
@@ -19,6 +24,8 @@ interface IAuthContext {
 }
 
 export const AuthContext = createContext<IAuthContext | undefined>(undefined);
+
+let preferencesSyncedThisLoad = false;
 
 // Decode JWT token to extract payload
 const decodeToken = (token: string): IUser | null => {
@@ -44,16 +51,32 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (token) {
-      const userData = decodeToken(token);
-      if (userData) {
-        setUser(userData);
-      } else {
-        // Invalid token
-        localStorage.removeItem("token");
-      }
+    if (!token) {
+      setLoading(false);
+      return;
     }
+
+    const userData = decodeToken(token);
+    if (!userData) {
+      localStorage.removeItem("token");
+      clearStoredUserPreferences();
+      setLoading(false);
+      return;
+    }
+
+    setUser(userData);
     setLoading(false);
+
+    if (preferencesSyncedThisLoad) return;
+    preferencesSyncedThisLoad = true;
+
+    API.get<IUserPreferences>("/user/me/preferences")
+      .then(({ data }) => {
+        writeStoredUserPreferences(data ?? {});
+      })
+      .catch(() => {
+        // Mantém o que já está no localStorage se o ping falhar.
+      });
   }, []);
 
   const login = async (data: ILoginRequest) => {
@@ -61,6 +84,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { access_token, user } = response.data;
 
     localStorage.setItem("token", access_token);
+    writeStoredUserPreferences(user.userPreferences ?? {});
     setUser(user);
   };
 
@@ -69,11 +93,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { access_token, user } = response.data;
 
     localStorage.setItem("token", access_token);
+    writeStoredUserPreferences(user.userPreferences ?? {});
     setUser(user);
   };
 
   const logout = () => {
     localStorage.removeItem("token");
+    clearStoredUserPreferences();
     setUser(null);
   };
 
