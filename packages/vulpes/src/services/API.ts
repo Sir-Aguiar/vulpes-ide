@@ -85,7 +85,7 @@ API.interceptors.response.use(
     if (error?.response?.status === 401) {
       localStorage.removeItem("token");
 
-      const publicPaths = ["/login", "/signup", "/validate-order"];
+      const publicPaths = ["/login", "/signup", "/validate-order", "/termos"];
       const isPublicPath =
         typeof window !== "undefined" &&
         publicPaths.some((path) => window.location.pathname.startsWith(path));

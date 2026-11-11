@@ -1,8 +1,9 @@
 "use client";
 
 import { useAppTheme } from "@/providers/ColorModeProvider";
-import { Box, Typography } from "@mui/material";
+import { Box, Link as MuiLink, Stack, Typography } from "@mui/material";
 import { Montserrat } from "next/font/google";
+import Link from "next/link";
 
 const montserrat = Montserrat({ subsets: ["latin"] });
 
@@ -22,6 +23,32 @@ export default function HomeFooter() {
         transition: "background-color 0.2s ease, border-color 0.2s ease",
       }}
     >
+      <Stack
+        direction="row"
+        spacing={3}
+        sx={{ justifyContent: "center", mb: 2 }}
+      >
+        <MuiLink
+          component={Link}
+          href="/termos"
+          underline="hover"
+          variant="caption"
+          className={montserrat.className}
+          sx={{ color: theme.textSecondary }}
+        >
+          Termos de Uso
+        </MuiLink>
+        <MuiLink
+          component={Link}
+          href="/termos#privacidade"
+          underline="hover"
+          variant="caption"
+          className={montserrat.className}
+          sx={{ color: theme.textSecondary }}
+        >
+          Privacidade
+        </MuiLink>
+      </Stack>
       <Typography
         variant="caption"
         className={montserrat.className}

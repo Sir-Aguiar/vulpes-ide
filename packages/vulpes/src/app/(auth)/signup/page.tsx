@@ -2,7 +2,9 @@
 
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import Checkbox from "@mui/material/Checkbox";
 import CircularProgress from "@mui/material/CircularProgress";
+import FormControlLabel from "@mui/material/FormControlLabel";
 import Dialog from "@mui/material/Dialog";
 import DialogContent from "@mui/material/DialogContent";
 import DialogTitle from "@mui/material/DialogTitle";
@@ -79,12 +81,17 @@ export default function SignupPage() {
       email: "",
       password: "",
       passwordConfirm: "",
+      acceptedTerms: false,
     },
   });
 
   const onSubmit = async (data: ISignupDTO) => {
     try {
-      const { passwordConfirm, ...signupData } = data;
+      const {
+        passwordConfirm: _passwordConfirm,
+        acceptedTerms: _acceptedTerms,
+        ...signupData
+      } = data;
       await signup(signupData);
       setIsSuccess(true);
       toast.success("Conta criada com sucesso!");
@@ -104,6 +111,13 @@ export default function SignupPage() {
   const handleOpenProfessorRequest = async () => {
     const isFormValid = await trigger();
 
+    if (!getValues("acceptedTerms")) {
+      toast.warning(
+        "Confirme que leu e concorda com os termos para continuar.",
+      );
+      return;
+    }
+
     if (!isFormValid) {
       toast.warning(
         "Preencha todos os dados do formulário para solicitar acesso como professor.",
@@ -120,6 +134,7 @@ export default function SignupPage() {
 
   const mainName = watch("name");
   const mainInstitutionId = toInstitutionId(watch("institutionId"));
+  const acceptedTerms = watch("acceptedTerms");
 
   const handleInstitutionSelected = (institutionId: number) => {
     setValue("institutionId", institutionId, {
@@ -288,11 +303,62 @@ export default function SignupPage() {
                       ))}
                     </RHFSelect>
 
+                    <FormControlLabel
+                      sx={{ alignItems: "flex-start", mx: 0 }}
+                      control={
+                        <Checkbox
+                          checked={acceptedTerms}
+                          onChange={(event) =>
+                            setValue("acceptedTerms", event.target.checked, {
+                              shouldDirty: true,
+                              shouldValidate: true,
+                            })
+                          }
+                          sx={{ pt: 0.25 }}
+                        />
+                      }
+                      label={
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ lineHeight: 1.6 }}
+                        >
+                          Li e concordo com os{" "}
+                          <Link
+                            href="/termos"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            underline="hover"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            Termos de Uso
+                          </Link>{" "}
+                          e a{" "}
+                          <Link
+                            href="/termos#privacidade"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            underline="hover"
+                            onClick={(event) => event.stopPropagation()}
+                          >
+                            Política de Privacidade
+                          </Link>
+                          . Se a conta for de um menor de 18 anos, declaro que
+                          sou o responsável e autorizo o uso.
+                        </Typography>
+                      }
+                    />
+                    {errors.acceptedTerms && (
+                      <Typography variant="caption" color="error">
+                        {errors.acceptedTerms.message}
+                      </Typography>
+                    )}
+
                     <Button
                       type="submit"
                       variant="contained"
                       size="large"
-                      disabled={!isValid || isSubmitting}
+                      disabled={!acceptedTerms || !isValid || isSubmitting}
                       sx={{ mt: 2 }}
                     >
                       {isSubmitting ? (
