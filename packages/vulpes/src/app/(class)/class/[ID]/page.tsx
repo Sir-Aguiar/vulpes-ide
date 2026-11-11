@@ -24,6 +24,7 @@ import CreateListTab from "./components/CreateListTab";
 import ListsTab from "./components/ListsTab";
 import TasksTab from "./components/TaskTab";
 import DashboardTab from "./components/DashboardTab";
+import StudentsTab from "./components/StudentsTab";
 
 export default function ClassPage() {
   const { ID } = useParams();
@@ -49,6 +50,7 @@ export default function ClassPage() {
         { key: "create", label: "Criar Lista" },
         { key: "lists", label: "Listas" },
         { key: "dashboard", label: "Dashboard" },
+        { key: "students", label: "Alunos" },
       ];
     }
 
@@ -147,6 +149,9 @@ export default function ClassPage() {
         {activeTab === "lists" && <ListsTab classId={classData.classId} />}
         {activeTab === "dashboard" && (
           <DashboardTab classId={classData.classId} />
+        )}
+        {activeTab === "students" && (
+          <StudentsTab classId={classData.classId} />
         )}
       </Container>
     </AuthGuard>
