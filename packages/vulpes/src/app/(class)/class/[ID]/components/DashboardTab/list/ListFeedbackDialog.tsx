@@ -4,7 +4,7 @@ import {
 } from "@/@types/ClassTaskListDashboard";
 import { ISubmission } from "@/@types/Submission";
 import API from "@/services/API";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import ArrowBackIosIcon from "@mui/icons-material/ArrowBackIos";
 import ArrowForwardIosIcon from "@mui/icons-material/ArrowForwardIos";
 import CloseIcon from "@mui/icons-material/CloseOutlined";
@@ -28,7 +28,6 @@ import MDEditor from "@uiw/react-md-editor";
 import { AnimatePresence, motion } from "framer-motion";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { registerPortugolLanguage } from "../../../../../../../../libs/monaco-config";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 
 function initialsFrom(name: string) {
@@ -203,11 +202,6 @@ export default function ListFeedbackDialog({
       tasks.filter((task) => drafts[task.classTaskListId]?.trim()).length,
     [tasks, drafts],
   );
-
-  const handleEditorMount = (_editor: unknown, monacoInstance: any) => {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  };
 
   const handleDraftChange = (value: string) => {
     if (!currentTask) return;
@@ -481,12 +475,10 @@ export default function ListFeedbackDialog({
                         />
                       </Stack>
                       <Box sx={{ flex: 1, minHeight: 320, bgcolor: appTheme.codeBg }}>
-                        <Editor
+                        <CodeEditor
                           key={currentTask.submission.submissionId}
                           height="100%"
-                          theme="vs-dark"
                           language="portugol"
-                          onMount={handleEditorMount}
                           value={currentTask.submission.code}
                           options={{
                             readOnly: true,

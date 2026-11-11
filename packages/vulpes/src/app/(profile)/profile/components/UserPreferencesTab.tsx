@@ -2,6 +2,7 @@
 
 import { IUserPreferences } from "@/@dtos/Auth";
 import { EDITOR_THEMES, UserPreferencesSchema } from "@/@schemas/User";
+import { normalizeStoredEditorTheme } from "@/utils/editor-preferences";
 import RHFSelect from "@/components/RHF/Select";
 import { useStoredUserPreferences } from "@/hooks/useStoredUserPreferences";
 import { useAuth } from "@/providers/AuthProvider";
@@ -29,22 +30,16 @@ import { z } from "zod";
 type PreferencesForm = z.infer<typeof UserPreferencesSchema>;
 
 const DEFAULTS: PreferencesForm = {
-  editorTheme: "vs-dark",
+  editorTheme: "dark",
   editorFontSize: 14,
   editorWordWrap: true,
   adminNotifyBugReport: true,
 };
 
-function isEditorTheme(
-  value: string | undefined,
-): value is PreferencesForm["editorTheme"] {
-  return EDITOR_THEMES.some((theme) => theme === value);
-}
-
 function formFromUser(preferences: IUserPreferences | undefined): PreferencesForm {
   return {
-    editorTheme: isEditorTheme(preferences?.editorTheme)
-      ? preferences.editorTheme
+    editorTheme: preferences?.editorTheme
+      ? normalizeStoredEditorTheme(preferences.editorTheme)
       : DEFAULTS.editorTheme,
     editorFontSize:
       typeof preferences?.editorFontSize === "number"
@@ -59,10 +54,8 @@ function formFromUser(preferences: IUserPreferences | undefined): PreferencesFor
 }
 
 const THEME_LABELS: Record<(typeof EDITOR_THEMES)[number], string> = {
-  "vs-dark": "Escuro",
-  vs: "Claro",
-  "portugol-dark": "Portugol escuro",
-  "portugol-light": "Portugol claro",
+  dark: "Escuro",
+  light: "Claro",
 };
 
 export default function UserPreferencesTab() {

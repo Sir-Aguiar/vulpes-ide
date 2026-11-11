@@ -6,7 +6,7 @@ import { useAppTheme } from "@/providers/ColorModeProvider";
 import { ICompileError, ITestCaseResult } from "@/utils/code-tester";
 import CodeIcon from "@mui/icons-material/Code";
 import TerminalIcon from "@mui/icons-material/Terminal";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import { Box } from "@mui/material";
 import { useState } from "react";
 import CheckIcon from "../../../../../../public/icons/CheckIcon";
@@ -77,17 +77,14 @@ export default function CodeSection({
         />
         {!editorCollapsed && (
           <Box sx={{ flex: 1, minHeight: 0, bgcolor: theme.codeBg }}>
-            <Editor
+            <CodeEditor
               height="100%"
-              theme="vs-dark"
               language="portugol"
               value={code}
               onChange={(value) => setCode(value || "")}
               onMount={handleEditorDidMount}
               options={{
-                fontSize: 14,
                 tabSize: 2,
-                wordWrap: "on",
                 minimap: { enabled: true },
                 lineNumbers: "on",
                 renderWhitespace: "selection",

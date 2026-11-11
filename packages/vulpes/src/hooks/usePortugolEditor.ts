@@ -18,8 +18,6 @@ export function usePortugolEditor(compileErrors: ICompileError[]) {
     monacoInstance: any,
   ) {
     registerPortugolLanguage(monacoInstance);
-    // eslint-disable-next-line @typescript-eslint/no-unsafe-call
-    monacoInstance.editor.setTheme("vs-dark");
     editorRef.current = editor;
     monacoRef.current = monacoInstance;
     applyCompileErrorMarkers(monacoInstance, editor, compileErrors);

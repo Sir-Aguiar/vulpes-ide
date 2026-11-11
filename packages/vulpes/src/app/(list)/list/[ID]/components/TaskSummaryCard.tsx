@@ -16,9 +16,8 @@ import SubmissionIndicator from "./SubmissionIndicator";
 import TaskStatusChip from "./TaskStatusChip";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import CodeIcon from "@mui/icons-material/Code";
-import { registerPortugolLanguage } from "../../../../../../libs/monaco-config";
 import { TaskSubmissionStatus } from "../page";
 
 interface ITaskSummaryCardProps {
@@ -124,20 +123,13 @@ export default function TaskSummaryCard({
 
         <Collapse in={!codeCollapsed} unmountOnExit>
           <Box sx={{ bgcolor: theme.codeBg, height: 260 }}>
-            <Editor
+            <CodeEditor
               height="100%"
-              theme="vs-dark"
               language="portugol"
               value={code}
-              onMount={(_e, monacoInstance) => {
-                registerPortugolLanguage(monacoInstance);
-                monacoInstance.editor.setTheme("vs-dark");
-              }}
               options={{
                 readOnly: true,
-                fontSize: 13,
                 tabSize: 2,
-                wordWrap: "on",
                 minimap: { enabled: false },
                 lineNumbers: "on",
                 automaticLayout: true,

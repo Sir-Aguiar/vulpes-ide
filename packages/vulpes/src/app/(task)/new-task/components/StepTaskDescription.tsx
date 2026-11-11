@@ -7,10 +7,9 @@ import RHFSelect from "@/components/RHF/Select";
 import RHFTextField from "@/components/RHF/TextField";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 import MenuItem from "@mui/material/MenuItem";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import { Box, Typography } from "@mui/material";
-import { Editor } from "@monaco-editor/react";
 import { Control, FieldErrors } from "react-hook-form";
-import { registerPortugolLanguage } from "../../../../../libs/monaco-config";
 
 export const StepTaskDescription = ({
   control,
@@ -24,11 +23,6 @@ export const StepTaskDescription = ({
   onCodeChange: (value: string | undefined) => void;
 }) => {
   const theme = useAppTheme();
-
-  const handleEditorDidMount = (editorInstance: unknown, monacoInstance: any) => {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  };
 
   return (
     <Box
@@ -118,11 +112,9 @@ export const StepTaskDescription = ({
             bgcolor: theme.codeBg,
           }}
         >
-          <Editor
+          <CodeEditor
             height="100%"
-            theme="vs-dark"
             language="portugol"
-            onMount={handleEditorDidMount}
             value={code}
             onChange={onCodeChange}
           />

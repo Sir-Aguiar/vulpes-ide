@@ -5,7 +5,7 @@ import { Box } from "@mui/material";
 import CodeIcon from "@mui/icons-material/Code";
 import TerminalIcon from "@mui/icons-material/Terminal";
 import { useState } from "react";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import { ICompileError, ITestCaseResult } from "@/utils/code-tester";
 import { ExecutionOutput } from "@/components/ide/ExecutionOutput";
 import { usePortugolEditor } from "@/hooks/usePortugolEditor";
@@ -77,17 +77,14 @@ export function CodeSection({
         />
         {!editorCollapsed && (
           <Box sx={{ flex: 1, minHeight: 0, bgcolor: theme.codeBg }}>
-            <Editor
+            <CodeEditor
               height="100%"
-              theme="vs-dark"
               language="portugol"
               value={code}
               onChange={(value) => setCode(value || "")}
               onMount={handleEditorDidMount}
               options={{
-                fontSize: 14,
                 tabSize: 2,
-                wordWrap: "on",
                 minimap: { enabled: true },
                 lineNumbers: "on",
                 renderWhitespace: "selection",

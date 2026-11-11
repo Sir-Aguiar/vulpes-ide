@@ -1,7 +1,7 @@
 import { ClassTaskDashboardStudentRow } from "@/@types/ClassTaskDashboard";
 import { ISubmission } from "@/@types/Submission";
 import API from "@/services/API";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import CloseIcon from "@mui/icons-material/CloseOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
@@ -24,7 +24,6 @@ import {
 import MDEditor from "@uiw/react-md-editor";
 import { useEffect, useMemo, useState } from "react";
 import { toast } from "react-toastify";
-import { registerPortugolLanguage } from "../../../../../../../libs/monaco-config";
 import { useAppTheme } from "@/providers/ColorModeProvider";
 
 function initialsFrom(name: string) {
@@ -64,11 +63,6 @@ export default function FeedbackDialog({
   useEffect(() => {
     setFeedback(selectedAttempt?.professorComments ?? student?.professorComments ?? "");
   }, [selectedAttempt, student]);
-
-  const handleEditorMount = (_editor: unknown, monacoInstance: any) => {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  };
 
   const handleSend = async () => {
     if (!selectedAttempt) {
@@ -226,11 +220,9 @@ export default function FeedbackDialog({
             </Stack>
             <Box sx={{ flex: 1, minHeight: 320, bgcolor: appTheme.codeBg }}>
               {selectedAttempt ? (
-                <Editor
+                <CodeEditor
                   height="100%"
-                  theme="vs-dark"
                   language="portugol"
-                  onMount={handleEditorMount}
                   value={selectedAttempt.code}
                   options={{ readOnly: true, minimap: { enabled: false } }}
                 />

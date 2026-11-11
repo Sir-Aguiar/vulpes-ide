@@ -3,7 +3,7 @@
 import AppNavBar from "@/components/AppNavBar";
 import AuthGuard from "@/components/AuthGuard";
 import API from "@/services/API";
-import { Editor } from "@monaco-editor/react";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CodeIcon from "@mui/icons-material/Code";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
@@ -26,7 +26,6 @@ import { Montserrat } from "next/font/google";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { useAppTheme } from "@/providers/ColorModeProvider";
-import { registerPortugolLanguage } from "../../../../libs/monaco-config";
 import {
   getFeedbackActivityId,
   getFeedbackRetryHref,
@@ -514,10 +513,6 @@ function FeedbackDetail({
   onRetry: () => void;
 }) {
   const theme = useAppTheme();
-  const handleEditorDidMount = (_editor: unknown, monacoInstance: any) => {
-    registerPortugolLanguage(monacoInstance);
-    monacoInstance.editor.setTheme("vs-dark");
-  };
 
   return (
     <Box
@@ -605,19 +600,15 @@ function FeedbackDetail({
             title="Código enviado"
           />
           <Box sx={{ flex: 1, minHeight: 0, bgcolor: theme.codeBg }}>
-            <Editor
+            <CodeEditor
               height="100%"
-              theme="vs-dark"
               language="portugol"
               value={feedback.code}
-              onMount={handleEditorDidMount}
               options={{
                 readOnly: true,
-                fontSize: 14,
                 minimap: { enabled: false },
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
-                wordWrap: "on",
               }}
             />
           </Box>

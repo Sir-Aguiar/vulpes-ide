@@ -3,8 +3,8 @@
 import { IClassListItem } from "@/@types/Class";
 import { CreateTaskDTO } from "@/@dtos/Task";
 import { useAppTheme } from "@/providers/ColorModeProvider";
+import { CodeEditor } from "@/components/ide/CodeEditor";
 import { Box, Typography } from "@mui/material";
-import { Editor } from "@monaco-editor/react";
 import MDEditor from "@uiw/react-md-editor";
 import { Control, useWatch } from "react-hook-form";
 import { TestWithId } from "../hooks/useTestCases";
@@ -75,8 +75,7 @@ export const StepReview = ({
             borderColor: theme.border,
           }}
         >
-          <Editor
-            theme="vs-dark"
+          <CodeEditor
             language="portugol"
             value={code}
             options={{ readOnly: true, minimap: { enabled: false } }}

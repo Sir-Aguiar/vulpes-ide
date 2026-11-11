@@ -7,7 +7,7 @@ export interface IUserPreferences {
   theme?: "light" | "dark";
   editorFontSize?: number;
   editorWordWrap?: boolean;
-  editorTheme?: string;
+  editorTheme?: "light" | "dark";
   adminNotifyBugReport?: boolean;
 }
 

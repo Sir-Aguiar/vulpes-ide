@@ -5,12 +5,7 @@ export const UpdateUserSchema = Zod.object({
   email: Zod.email("Email inválido"),
 });
 
-export const EDITOR_THEMES = [
-  "vs-dark",
-  "vs",
-  "portugol-dark",
-  "portugol-light",
-] as const;
+export const EDITOR_THEMES = ["dark", "light"] as const;
 
 export const UserPreferencesSchema = Zod.object({
   editorTheme: Zod.enum(EDITOR_THEMES),
